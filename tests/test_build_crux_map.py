@@ -50,6 +50,10 @@ def test_compute_post_coords_returns_xyz_per_post():
     assert np.all(np.abs(geo.coords) <= 1.0 + 1e-9)
     assert geo.reduction == "truncated_svd"
     assert geo.embedding_model is None
+    # Clustering features are separate from the 3D display coords (here the
+    # tiny corpus only supports 3 components, but they are distinct arrays).
+    assert geo.cluster_features.shape[0] == 4
+    assert geo.cluster_features.shape[1] >= 1
 
 
 def test_describe_pca_axes_labels_components():

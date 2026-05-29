@@ -7,7 +7,9 @@ New approach (per-post, no cross-article edges):
   2. Embed each post with dense, torch-free semantic vectors (model2vec) and
      project to 3D with PCA — falling back to TF-IDF + TruncatedSVD (LSA) when
      the embedding model is unavailable. (TF-IDF is always kept for labels.)
-  3. Cluster posts with k-means; k is auto-selected by silhouette score
+  3. Cluster posts with k-means on a higher-dimensional projection (up to
+     CLUSTER_COMPONENTS), not just the 3 axes shown, so clusters capture
+     structure the 3D view drops. k is auto-selected by silhouette score
      ("however many clusters make sense") unless --clusters is given.
   4. For each post: summarize its claim(s), fetch its top comment from the
      public LW/AF GraphQL API, and — when the comment disagrees — extract the
@@ -64,6 +66,10 @@ MODEL = "claude-sonnet-4-20250514"
 EMBED_MODEL = "minishlab/potion-base-8M"
 MAX_PASSAGE_CHARS = 4_000
 MAX_COMMENT_CHARS = 1_600
+
+# Components used for clustering. The map only shows 3, but k-means runs on a
+# higher-dimensional projection so clusters reflect structure the 3D view drops.
+CLUSTER_COMPONENTS = 50
 
 # Auto-k search range for silhouette selection.
 MIN_K = 3
@@ -336,10 +342,11 @@ def embed_texts(texts: list[str]) -> np.ndarray | None:
 
 @dataclass
 class PostGeometry:
-    """3D layout plus the artifacts needed to label clusters and axes."""
+    """3D layout plus the artifacts needed to cluster, and to label axes."""
 
-    coords: np.ndarray  # (n, 3) L2-normalized, drives positions + clustering
+    coords: np.ndarray  # (n, 3) L2-normalized, drives map positions only
     scores: np.ndarray  # (n, 3) pre-normalization projection, for axis labels
+    cluster_features: np.ndarray  # (n, <=CLUSTER_COMPONENTS) L2-normalized, for k-means
     vectorizer: TfidfVectorizer  # always TF-IDF, used only for word labels
     matrix: object  # TF-IDF matrix, used only for word labels
     variance: list[float]  # explained variance ratio per component
@@ -347,31 +354,42 @@ class PostGeometry:
     embedding_model: str | None  # model id when dense, else None
 
 
-def _reduce_to_3d(features, *, dense: bool) -> tuple[np.ndarray, np.ndarray, list[float]]:
-    """Reduce a feature matrix to 3 components; return (coords, scores, variance).
+def _reduce(
+    features,
+    *,
+    dense: bool,
+    max_components: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[float]]:
+    """Reduce a feature matrix; return (coords3d, scores3d, cluster_features, variance).
 
     Dense embeddings use centered PCA; sparse TF-IDF uses TruncatedSVD (LSA).
-    ``coords`` are L2-normalized (angular geometry); ``scores`` are the raw
-    projection used for interpreting each axis.
+    A single reducer is fit to up to ``max_components`` dimensions; the first 3
+    (L2-normalized) drive the map layout, while the full L2-normalized
+    projection is used for clustering — so clustering sees far more of the
+    semantic structure than the 3 axes shown on screen.
     """
     n_samples, n_features = features.shape[0], features.shape[1]
-    n_components = min(3, n_samples - 1, n_features - 1)
-    zeros = np.zeros((n_samples, 3))
+    zeros3 = np.zeros((n_samples, 3))
+    n_components = min(max_components, n_samples - 1, n_features - 1)
     if n_components < 1:
-        return zeros, zeros, []
+        return zeros3, zeros3, zeros3, []
     reducer = (
         PCA(n_components=n_components, random_state=42)
         if dense
         else TruncatedSVD(n_components=n_components, random_state=42)
     )
-    scores = reducer.fit_transform(features)
+    projection = reducer.fit_transform(features)
     variance = [float(v) for v in reducer.explained_variance_ratio_]
+
+    scores = projection[:, :3]
     coords = normalize(scores)
     if coords.shape[1] < 3:
         pad = np.zeros((coords.shape[0], 3 - coords.shape[1]))
         coords = np.hstack([coords, pad])
         scores = np.hstack([scores, np.zeros((scores.shape[0], 3 - scores.shape[1]))])
-    return coords, scores, variance
+
+    cluster_features = normalize(projection)  # angular geometry in the full space
+    return coords, scores, cluster_features, variance
 
 
 def compute_post_coords(
@@ -379,18 +397,22 @@ def compute_post_coords(
     *,
     use_embeddings: bool = True,
 ) -> PostGeometry:
-    """Project posts to a 3D layout.
+    """Project posts to a 3D layout, plus higher-dim features for clustering.
 
-    Primary path: dense, torch-free semantic embeddings (model2vec) reduced to
-    3 components with PCA — far more variance and cleaner topical geometry than
-    sparse word counts. Fallback (no embedding model, or ``use_embeddings``
-    False): TF-IDF reduced with TruncatedSVD (LSA). TF-IDF is always computed
-    regardless, because cluster and axis *labels* are word-based.
+    Primary path: dense, torch-free semantic embeddings (model2vec) reduced
+    with PCA — far more variance and cleaner topical geometry than sparse word
+    counts. Fallback (no embedding model, or ``use_embeddings`` False): TF-IDF
+    reduced with TruncatedSVD (LSA). TF-IDF is always computed regardless,
+    because cluster and axis *labels* are word-based.
+
+    The map shows the first 3 components, but clustering runs on up to
+    ``CLUSTER_COMPONENTS`` components so it captures structure the 3D view
+    cannot.
     """
     if not posts:
         return PostGeometry(
-            np.zeros((0, 3)), np.zeros((0, 3)), TfidfVectorizer(), np.zeros((0, 0)),
-            [], "truncated_svd", None,
+            np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 0)),
+            TfidfVectorizer(), np.zeros((0, 0)), [], "truncated_svd", None,
         )
 
     texts = [truncate(clean_text(post.text), 4_000) for post in posts]
@@ -398,11 +420,19 @@ def compute_post_coords(
 
     embeddings = embed_texts(texts) if use_embeddings else None
     if embeddings is not None and embeddings.shape[0] == len(posts):
-        coords, scores, variance = _reduce_to_3d(embeddings, dense=True)
-        return PostGeometry(coords, scores, vectorizer, matrix, variance, "pca", EMBED_MODEL)
+        coords, scores, cluster_features, variance = _reduce(
+            embeddings, dense=True, max_components=CLUSTER_COMPONENTS
+        )
+        return PostGeometry(
+            coords, scores, cluster_features, vectorizer, matrix, variance, "pca", EMBED_MODEL
+        )
 
-    coords, scores, variance = _reduce_to_3d(matrix, dense=False)
-    return PostGeometry(coords, scores, vectorizer, matrix, variance, "truncated_svd", None)
+    coords, scores, cluster_features, variance = _reduce(
+        matrix, dense=False, max_components=CLUSTER_COMPONENTS
+    )
+    return PostGeometry(
+        coords, scores, cluster_features, vectorizer, matrix, variance, "truncated_svd", None
+    )
 
 
 def choose_k(coords: np.ndarray, *, min_k: int = MIN_K, max_k: int = MAX_K) -> int:
@@ -665,13 +695,14 @@ def build_graph(
 ) -> dict:
     geo = compute_post_coords(posts)
     coords = geo.coords
+    cluster_space = geo.cluster_features
     axis_labels = describe_pca_axes(geo.scores, geo.vectorizer, geo.matrix, geo.variance)
 
     if n_clusters and n_clusters > 0:
         k = min(n_clusters, len(posts))
     else:
-        k = choose_k(coords)
-    labels = compute_clusters(coords, k)
+        k = choose_k(cluster_space)
+    labels = compute_clusters(cluster_space, k)
     terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels)
 
     comment_cache = comments_mod.load_comment_cache(comment_cache_path)
@@ -751,6 +782,7 @@ def build_graph(
             "double_crux_count": crux_total,
             "referenced_post_count": referenced_total,
             "components": 3,
+            "cluster_components": int(cluster_space.shape[1]) if cluster_space.ndim == 2 else 0,
             "reduction": geo.reduction,
             "embedding_model": geo.embedding_model,
             "variance_explained": round(float(sum(geo.variance[:3])), 4),
