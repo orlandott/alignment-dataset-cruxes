@@ -141,6 +141,62 @@
       color: var(--muted); font-size: 12px; pointer-events: none;
     }
 
+    #zoom-control {
+      position: absolute;
+      right: 18px;
+      bottom: 52px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 1px 4px rgba(26, 35, 50, 0.06);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    #zoom-control .zoom-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-right: 2px;
+      user-select: none;
+    }
+
+    #zoom-control button {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    #zoom-control button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    #zoom-slider {
+      width: 110px;
+      height: 4px;
+      margin: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      #zoom-control { bottom: auto; top: 18px; right: 18px; }
+    }
+
     #panel { border-left: 1px solid var(--border); background: var(--panel); padding: 22px 20px; overflow-y: auto; }
     #panel h2 { margin: 0 0 6px; font-size: 17px; line-height: 1.35; }
     #panel .placeholder { color: var(--muted); font-size: 14px; line-height: 1.55; }
@@ -224,7 +280,13 @@
         <div id="axis-legend"></div>
         <span class="legend-title" style="margin-top:8px">Point size · times referenced by other posts</span>
       </div>
-      <div id="hint">Drag to orbit · Scroll to zoom · Hover &amp; click a post</div>
+      <div id="zoom-control">
+        <span class="zoom-label">Zoom</span>
+        <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+        <input type="range" id="zoom-slider" min="0" max="100" value="50" aria-label="Zoom level" />
+        <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+      </div>
+      <div id="hint">Drag to orbit · Scroll or slider to zoom · Click a post</div>
       <div id="overlay"></div>
       <div id="error">
         <div>
@@ -280,6 +342,10 @@
     const GRID_COLOR = 0xb8c6d4;
     const GRID_DIV_MIN = 8;
     const GRID_DIV_MAX = 12;
+    // Proportional wheel zoom: scales with deltaY so one mouse notch is gentle
+    // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
+    // event, which feels too aggressive (regression after corpus grew).
+    const WHEEL_ZOOM_SENSITIVITY = 0.22;
 
     const state = {
       graph: null,
@@ -315,8 +381,80 @@
     controls.dampingFactor = 0.06;
     controls.minDistance = 120;
     controls.maxDistance = 1300;
-    controls.zoomSpeed = 0.55;
+    controls.enableZoom = false; // custom proportional wheel handler below
     controls.zoomToCursor = false;
+
+    const zoomSlider = document.getElementById("zoom-slider");
+    const zoomInBtn = document.getElementById("zoom-in");
+    const zoomOutBtn = document.getElementById("zoom-out");
+    let zoomSliderSyncing = false;
+
+    function cameraDistance() {
+      return camera.position.distanceTo(controls.target);
+    }
+
+    function distanceToSliderValue(dist) {
+      const min = controls.minDistance;
+      const max = controls.maxDistance;
+      if (max <= min) return 50;
+      const t = (Math.log(dist) - Math.log(min)) / (Math.log(max) - Math.log(min));
+      return Math.round(Math.min(100, Math.max(0, t * 100)));
+    }
+
+    function sliderValueToDistance(value) {
+      const min = controls.minDistance;
+      const max = controls.maxDistance;
+      const t = value / 100;
+      return min * Math.pow(max / min, t);
+    }
+
+    function setCameraDistance(dist) {
+      const clamped = Math.min(controls.maxDistance, Math.max(controls.minDistance, dist));
+      const offset = camera.position.clone().sub(controls.target);
+      if (offset.lengthSq() < 1e-6) offset.set(0.25, 0.2, 1);
+      offset.normalize().multiplyScalar(clamped);
+      camera.position.copy(controls.target).add(offset);
+      controls.update();
+      syncZoomSliderFromCamera();
+    }
+
+    function syncZoomSliderFromCamera() {
+      if (!zoomSlider || zoomSliderSyncing) return;
+      zoomSliderSyncing = true;
+      zoomSlider.value = String(distanceToSliderValue(cameraDistance()));
+      zoomSliderSyncing = false;
+    }
+
+    function applyWheelZoom(deltaY) {
+      const scale = Math.exp(-deltaY * 0.001 * WHEEL_ZOOM_SENSITIVITY);
+      setCameraDistance(cameraDistance() * scale);
+    }
+
+    renderer.domElement.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      applyWheelZoom(event.deltaY);
+    }, { passive: false });
+
+    if (zoomSlider) {
+      zoomSlider.addEventListener("input", () => {
+        if (zoomSliderSyncing) return;
+        zoomSliderSyncing = true;
+        setCameraDistance(sliderValueToDistance(Number(zoomSlider.value)));
+        zoomSliderSyncing = false;
+      });
+    }
+
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener("click", () => {
+        setCameraDistance(cameraDistance() * 0.88);
+      });
+    }
+
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener("click", () => {
+        setCameraDistance(cameraDistance() * 1.12);
+      });
+    }
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.72));
     const keyLight = new THREE.DirectionalLight(0xffffff, 0.88);
@@ -752,6 +890,7 @@
       controls.minDistance = radius * 0.25;
       controls.maxDistance = distance * 3;
       controls.update();
+      syncZoomSliderFromCamera();
     }
 
     function pickNode(event) {
@@ -779,6 +918,7 @@
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
+      syncZoomSliderFromCamera();
       updateLabel();
       updateAxisLabels();
       renderer.render(scene, camera);
