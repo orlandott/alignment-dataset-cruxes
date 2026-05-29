@@ -399,8 +399,16 @@ def extract_crux(
         entry = (authored or {}).get(authored_pair_key(author_a, author_b))
         if entry:
             return entry
-        # Fall back to the free heuristic when no authored crux exists.
-        return extract_heuristic_crux(truncate(post_a.text), truncate(post_b.text))
+        # No authored crux for this pair: drop the edge rather than emit a
+        # low-quality heuristic guess.
+        return {
+            "has_crux": False,
+            "no_crux_reason": "no authored crux for this pair",
+            "crux_question": None,
+            "type": None,
+            "evidence_a": None,
+            "evidence_b": None,
+        }
 
     if method == "heuristic":
         return extract_heuristic_crux(
@@ -526,14 +534,19 @@ def build_graph(
     }
 
 
-CSS_RULE = re.compile(r"[.#]?[A-Za-z][\w ,.>:*\[\]()=!\"'%+\-]*\{[^{}]*\}")
 MD_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+CSS_DECL = re.compile(r"\{[^{}]*\}")
+CSS_SELECTOR = re.compile(r"[.#][A-Za-z][\w]*-[\w-]*")
+MJX_TOKEN = re.compile(r"\b(?:mjx|MJX)[\w-]*")
 
 
 def clean_passage(text: str) -> str:
     """Strip HTML tags, inline MathJax CSS, and markdown link syntax."""
     text = re.sub(r"<[^>]+>", " ", text)
-    text = CSS_RULE.sub(" ", text)
+    text = CSS_DECL.sub(" ", text)
+    text = CSS_SELECTOR.sub(" ", text)
+    text = MJX_TOKEN.sub(" ", text)
+    text = re.sub(r"@[A-Za-z-]+", " ", text)
     text = MD_LINK.sub(r"\1", text)
     text = re.sub(r"[*_`>#]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()

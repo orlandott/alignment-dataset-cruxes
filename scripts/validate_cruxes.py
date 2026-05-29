@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 REQUIRED_FIELDS = ("id", "prompt", "tags", "expected_behavior", "notes")

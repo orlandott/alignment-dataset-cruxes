@@ -1,0 +1,165 @@
+{
+  "_comment": "LLM-authored cruxes baked into the repo so the deployed pipeline needs no paid API. Keys are sorted author-slug pairs (see authored_pair_key). Pairs whose best-matching posts show no genuine disagreement are intentionally omitted, so they are dropped from the graph. Evidence quotes are drawn from the matched passages in data/processed/pairs.json.",
+  "pairs": {
+    "Diffractor__Scott_Garrabrant": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Is the right foundation for describing multi-agent systems a structure of agent 'boundaries/frames' defined prior to any utility function, or does rational collective behavior always reduce to a weighted aggregation of individual utilities (a la Harsanyi)?",
+      "type": "empirical",
+      "evidence_a": "This post is partially in response to Critch's boundaries sequence. My best guess is that he would agree with most of it in theory, but disagree with some of it in practice due to tradeoffs with other considerations in defining the concepts.",
+      "evidence_b": "If you want to aggregate utility functions, the only sane way to do so is to give everyone importance weights, and do a weighted sum of everyone's individual utility functions."
+    },
+    "Diffractor__johnswentworth": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Does stable, reflective optimization require classical expected-utility maximization under a single prior - making randomized or robust 'worst-case' objectives unstable - or are robust (infra-Bayesian) objectives a more fundamental description of capable agents?",
+      "type": "empirical",
+      "evidence_a": "Conjecture: observing an additional N bits of information can allow a system to perform at most N additional bits of optimization. For once, I'm pretty confident that the operationalization is correct, so this is a concrete math question.",
+      "evidence_b": "For any utility function at all, an agent using it will experience a convergent pressure towards deterministic decision-making. Every single clever alignment trick involving an agent behaving randomly is thereby guaranteed to fail, as it's not stable under reflection as the agent gets smarter."
+    },
+    "Akash__So8res": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Can training an AI against all visible signs of deception actually prevent deceptive behavior, or will a sufficiently general optimizer still exploit deception because its advantageousness is a fact about the world rather than a removable property of the model?",
+      "type": "empirical",
+      "evidence_a": "The reason the AI is deceiving you is not that it has some 'deception' property, it's that it's a fact about the world rather than the AI that deceiving you forwards its objectives, and you've built a general engine that's good at taking advantage of advantageous facts in general.",
+      "evidence_b": "OpenAI's plan involves using reinforcement learning from human feedback and recursive reward modeling to build AI systems that are better than humans at alignment research. For the plan to work, I think it needs to get through the following 6 steps."
+    },
+    "So8res__Steven_Byrnes": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Can process-based supervision and myopic training reliably prevent an AI from acquiring and acting on deceptive, power-seeking strategies, or does the advantage of deception remain accessible to any sufficiently capable system?",
+      "type": "empirical",
+      "evidence_a": "I think of the load-bearing ingredients of Holden's take on 'process-based supervision' as being: AI boxing some of the time; 'Myopic training'; NOT aspiring to be a complete solution to safety, but a more modest attempt to help avoid situations where we accidentally positively reinforce the AI for engaging in directly dangerous behavior.",
+      "evidence_b": "To make the AI be non-deceptive, you have three options: (a) make this fact be false; (b) make the AI fail to notice this truth; (c) prevent the AI from taking advantage of this truth. The problem with (a) is that it's alignment-complete; the problem with (b) is that lies are contagious; the problem with (c) is that the other half of intelligence is in teasing out advantages from cryptic hints."
+    },
+    "Akash__Charlie_Steiner": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Does building AI tools to accelerate alignment research do more good than harm, or are such 'research amplifiers' so dual-use that they mostly shorten timelines by accelerating capabilities?",
+      "type": "prediction",
+      "evidence_a": "It turns out that other people would also like to use souped-up autocomplete, smart literature search, code assistants, and similar. Pushing forward the state of the art on these tools lets you get them earlier, yet it also helps other people get them earlier too, even if you don't share your weights.",
+      "evidence_b": "I've found his posts helpful for understanding how the OpenAI safety team is thinking about alignment and for developing my own models of alignment/AI x-risk. I encourage more people to engage with Jan's blog posts."
+    },
+    "Marius_Hobbhahn__evhub": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Can the likelihood of deceptive alignment be settled with concrete experiments on today's models (e.g. measuring how 'sticky' learned proxy goals are), or does it mainly turn on higher-level arguments that current systems cannot yet test?",
+      "type": "empirical",
+      "evidence_a": "I want to propose an experiment that I think would shed substantial light on the high path-dependence case specifically. We can conceptualize the question as: how 'sticky' are an agent's existing terminal proxies?",
+      "evidence_b": "No matter from which angle I look at it, I always arrive at the conclusion that deceptive alignment is either a necessary component or greatly increases the harm of bad AI scenarios."
+    },
+    "Akash__Steven_Byrnes": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Can human-compatible values be reliably instilled in an RL-based AGI through reward design and curriculum (as in brain-like RL or RLHF bootstrapping), or does that approach fail to scale to systems powerful enough to matter?",
+      "type": "empirical",
+      "evidence_a": "I don't have a strong reason to believe that this plan wouldn't work. If someone published an algorithm for x-risk-capable brain-like AGI tomorrow, this blog post is more-or-less what I would propose to try. It's the least-bad plan that I currently know.",
+      "evidence_b": "OpenAI's plan is not aiming for a full solution to alignment. Rather, the plan is intended to build systems that are better at alignment research than humans, use these AI assistants to accelerate alignment research, and use these systems to build and align more powerful AI assistants."
+    },
+    "So8res__Stuart_Armstrong": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Is alignment an all-or-nothing constraint that requires a near-perfect method (so combining imperfect techniques is useless), or can imperfect methods that extend safely across distribution shifts be productively combined?",
+      "type": "empirical",
+      "evidence_a": "Alignment is thus a dam that has to be tall enough and sturdy enough. A consequence of that perspective is that imperfect methods are of little use for alignment. Concept extrapolation/model splintering has a different dynamic: ensure that the alignment method extends safely across an environment change.",
+      "evidence_b": "My overall sense is that Sam didn't engage with the arguments enough to shift his own probability mass around on the important disagreements. Our disagreements are pretty major, as far as I can tell."
+    },
+    "Marius_Hobbhahn__So8res": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Will successful mechanistic interpretability research significantly advance AI capabilities, such that at least some of it should be kept private rather than published openly?",
+      "type": "prediction",
+      "evidence_a": "Insofar as interpretability researchers gain understanding of AIs that could significantly advance the capabilities frontier, I encourage interpretability researchers to keep their research closed.",
+      "evidence_b": "We argue that there is no general answer and the publishing decision primarily depends on how easily the work advances alignment in relation to how much it can be used to advance capabilities. We recommend a differential publishing process."
+    },
+    "Charlie_Steiner__So8res": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Can reward-shaping an RL agent (shard theory) reliably produce human-compatible values that survive reflection, or do the resulting 'shards' fail to generalize because the needed values are unnatural and reflection-unstable?",
+      "type": "empirical",
+      "evidence_a": "Shard theory alignment requires magic - not in the sense of magic spells, but in the technical sense of steps we need to remind ourselves we don't know how to do. One magical process is how we pick the training curriculum and reward signal.",
+      "evidence_b": "A bunch of my response to shard theory is a generalization of how niceness is unnatural. Once you get it to be smart, all of those little correlates-of-training-objectives that it latched onto in order to have a gradient up to general intelligence blow the whole plan sky-high once it starts to reflect."
+    },
+    "So8res__TurnTrout": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Can incremental, incentive-aligning technical proposals (such as predictability-based evals) meaningfully reduce AI existential risk, or is the situation dire enough that only halting frontier development helps?",
+      "type": "prediction",
+      "evidence_a": "I propose a (relatively strict) prediction-based eval which is well-defined, which seems to rule out lots of accident risk, and which seems to partially align industry incentives with real alignment progress.",
+      "evidence_b": "My overall sense is that Sam didn't engage with the arguments enough to shift his own probability mass around on the important disagreements. Our disagreements are pretty major, as far as I can tell."
+    },
+    "Charlie_Steiner__Steven_Byrnes": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Is there a reliably findable 'goldilocks' training curriculum and reward signal that leads an RL agent to learn the values we intend, or is that choice an unsolved free parameter we don't know how to set?",
+      "type": "empirical",
+      "evidence_a": "If someone published an algorithm for x-risk-capable brain-like AGI tomorrow, this blog post is more-or-less what I would propose to try. It's the least-bad plan that I currently know.",
+      "evidence_b": "Does a goldilocks zone where the agent learns more-or-less what we intended exist? How can we build confidence that it does, and that we've found it? And what's in the curriculum matters a lot."
+    },
+    "Charlie_Steiner__evhub": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Can in-vitro 'model organisms of misalignment' supply the key evidence we need about deceptive and power-seeking failures, or do the decisive uncertainties lie in how values generalize under reflection, which toy demonstrations cannot capture?",
+      "type": "empirical",
+      "evidence_a": "We don't currently have ~any strong empirical evidence for the most concerning sources of existential risk. It seems useful to evaluate the likelihood of each of the scary tendencies or capabilities separately in order to understand how severe the risks are.",
+      "evidence_b": "Shard theory alignment requires magic - in the technical sense of steps we need to remind ourselves we don't know how to do. Locating magic is an important step in trying to demystify it."
+    },
+    "Dan_H__Marius_Hobbhahn": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Is reducing catastrophic AI risk best pursued through broad societal and governance interventions across many risk types, or through technical auditing of frontier models for misalignment and dangerous capabilities?",
+      "type": "values",
+      "evidence_a": "Catastrophic AI risks can be grouped under four key categories: malicious use, AI race, organizational risks, and rogue AIs. We recommend safety regulations, international coordination, and public control of general-purpose AIs.",
+      "evidence_b": "Our mission at Apollo Research is to reduce catastrophic risks from AI by auditing advanced AI systems for misalignment and dangerous capabilities, with an initial focus on deceptive alignment."
+    },
+    "Akash__evhub": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Are ML inductive biases high path-dependent - so the training trajectory strongly determines which goals a model ends up with - or low path-dependent, with the final values largely overdetermined regardless of training details?",
+      "type": "empirical",
+      "evidence_a": "High path-dependence indicates that small changes to the training process can cause significant changes to how the final model generalizes. In contrast, a world with low path dependence allows us to reason about inductive bias in terms of priors and updates, sparing the details of training dynamics.",
+      "evidence_b": "What complicates this problem are suspicions of path-dependence. It's not overdetermined what values a given system will learn. Rather, every next value learned is also a function of the values the system has already learned."
+    },
+    "Marius_Hobbhahn__Steven_Byrnes": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Are research directions like ELK, debate, recursive reward modeling, and natural abstractions promising routes to alignment, or are they poorly matched to how AGI will actually be built?",
+      "type": "prediction",
+      "evidence_a": "The various research programs in the post title do not seem to be a good use of time, on my own models of how AGI will be developed and what AGI will look like.",
+      "evidence_b": "I personally think ELK is very promising and therefore want to make extra sure that the summary is readable and accurate."
+    },
+    "TurnTrout__johnswentworth": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Is the most promising route to trustworthy AI understanding a model's internal structure (e.g. natural abstractions and interpretability), or demonstrating fine-grained behavioral predictability without necessarily understanding internals?",
+      "type": "empirical",
+      "evidence_a": "Nearly all the informational work of learning what 'apple' means must be performed by unsupervised learning, not supervised learning. Humans are empirically able to communicate; one human can say words and the other can guess what they refer to, and both agree on what physical thing was referred to.",
+      "evidence_b": "The developers have to predict the next-token probabilities on a range of government-provided validation prompts, without running the model itself. Developers probably have to truly understand the model in order to predict it so finely."
+    },
+    "Akash__Rohin_Shah": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Is goal misgeneralization tractable enough that open research contests can make real progress on detecting and preventing it, or is it so far mainly an empirical phenomenon we can only document case by case?",
+      "type": "empirical",
+      "evidence_a": "The core feature of goal misgeneralization is that after learning, the system pursues a goal that was correlated with the intended goal in the training situations, but comes apart in some test situations. It can be hard to identify goal misgeneralization.",
+      "evidence_b": "AI Alignment Awards is running two contests designed to raise awareness about AI alignment research and generate new research proposals. How can we prevent or detect goal misgeneralization?"
+    },
+    "So8res__paulfchristiano": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Will technical programs aiming for formal or worst-case guarantees (such as ARC's heuristic estimators) substantially reduce existential risk, or are the central alignment difficulties not the kind of thing such methods resolve?",
+      "type": "empirical",
+      "evidence_a": "ARC is trying to find efficient heuristic estimators as a formalization of defeasible reasoning about quantities like the variance of a neural network's output. These two questions are very closely related to one of the simplest cases where we haven't yet found any reasonable linear time heuristic estimator.",
+      "evidence_b": "My overall sense is that Sam didn't engage with the arguments enough to shift his own probability mass around on the important disagreements. Our disagreements are pretty major, as far as I can tell."
+    },
+    "johnswentworth__paulfchristiano": {
+      "has_crux": true,
+      "no_crux_reason": null,
+      "crux_question": "Is alignment-relevant structure in models best captured by emergent 'natural abstractions' we can learn to read off, or by formal worst-case tools (e.g. ARC's heuristic estimators) that bound behavior without relying on such structure?",
+      "type": "empirical",
+      "evidence_a": "Nearly all the informational work of learning what 'apple' means must be performed by unsupervised learning. Humans are empirically able to communicate; one human can say words and the other can guess what they refer to, and both agree on what physical thing was referred to.",
+      "evidence_b": "ARC is trying to find efficient heuristic estimators as a formalization of defeasible reasoning about quantities like the variance of a neural network's output."
+    }
+  }
+}

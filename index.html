@@ -113,7 +113,8 @@
       bottom: 18px;
       z-index: 2;
       display: flex;
-      gap: 14px;
+      flex-direction: column;
+      gap: 10px;
       padding: 10px 14px;
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -122,6 +123,22 @@
       box-shadow: 0 1px 4px rgba(26, 35, 50, 0.06);
       font-size: 12px;
       pointer-events: none;
+      max-width: 360px;
+    }
+
+    .legend-title {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
     }
 
     .legend-item {
@@ -291,9 +308,18 @@
         <p id="subtitle">Loading alignment research disagreements…</p>
       </div>
       <div id="legend">
-        <div class="legend-item"><span class="swatch" style="background:var(--empirical)"></span> Empirical</div>
-        <div class="legend-item"><span class="swatch" style="background:var(--values)"></span> Values</div>
-        <div class="legend-item"><span class="swatch" style="background:var(--prediction)"></span> Prediction</div>
+        <div class="legend-group">
+          <span class="legend-title">Edge · crux type</span>
+          <div class="legend-row">
+            <div class="legend-item"><span class="swatch" style="background:var(--empirical)"></span> Empirical</div>
+            <div class="legend-item"><span class="swatch" style="background:var(--values)"></span> Values</div>
+            <div class="legend-item"><span class="swatch" style="background:var(--prediction)"></span> Prediction</div>
+          </div>
+        </div>
+        <div class="legend-group">
+          <span class="legend-title">Node · topic cluster (k-means)</span>
+          <div class="legend-row" id="cluster-legend"></div>
+        </div>
       </div>
       <div id="hint">Drag to orbit · Scroll to zoom · Click nodes or edges</div>
       <div id="overlay"></div>
@@ -342,6 +368,18 @@
       prediction: 0x0d9488,
     };
 
+    // Distinct, print-friendly palette for k-means topic clusters.
+    const CLUSTER_COLORS = [
+      0x4e79a7, 0xf28e2b, 0x59a14f, 0xe15759, 0xb07aa1,
+      0x76b7b2, 0xedc948, 0xff9da7, 0x9c755f, 0x86bcb6,
+    ];
+    const CLUSTER_FALLBACK = 0x6b7a8f;
+
+    function clusterColor(cluster) {
+      if (cluster === undefined || cluster === null) return CLUSTER_FALLBACK;
+      return CLUSTER_COLORS[cluster % CLUSTER_COLORS.length];
+    }
+
     const SCALE = 220;
     const BOUNDS_PADDING = 52;
     const SCENE_BG = 0xf5f7fa;
@@ -385,8 +423,11 @@
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.minDistance = 80;
-    controls.maxDistance = 900;
+    controls.minDistance = 140;
+    controls.maxDistance = 1100;
+    // Wheel dolly was far too aggressive; slow it down and clamp the near range.
+    controls.zoomSpeed = 0.45;
+    controls.zoomToCursor = false;
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.72));
     const keyLight = new THREE.DirectionalLight(0xffffff, 0.88);
@@ -480,7 +521,7 @@
               return `<li data-edge-id="${edge.id}"><strong>${formatLabel(other.label)}</strong> — ${escapeHtml(edge.crux_question || edge.type)}</li>`;
             })
             .join("")
-        : `<li style="cursor:default;color:var(--muted)">No crux edges yet. Run the pipeline with an Anthropic API key.</li>`;
+        : `<li style="cursor:default;color:var(--muted)">No crux edges for this author in the current graph.</li>`;
 
       setPanelHtml(`
         <h2>${formatLabel(node.label)}</h2>
@@ -788,6 +829,29 @@
       spatialGroup.add(grid);
     }
 
+    function hexCss(hex) {
+      return `#${hex.toString(16).padStart(6, "0")}`;
+    }
+
+    function buildClusterLegend(graph) {
+      const container = document.getElementById("cluster-legend");
+      if (!container) return;
+      const byCluster = new Map();
+      graph.nodes.forEach((node) => {
+        const c = node.cluster ?? 0;
+        if (!byCluster.has(c) || node.post_count > byCluster.get(c).post_count) {
+          byCluster.set(c, node);
+        }
+      });
+      const clusters = [...byCluster.keys()].sort((a, b) => a - b);
+      container.innerHTML = clusters
+        .map((c) => {
+          const rep = byCluster.get(c);
+          return `<div class="legend-item"><span class="swatch" style="background:${hexCss(clusterColor(c))}"></span> ${formatLabel(rep.label)}…</div>`;
+        })
+        .join("");
+    }
+
     function buildScene(graph) {
       nodesGroup.clear();
       edgesGroup.clear();
@@ -810,7 +874,7 @@
         const radius = nodeRadius(node.post_count, minCount, maxCount);
         const geometry = new THREE.SphereGeometry(radius, 24, 24);
         const material = new THREE.MeshStandardMaterial({
-          color: 0x5a6d82,
+          color: clusterColor(node.cluster),
           roughness: 0.42,
           metalness: 0.06,
           emissive: 0x000000,
@@ -873,6 +937,8 @@
 
       const bounds = computeNodeBounds();
       if (bounds) buildSpatialAnchors(bounds);
+
+      buildClusterLegend(graph);
     }
 
     function pickObject(event) {
@@ -918,7 +984,8 @@
         buildScene(graph);
 
         const { meta } = graph;
-        subtitle.textContent = `${meta.author_count} authors · ${meta.edge_count} cruxes · ${meta.post_count} posts · PCA 3D layout`;
+        const clusterText = meta.cluster_count ? ` · ${meta.cluster_count} clusters` : "";
+        subtitle.textContent = `${meta.author_count} authors · ${meta.edge_count} cruxes · ${meta.post_count} posts${clusterText} · PCA 3D layout`;
         errorBox.remove();
         animate();
       } catch (error) {

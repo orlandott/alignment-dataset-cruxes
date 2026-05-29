@@ -23,7 +23,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build crux graph
-        run: python scripts/build_crux_map.py --method heuristic
+        # Uses the baked-in, hand-authored cruxes (data/authored_cruxes.json).
+        # No API key needed; node positions + k-means clusters are recomputed.
+        run: python scripts/build_crux_map.py --method authored
 
       - name: Commit updated cruxes.json
         run: |
