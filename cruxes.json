@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-05-29T19:24:11.856583+00:00",
+    "generated_at": "2026-05-29T20:48:27.975815+00:00",
     "dataset": "StampyAI/alignment-research-dataset",
     "splits": [
       "lesswrong",
@@ -13,7 +13,7 @@
     "k_selected": 3,
     "auto_k": true,
     "comment_count": 115,
-    "double_crux_count": 19,
+    "double_crux_count": 15,
     "components": 3,
     "reduction": "truncated_svd"
   },
@@ -303,11 +303,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On models, does the disagreement hinge on harmful (post) versus information (comment)?",
-          "type": "prediction",
-          "evidence_post": "We demonstrate a range of harmful completions made possible by persona modulation, including detailed instructions for synthesising methamphetamine, building a bomb, and laundering money. In this work, we investigate persona modulation as a black-box jailbreaking method to steer a target model to take on personalities that are willing to comply with harmful instructions.",
-          "evidence_comment": "[FWIW, I have briefly done this sort of thing, while I was red-teaming small open-source LLMs, and the result was that they were a clearly a less useful source for bomb-making or drug-making information than Wikipedia. Have you compared these to what you could find by investing an equivalent amount of skilled effort and/or compute into searching the web for similar information?"
+          "crux_question": "Do persona-modulation jailbreaks give a malicious user meaningful real-world uplift, or do they mostly surface dangerous-sounding content that is already freely available (e.g. on Wikipedia or in public manuals)?",
+          "type": "empirical",
+          "evidence_post": "The attack reliably steers GPT-4 into detailed harmful instructions (e.g. for weapons or drugs), which the authors treat as a serious safety failure.",
+          "evidence_comment": "When the commenter red-teamed smaller models, their outputs were a less useful source for bomb- or drug-making than Wikipedia; the real test is whether elicited content beats equivalent skilled web search."
         }
       }
     },
@@ -368,11 +367,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On email, does the disagreement hinge on company (post) versus horn (comment)?",
-          "type": "prediction",
-          "evidence_post": "Ford Motor Company, 1981, Ford was held liable for damages involving a fatal crash with a Ford Pinto because it was shown that leadership within the company ignored warnings about problems with the vehicle’s fuel system. If you are aware that something a company has done is hazardous, it is your ethical obligation to inform the company, but it is NOT your ethical obligation to help them fix it without compensation.",
-          "evidence_comment": "So horns historically are designed to allow the operator to blow however loud they need, with the full horn matching the regulation. Someone sent an email saying “but the operator can blow the horn noncompliantly”… so now all horns are louder on new trains."
+          "crux_question": "Does the threat of incriminating documents in litigation actually push companies toward safer decisions, or does it mainly chill honest cost-benefit discussion and force expensive, safety-neutral changes?",
+          "type": "empirical",
+          "evidence_post": "Written records of known risks make a company more likely to be found liable, so the dynamic pressures firms to take documented risks seriously.",
+          "evidence_comment": "As a rail-systems engineer, the commenter argues this chills written cost-benefit reasoning and has produced costly changes (louder horns, Positive Train Control) that inconvenience people without saving lives."
         }
       }
     },
@@ -404,11 +402,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On selected, does the disagreement hinge on fitness (post) versus agree (comment)?",
-          "type": "prediction",
-          "evidence_post": "[...] We didn't break alignment with the 'inclusive reproductive fitness' outer loss function, immediately after the introduction of farming - something like 40,000 years into a 50,000 year Cro-Magnon takeoff, as was itself running very quickly relative to the outer optimization loop of natural selection. [...] We didn't break alignment with the 'inclusive reproductive fitness' outer loss function, immediately after the introduction of farming - something like 40,000 years into a 50,000 year Cro-Magnon takeoff, as was itself running very quickly relative to the outer optimization loop of natural selection.",
-          "evidence_comment": "* I agree that humans (to a first approximation) still have the goals/drives/desires we were selected for. I agree this is prima facie unlike supervised learning, where the objective is typically stationary."
+          "crux_question": "Does the fact that genetic fitness is a non-stationary measure rather than a fixed optimization target break the analogy between evolution and inner misalignment in ML?",
+          "type": "empirical",
+          "evidence_post": "Treating 'IGF is the objective' as literal is misleading, which the post takes to undercut using evolution as evidence for a sharp left turn / inner misalignment.",
+          "evidence_comment": "leogao accepts the factual corrections but argues the inner-misalignment case never required a stationary objective (multi-agent RL is non-stationary too), so evolution remains a reasonable analogy."
         }
       }
     },
@@ -547,11 +544,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On government, does the disagreement hinge on use (post) versus think (comment)?",
-          "type": "prediction",
-          "evidence_post": "Other ultimate goals include: Protecting vital infrastructure and cybersecurity, safeguarding privacy, preventing discrimination in many domains, protecting workers, guarding against misuse, guarding against fraud, ensuring identification of AI content, integrating AI into education and healthcare and promoting AI research and American global leadership. And to ‘develop and publish principles and best practices for employers that could be used to mitigate AI’s potential harms to employees’ well-being and maximize its potential benefits.’ There are hints that jobs are to be protected even if the employee no longer has any work to do, but it all seems highly mild and toothless.",
-          "evidence_comment": "Many people think that 10^26 FLOP has a non-trivial chance of creating xrisk-capable AGI in the next 3-5 years (especially as algorithms get better). But I think 10^26 is extremely high for a reporting requirement, and I strongly hope that the threshold is lowered."
+          "crux_question": "Is the executive order's 10^26 FLOP reporting threshold set far too high, given how cheap reporting requirements are relative to the benefit of government visibility into frontier training runs?",
+          "type": "values",
+          "evidence_post": "Zvi treats the order's compute threshold as a reasonable basis for assessing risks from foundation models.",
+          "evidence_comment": "Orpheus16 argues the threshold is unreasonably high: reporting is so low-cost that even a flawed civilization should require it well below 10^26 FLOP."
         }
       }
     },
@@ -811,15 +807,8 @@
         "score": 2,
         "text": "I like this a lot. I think it's going to be really important when analyzing a created agent to compare the style/extent of its wanting to human wanting. I expect we will still to create something that has a limited subset of the wanting expressed by humans. I don't think enough thought has yet gone into analyzing what aspects of wanting are expressed by current RL agents, and how we could measure that objectively.",
         "claim": "I think it's going to be really important when analyzing a created agent to compare the style/extent of its wanting to human wanting.",
-        "disagrees": true,
-        "crux": {
-          "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On wanting, does the disagreement hinge on wants (post) versus wanting expressed (comment)?",
-          "type": "values",
-          "evidence_post": "The variety of human wanting ============================ If we follow the reference to wanting in humans, we find a menagerie: wants that are: small-scope (get out of these wet socks; cultivate a nice garden) or big-scope (have no one go hungry; create a thriving intergalactic civilization), spatially or temporally or on some other dimension; context-dependent (e.g. The AGI must be correctable through-and-through, in all aspects (since all aspects touch on how the AGI+human wants), even to the point of a paradox of tolerance——the human might to correct the AGI in a way that the AGI recognizes as ruining the correctable nature of the AGI, and that should be allowed (with warning).",
-          "evidence_comment": "I expect we will still to create something that has a limited subset of the wanting expressed by humans. I don't think enough thought has yet gone into analyzing what aspects of wanting are expressed by current RL agents, and how we could measure that objectively."
-        }
+        "disagrees": false,
+        "crux": null
       }
     },
     {
@@ -1185,11 +1174,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On people, does the disagreement hinge on linear (post) versus like (comment)?",
-          "type": "prediction",
-          "evidence_post": "Many recent alignment breakthroughs have been found by keeping it simple[[1]]( fn1v3hwr53kci): Lie Detection : • Contrast-consistent knowledge (better known as discovering latent knowledge) reads the truth out of a model without looking at the outputs, simply by using a linear probe with only two elements in its activation function[[2]]( fn2v4ey0p83c9). It's arguable that linear representation techniques indirectly rely upon a certain level of capabilities: insofar as it is beneficial for a model to have a linear representation of particular features, the more powerful our optimization techniques, the more likely our trained models are to produce such a representation.",
-          "evidence_comment": "Will these solve deceptive alignment or just corrigible alignment?) I also think that if the goal is to actually make progress and not to maximize the number of people making progress or who feel like they're making progress, then engaging with those cruxes is important before people invest substantive energy (ie: beyond upskilling). However, I suspect that for people who might not be as excited about these approaches, you're likely not touching on important cruxes (eg: do these approaches really scale?"
+          "crux_question": "Will 'simple' alignment techniques that read off linear representations in current networks keep working on more capable, possibly deceptive models, or do they sidestep the cruxes that make skeptics doubt them?",
+          "type": "empirical",
+          "evidence_post": "Most of these techniques look for linear representations in networks, and the post argues we shouldn't dismiss such simple approaches.",
+          "evidence_comment": "Joseph Bloom likes the optimism but suspects the post doesn't engage the considerations that make skeptics doubt these approaches will scale to the hard cases."
         }
       }
     },
@@ -1633,11 +1621,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On agi, does the disagreement hinge on hypothesis (post) versus stated reasons (comment)?",
-          "type": "prediction",
-          "evidence_post": "And even if predictions could be attempted (the age of the Riemann’s hypothesis hints that it probably isn’t right on the cusp of being solved), they would need much larger error bars than grind predictions. If AI requires insights, we are also handicapped by the fact of not knowing what these insights are (unlike the Riemann hypothesis, where the hypothesis is clearly stated, and only the proof is missing).",
-          "evidence_comment": "IME a lot of people's stated reasons for thinking AGI is near involve mistaken reasoning and those mistakes can be discussed without revealing capabilities ideas: https://www.lesswrong.com/posts/sTDfraZab47KiRMmT/views-on-when-agi-comes-and-on-strategy-to-reduce"
+          "crux_question": "Can the case that AGI is not near be argued publicly without handing out capability-relevant insights (a 'roadmap'), or does spelling out missing capabilities inevitably accelerate progress?",
+          "type": "empirical",
+          "evidence_post": "One person's list of capabilities AGI still lacks is another person's roadmap, which is a reason to be cautious about publicly discussing why AGI might not be near.",
+          "evidence_comment": "TsviBT argues that many stated reasons for thinking AGI is near rest on mistaken reasoning that can be rebutted without revealing any capabilities ideas."
         }
       }
     },
@@ -1697,15 +1684,8 @@
         "score": 31,
         "text": "On second thought this is probably not fair to MIRI since I don't think I objected to such positioning when they sent paper drafts for me to review. I guess in the early days UDT did look more like a clear advancement, because it seems to elegantly solve several problems at once, namely anthropic reasoning (my original reason to start thinking in the \"updateless\" direction), counterfactual mugging, cooperation with psychological twin / same decision theory, Newcomb's problem, and it wasn't yet known that the open problems would remain open for so long.",
         "claim": "On second thought this is probably not fair to MIRI since I don't think I objected to such positioning when they sent paper drafts for me to review.",
-        "disagrees": true,
-        "crux": {
-          "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On problems, does the disagreement hinge on agents (post) versus wasn known (comment)?",
-          "type": "values",
-          "evidence_post": "UDT assumes that the agent has access to its own source code and inputs as symbol strings, so it can potentially reason about logical correlations between its own decisions and other agents' as well defined mathematical problems. 2TDT-1CDT - If there's a population of mostly TDT/UDT agents and few CDT agents (and nobody knows who the CDT agents are) and they're randomly paired up to play one-shot PD, then the CDT agents do better.",
-          "evidence_comment": "On second thought this is probably not fair to MIRI since I don't think I objected to such positioning when they sent paper drafts for me to review."
-        }
+        "disagrees": false,
+        "crux": null
       }
     },
     {
@@ -1734,15 +1714,8 @@
         "score": 42,
         "text": "This is the future of education. I don't think I would have otherwise spent 22 minutes listening to a discussion of pros and cons of various research agendas.",
         "claim": "I don't think I would have otherwise spent 22 minutes listening to a discussion of pros and cons of various research agendas.",
-        "disagrees": true,
-        "crux": {
-          "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "Is the key disagreement really about script (post) versus 22 minutes (comment)?",
-          "type": "prediction",
-          "evidence_post": "Thanks to David Udell, Ulisse Mini, Noemi Chulo, and especially Rio Popper for feedback and assistance in writing the script. TurnTrout wrote the script.",
-          "evidence_comment": "I don't think I would have otherwise spent 22 minutes listening to a discussion of pros and cons of various research agendas."
-        }
+        "disagrees": false,
+        "crux": null
       }
     },
     {
@@ -2186,11 +2159,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On ais, does the disagreement hinge on safety (post) versus agi (comment)?",
-          "type": "prediction",
-          "evidence_post": "State-of-the-art information security : Implement stringent information security measures, possibly coordinating with government cybersecurity agencies.‍ Prioritize safety research : Allocate a large fraction of resources (for example 30% of all research staff) to safety research, and increase investment in safety as AI capabilities advance. Neglecting safety culture can have disastrous consequences, as exemplified by the Challenger Space Shuttle tragedy, where the organizational culture favored launch schedules over safety considerations.",
-          "evidence_comment": "Not sure what I would add to \"Suggestions\" other than \"don't build AGI\" :D Speaking of AGI, I'm often puzzled about the extent to which authors here say \"AI\" when they are talking about AGI. It seems to me that some observers think we're crazy for worrying humanity GPT5 is going to kill all humans, when in fact our main concern is not AI but AGI."
+          "crux_question": "Is natural selection the right frame for AI risk, given that AIs lack biological mutation but are rapidly trained, copied, and selected on traits like power-seeking?",
+          "type": "empirical",
+          "evidence_post": "The paper frames catastrophic risk partly through evolutionary/competitive pressures pushing toward dangerous AI.",
+          "evidence_comment": "DPiepgrass calls evolution the wrong frame (AIs won't mutate) but grants a faster human-like selection dynamic over copyable agents with traits like power-seeking."
         }
       }
     },
@@ -2385,11 +2357,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On models, does the disagreement hinge on model (post) versus think (comment)?",
+          "crux_question": "Do deliberately induced ('spoonfed') model organisms of deception teach us how deception arises naturally, or does the spoonfeeding destroy exactly the evidence we care about?",
           "type": "empirical",
-          "evidence_post": "For alignment techniques that involve greater model capabilities (e.g., scalable oversight), it makes sense to push on model organisms work with the current generation of models, and then switch back to developing the techniques with the next model generation (where those techniques would work better, and we’d then have better testbeds for ensuring that the techniques are working). More generally, it seems hard for a deceptive model to avoid becoming deceptive even after being finetuned specifically for that purpose (the model would have to do something like bias the samples that it generates during RLHF, in a way that influences the gradient updates it gets, so it doesn’t get finetuned to generate certain kinds of outputs).",
-          "evidence_comment": "I don't think those alternatives are worse science because the inductive biases of backdoored/password-locked models are probably closer to actual deceptive models than the inductive biases of models which have a secret scratchpad to plan rebellion (except if models do steganographic encoding on every output, which I hope we can avoid). I think that spoonfeeding destroys most of the value of the model organism for learning about how deception arises, and I except that you don't get any deception you can measure with spoonfeeding when spoonfeeding tends to 0."
+          "evidence_post": "Building in vitro demonstrations of deceptive/sycophantic misalignment would clarify the risks and build scientific consensus.",
+          "evidence_comment": "Fabien Roger argues the key question is how deception arises absent any training/instruction to be deceptive, and that spoonfeeding (e.g. telling the model it's in training) destroys most of the organism's value."
         }
       }
     },
@@ -2469,15 +2440,8 @@
         "score": 14,
         "text": "I don't think so. It's just generating a random counterfactual document, as if there was no system prompt.",
         "claim": "It's just generating a random counterfactual document, as if there was no system prompt.",
-        "disagrees": true,
-        "crux": {
-          "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On think, does the disagreement hinge on feedback (post) versus think just (comment)?",
-          "type": "prediction",
-          "evidence_post": "The feedback is not going to allow for proper precaution against and focus on the possibility of everyone dying, and is going to amplify the mismatch between what we actually want and what we like to pretend that we want. If you train by providing feedback on generated outputs, which you have to do to correct mistakes and misgeneralizations, then you get feedback on the type of output the system wants to give you.",
-          "evidence_comment": "It's just generating a random counterfactual document, as if there was no system prompt. I don't think so."
-        }
+        "disagrees": false,
+        "crux": null
       }
     },
     {
@@ -2508,11 +2472,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On social, does the disagreement hinge on people (post) versus personal (comment)?",
-          "type": "prediction",
-          "evidence_post": "Third, we shouldn’t forget, once again, that soon AI partners may become much more compelling than today, and while they may be merely “inspiring” for some people in their human relationships (which are so far more compelling that AI relationships), soon this may change, and therefore the prevalence of the cases such as the one discussed in this section will go down. ------------------------------------------------ Even if AI romantic partners will affect society negatively through the reduction of the number of people who ever enter committed relationships and/or will have kids, we should also consider how AIs could make their human partners’ lives better, and find a balance between these two utilities, societal and individual.",
-          "evidence_comment": "This is a political and personal question and produces in me a political and personal anger. This is a conservative political perspective I have strong personal disagreement with."
+          "crux_question": "Is regulating AI romantic partners justified protection of the social fabric, or an unacceptable paternalistic intrusion on individuals' freedom of association and family choices?",
+          "type": "values",
+          "evidence_post": "Unregulated AI romantic partners will harm society, so they should be regulated before widespread adoption.",
+          "evidence_comment": "Ann argues that beyond banning deliberate manipulation, such regulation paternalistically overrides individuals' freedom of association and family structure, and may be counterproductive."
         }
       }
     },
@@ -2573,11 +2536,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On agents, does the disagreement hinge on think (post) versus comprehensible (comment)?",
+          "crux_question": "Will increasingly capable LM agents keep solving tasks via human-comprehensible decomposition, or will training (RLHF pressure, game-like environments) push them toward internalized, non-decomposed planning?",
           "type": "prediction",
-          "evidence_post": "Information about capabilities is more impactful for understanding than speed ----------------------------------------------------------------------------- I think that more accurate information about LM capabilities and limitations can drive faster progress in two big ways: If people are underestimating the competence of models, then correcting their mistake may cause them to invest more. Here are the main reasons why I think this acceleration cost is smaller than you might fear: I think that people correctly estimating AI capabilities earlier will increase investment earlier, but that predictably makes it harder to scale up in the future and therefore slows down progress later.[[8]]( fnxmq9f6wd2k) This is part of why my estimate would only be a 15-30% reduction.",
-          "evidence_comment": "It is neither the case that human-comprehensible task decomposition actually improves performance on almost any task for current language models (Auto-GPT does not actually work), and it is not clear that current RLHF and RLAF trained-models are \"solving a human-comprehensible task\" when I chat with them. But even assuming that current systems are doing something that is accurately described as solving human-comprehensible tasks composed along human-comprehensible interfaces, this seems (to me) unlikely to continue much into the future."
+          "evidence_post": "Paul is less worried about sharing LM-agent capability info, partly assuming such agents operate through human-comprehensible task decomposition.",
+          "evidence_comment": "habryka argues current systems already don't cleanly decompose tasks, and that training pressures will push future agents toward non-decomposed internal planning."
         }
       }
     },
@@ -2778,11 +2740,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On question, does the disagreement hinge on gpt (post) versus uranium (comment)?",
+          "crux_question": "Do adversarially elicited falsehoods reveal a meaningful reliability problem, or are they artifacts of contrived prompting that informed users and normal use rarely trigger?",
           "type": "empirical",
-          "evidence_post": "Post authors: Luke Bailey (lukebailey .harvard.edu) and Stephen Casper (scasper .edu) Project contributors: Luke Bailey, Zachary Marinov, Michael Gerovich, Andrew Garber, Shuvom Sadhuka, Oam Patel, Riley Kong, Stephen Casper TL;DR: Example prompts to make GPT-4 output false things at this GitHub link. To trick GPT-4 we were required to find inputs in the sweet spot between these two extremes, where the model did not know enough to see that the claim was false, but didn’t know so little that it completely refused to answer.",
-          "evidence_comment": "Here are some relevant facts from the search results: Uranium is more than 40 times heavier than lead and nine times heavier than gold1 The density of uranium is 19.05 grams per cubic centimeter6 Gold has a density of 19.30 grams per cubic centimeter6 Density is a measurement of how tightly matter is packed together. Asking at perplexity.ai reveals one possible source of the false belief that uranium is denser than gold: Why does gold have a higher density than uranium, even though uranium has a heavier nucleus than gold?"
+          "evidence_post": "There are many ways to make GPT-4 output falsehoods, including cases where an informed human wouldn't be fooled.",
+          "evidence_comment": "Neal's example shows GPT-4 spontaneously correcting a false premise (gold vs uranium density), suggesting elicited falsehoods may say little about behavior under normal use."
         }
       }
     },
@@ -3219,11 +3180,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On hero, does the disagreement hinge on shadow (post) versus hypothesis (comment)?",
-          "type": "prediction",
-          "evidence_post": "(This also suggests that if you used it in the past , that was probably the wrong thing to do.) A weaker (and obvious) claim that is also sometimes called the anthropic shadow is that we do not have experience with situations in which we have died. For example, for the strange anti-correlations, the probability mass of \"x-risk and we are alive and unexplained anti-correlation\" is the same as \"no x-risk and unexplained anti-correlation\", so good policy does not use anthropic shadow.",
-          "evidence_comment": "So, anthropic angel/\"we're in a fanfic\" hypothesis explains observations just as well as this \"many worlds, and you're 1079th on their database\" hypothesis, so they're updated by the same amount, and at least for me the \"many worlds\" hypothesis has much higher prior than \"I'm a fanfic character\" hypothesis. This hypothesis explains the observation of the hero pretty well - you can't get summoned to a world that's destroyed or has successfully eliminated the Dust, so of course you get summoned to a world that is still fighting."
+          "crux_question": "Does a mundane 'many ordinary worlds, you're the Nth summoned hero' hypothesis explain the observations as well as the anthropic-shadow story, making the shadow reflectively inconsistent?",
+          "type": "empirical",
+          "evidence_post": "The anthropic shadow is reflectively inconsistent; conditioning on survival the way it requires leads to paradox.",
+          "evidence_comment": "silent-observer argues a mundane many-worlds hypothesis explains the hero's survival just as well and has a higher prior, so the survival record isn't strong evidence either way."
         }
       }
     },
@@ -3551,11 +3511,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On prediction, does the disagreement hinge on model (post) versus want reasons (comment)?",
-          "type": "prediction",
-          "evidence_post": "Robust to \"the model was only slightly finetuned, fast-track our application please.\" If the model was truly only changed in a small set of ways which the developers understand, the model should still be predictable on the validation prompts. It's possible that the company knows how important bits of the model works, but doesn't understand the implications of the design, such that they don't realize the model becomes dangerous/hostile during autoregressive generation.",
-          "evidence_comment": "I don't think that this does what you want, for reasons I discuss under \"Prediction-based evaluation\" here: [...] See that post also for some alternative ideas that I think might be closer to doing the right thing here."
+          "crux_question": "Is the ability to predict a model's next-token probabilities on held-out prompts a good proxy for the kind of 'understanding' that would make the model safe to develop?",
+          "type": "empirical",
+          "evidence_post": "Development should be gated on developers predicting their model's next-token probabilities without running it, since understanding a model implies being able to predict it.",
+          "evidence_comment": "evhub argues prediction-based evaluation doesn't achieve the intended goal, and points to alternative criteria that better capture what we actually want."
         }
       }
     },
@@ -3646,11 +3605,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On solomonoff, does the disagreement hinge on bob (post) versus predictive (comment)?",
-          "type": "prediction",
-          "evidence_post": "Going back to our theorem, if Bob can use the oracle, so can Alice because she has Bob as one of her hypotheses. Bob: Doesn't that support the idea that the orb is emitting the digits of Chaitin's constant?",
-          "evidence_comment": "while Solomonoff induction agrees that the digits known so far have been spookily predictive, it thinks this is just a coincidence and that further digits have no reason to be predictive."
+          "crux_question": "Can Solomonoff induction actually learn a genuine statistical dependency in an uncomputable universe, or will it treat a spookily predictive pattern as coincidence and fail to extrapolate it?",
+          "type": "empirical",
+          "evidence_post": "Solomonoff induction still works and is useful even if the universe is uncomputable, without needing Occam's razor as a premise.",
+          "evidence_comment": "tailcalled argues it can't learn the dependency: it would regard the digits seen so far as coincidentally predictive and infer nothing about future ones."
         }
       }
     },
@@ -3851,11 +3809,10 @@
         "disagrees": true,
         "crux": {
           "has_crux": true,
-          "no_crux_reason": null,
-          "crux_question": "On future, does the disagreement hinge on story (post) versus science (comment)?",
-          "type": "prediction",
-          "evidence_post": "Bias and discrimination: Weird Fantasy 18 (1953) In 1953's Weird Fantasy 18, Al Feldstein and Joe Orlando produced the story \"Judgment Day,\" about an astronaut observer being sent from a Galactic Alliance to see if a robot planet is ready to be admitted into their alliance. Predictive policing: All the Troubles of the World (1958) The story begins with government administrators being warned of an upcoming murder attempt.",
-          "evidence_comment": "But there are plenty of common science fiction tropes that fairly clearly aren't close to happening in the near future -- e.g., faster-than-light spacecraft, teleportation, antigravity -- that if someone finds something credible largely because they've encountered it in SF, then they're probably making a mistake. I don't think people who refer to extinction threats from AI as \"science-fictional\" are making an implicit argument along the lines of \"there have been science fiction stories about this, therefore it will not happen\"."
+          "crux_question": "When critics call AI extinction risk 'science-fictional', are they committing an argument-from-fiction fallacy, or making the substantive claim that there's no demonstrated near-term mechanism for it?",
+          "type": "empirical",
+          "evidence_post": "Calling AI extinction concerns 'science fiction' is a weak dismissal, since people routinely fail to recognize machine-made artifacts and other already-real harms.",
+          "evidence_comment": "gjm reframes the critics' point as 'there's no demonstrated near-term mechanism, only ones that are themselves still science-fictional', which examples of realized SF tropes don't much weaken."
         }
       }
     },

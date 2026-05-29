@@ -1,0 +1,129 @@
+{
+  "_meta": {
+    "description": "Hand-authored post<->top-comment double cruxes, keyed by post id. Written by reading each post summary and its top comment. Each entry overrides the heuristic for that post: has_crux=true supplies a specific, falsifiable crux; has_crux=false records that the top comment is not really a disagreement (cue heuristic false positive), so no crux is shown.",
+    "author": "Claude Opus 4.8"
+  },
+  "cruxes": {
+    "9ac7cf9f3e65d9f49405e2264643215f": {
+      "has_crux": true,
+      "crux_question": "Do persona-modulation jailbreaks give a malicious user meaningful real-world uplift, or do they mostly surface dangerous-sounding content that is already freely available (e.g. on Wikipedia or in public manuals)?",
+      "type": "empirical",
+      "evidence_post": "The attack reliably steers GPT-4 into detailed harmful instructions (e.g. for weapons or drugs), which the authors treat as a serious safety failure.",
+      "evidence_comment": "When the commenter red-teamed smaller models, their outputs were a less useful source for bomb- or drug-making than Wikipedia; the real test is whether elicited content beats equivalent skilled web search."
+    },
+    "b69fcd7f419795f56f679aa345ac8ef6": {
+      "has_crux": true,
+      "crux_question": "Does the threat of incriminating documents in litigation actually push companies toward safer decisions, or does it mainly chill honest cost-benefit discussion and force expensive, safety-neutral changes?",
+      "type": "empirical",
+      "evidence_post": "Written records of known risks make a company more likely to be found liable, so the dynamic pressures firms to take documented risks seriously.",
+      "evidence_comment": "As a rail-systems engineer, the commenter argues this chills written cost-benefit reasoning and has produced costly changes (louder horns, Positive Train Control) that inconvenience people without saving lives."
+    },
+    "d81a9b3909049ccdb3422b7da6b55be2": {
+      "has_crux": true,
+      "crux_question": "Does the fact that genetic fitness is a non-stationary measure rather than a fixed optimization target break the analogy between evolution and inner misalignment in ML?",
+      "type": "empirical",
+      "evidence_post": "Treating 'IGF is the objective' as literal is misleading, which the post takes to undercut using evolution as evidence for a sharp left turn / inner misalignment.",
+      "evidence_comment": "leogao accepts the factual corrections but argues the inner-misalignment case never required a stationary objective (multi-agent RL is non-stationary too), so evolution remains a reasonable analogy."
+    },
+    "1314a8feb3a56179634f2f706783f304": {
+      "has_crux": true,
+      "crux_question": "Is the executive order's 10^26 FLOP reporting threshold set far too high, given how cheap reporting requirements are relative to the benefit of government visibility into frontier training runs?",
+      "type": "values",
+      "evidence_post": "Zvi treats the order's compute threshold as a reasonable basis for assessing risks from foundation models.",
+      "evidence_comment": "Orpheus16 argues the threshold is unreasonably high: reporting is so low-cost that even a flawed civilization should require it well below 10^26 FLOP."
+    },
+    "2024a0ee7b0037bd17f968bb04e17ca9": {
+      "has_crux": false,
+      "no_crux_reason": "The top comment endorses and extends the post ('I like this a lot') rather than disagreeing."
+    },
+    "3305494fabc480887e1913394da2c460": {
+      "has_crux": true,
+      "crux_question": "Will 'simple' alignment techniques that read off linear representations in current networks keep working on more capable, possibly deceptive models, or do they sidestep the cruxes that make skeptics doubt them?",
+      "type": "empirical",
+      "evidence_post": "Most of these techniques look for linear representations in networks, and the post argues we shouldn't dismiss such simple approaches.",
+      "evidence_comment": "Joseph Bloom likes the optimism but suspects the post doesn't engage the considerations that make skeptics doubt these approaches will scale to the hard cases."
+    },
+    "3c4fe0c78bb46a2d2732ce27af4e3291": {
+      "has_crux": true,
+      "crux_question": "Can the case that AGI is not near be argued publicly without handing out capability-relevant insights (a 'roadmap'), or does spelling out missing capabilities inevitably accelerate progress?",
+      "type": "empirical",
+      "evidence_post": "One person's list of capabilities AGI still lacks is another person's roadmap, which is a reason to be cautious about publicly discussing why AGI might not be near.",
+      "evidence_comment": "TsviBT argues that many stated reasons for thinking AGI is near rest on mistaken reasoning that can be rebutted without revealing any capabilities ideas."
+    },
+    "e045d13facbc03b65f16892708bdb0dd": {
+      "has_crux": false,
+      "no_crux_reason": "The top comment is the post author replying to himself with a self-correction, not a disagreement between two people."
+    },
+    "dc91f054f958f2a95ba60cd01f764f46": {
+      "has_crux": false,
+      "no_crux_reason": "The top comment praises the format ('this is the future of education') rather than disagreeing with the post."
+    },
+    "fa51c30d3ab88100bfa8979010281083": {
+      "has_crux": true,
+      "crux_question": "Is natural selection the right frame for AI risk, given that AIs lack biological mutation but are rapidly trained, copied, and selected on traits like power-seeking?",
+      "type": "empirical",
+      "evidence_post": "The paper frames catastrophic risk partly through evolutionary/competitive pressures pushing toward dangerous AI.",
+      "evidence_comment": "DPiepgrass calls evolution the wrong frame (AIs won't mutate) but grants a faster human-like selection dynamic over copyable agents with traits like power-seeking."
+    },
+    "61abc3d0b7a60e3783c8d19f80d935f3": {
+      "has_crux": true,
+      "crux_question": "Do deliberately induced ('spoonfed') model organisms of deception teach us how deception arises naturally, or does the spoonfeeding destroy exactly the evidence we care about?",
+      "type": "empirical",
+      "evidence_post": "Building in vitro demonstrations of deceptive/sycophantic misalignment would clarify the risks and build scientific consensus.",
+      "evidence_comment": "Fabien Roger argues the key question is how deception arises absent any training/instruction to be deceptive, and that spoonfeeding (e.g. telling the model it's in training) destroys most of the organism's value."
+    },
+    "23ba20094be9fda5bd5c8606191ce42a": {
+      "has_crux": false,
+      "no_crux_reason": "The top comment is a short, out-of-context reply about a specific generation, not a substantive disagreement with the post's thesis."
+    },
+    "be5d1417adf40abbe97adb09e1fb0084": {
+      "has_crux": true,
+      "crux_question": "Is regulating AI romantic partners justified protection of the social fabric, or an unacceptable paternalistic intrusion on individuals' freedom of association and family choices?",
+      "type": "values",
+      "evidence_post": "Unregulated AI romantic partners will harm society, so they should be regulated before widespread adoption.",
+      "evidence_comment": "Ann argues that beyond banning deliberate manipulation, such regulation paternalistically overrides individuals' freedom of association and family structure, and may be counterproductive."
+    },
+    "64bbf30922ff226bb27d166e06e80170": {
+      "has_crux": true,
+      "crux_question": "Will increasingly capable LM agents keep solving tasks via human-comprehensible decomposition, or will training (RLHF pressure, game-like environments) push them toward internalized, non-decomposed planning?",
+      "type": "prediction",
+      "evidence_post": "Paul is less worried about sharing LM-agent capability info, partly assuming such agents operate through human-comprehensible task decomposition.",
+      "evidence_comment": "habryka argues current systems already don't cleanly decompose tasks, and that training pressures will push future agents toward non-decomposed internal planning."
+    },
+    "e9594c2f0ee9299ee8cb5bf9d135faf1": {
+      "has_crux": true,
+      "crux_question": "Do adversarially elicited falsehoods reveal a meaningful reliability problem, or are they artifacts of contrived prompting that informed users and normal use rarely trigger?",
+      "type": "empirical",
+      "evidence_post": "There are many ways to make GPT-4 output falsehoods, including cases where an informed human wouldn't be fooled.",
+      "evidence_comment": "Neal's example shows GPT-4 spontaneously correcting a false premise (gold vs uranium density), suggesting elicited falsehoods may say little about behavior under normal use."
+    },
+    "007c527320deb9a654510f5ef86388e3": {
+      "has_crux": true,
+      "crux_question": "Does a mundane 'many ordinary worlds, you're the Nth summoned hero' hypothesis explain the observations as well as the anthropic-shadow story, making the shadow reflectively inconsistent?",
+      "type": "empirical",
+      "evidence_post": "The anthropic shadow is reflectively inconsistent; conditioning on survival the way it requires leads to paradox.",
+      "evidence_comment": "silent-observer argues a mundane many-worlds hypothesis explains the hero's survival just as well and has a higher prior, so the survival record isn't strong evidence either way."
+    },
+    "64877a97bf7d4fe600ad8b05411ccd4e": {
+      "has_crux": true,
+      "crux_question": "Is the ability to predict a model's next-token probabilities on held-out prompts a good proxy for the kind of 'understanding' that would make the model safe to develop?",
+      "type": "empirical",
+      "evidence_post": "Development should be gated on developers predicting their model's next-token probabilities without running it, since understanding a model implies being able to predict it.",
+      "evidence_comment": "evhub argues prediction-based evaluation doesn't achieve the intended goal, and points to alternative criteria that better capture what we actually want."
+    },
+    "ec2a5ef33de8bb6ba280b61f6e447f31": {
+      "has_crux": true,
+      "crux_question": "Can Solomonoff induction actually learn a genuine statistical dependency in an uncomputable universe, or will it treat a spookily predictive pattern as coincidence and fail to extrapolate it?",
+      "type": "empirical",
+      "evidence_post": "Solomonoff induction still works and is useful even if the universe is uncomputable, without needing Occam's razor as a premise.",
+      "evidence_comment": "tailcalled argues it can't learn the dependency: it would regard the digits seen so far as coincidentally predictive and infer nothing about future ones."
+    },
+    "6603babc64c351239aa2755e47a63003": {
+      "has_crux": true,
+      "crux_question": "When critics call AI extinction risk 'science-fictional', are they committing an argument-from-fiction fallacy, or making the substantive claim that there's no demonstrated near-term mechanism for it?",
+      "type": "empirical",
+      "evidence_post": "Calling AI extinction concerns 'science fiction' is a weak dismissal, since people routinely fail to recognize machine-made artifacts and other already-real harms.",
+      "evidence_comment": "gjm reframes the critics' point as 'there's no demonstrated near-term mechanism, only ones that are themselves still science-fictional', which examples of realized SF tropes don't much weaken."
+    }
+  }
+}

@@ -1,7 +1,9 @@
 import numpy as np
 
+import scripts.build_crux_map as bcm
 from scripts.build_crux_map import (
     Post,
+    build_comment_block,
     choose_k,
     cluster_top_terms,
     compute_clusters,
@@ -11,6 +13,7 @@ from scripts.build_crux_map import (
     slugify,
     truncate,
 )
+from scripts.comments import TopComment
 
 
 def _posts():
@@ -82,3 +85,38 @@ def test_post_summary_returns_list():
     post = _posts()[0]
     summary = post_summary(post)
     assert isinstance(summary, list)
+
+
+def test_authored_crux_overrides_heuristic(monkeypatch):
+    post = _posts()[0]
+    comment = TopComment("c1", "Critic", 12, "I disagree, the problem with this is X.")
+    monkeypatch.setattr(
+        bcm,
+        "_authored_cruxes_cache",
+        {
+            post.id: {
+                "has_crux": True,
+                "crux_question": "Authored specific question?",
+                "type": "values",
+                "evidence_post": "post side",
+                "evidence_comment": "comment side",
+            }
+        },
+    )
+    block = build_comment_block(post, comment, method="heuristic")
+    assert block["disagrees"] is True
+    assert block["crux"]["crux_question"] == "Authored specific question?"
+    assert block["crux"]["type"] == "values"
+
+
+def test_authored_crux_can_suppress_false_positive(monkeypatch):
+    post = _posts()[0]
+    comment = TopComment("c1", "Fan", 5, "I disagree but actually this is a great post, however.")
+    monkeypatch.setattr(
+        bcm,
+        "_authored_cruxes_cache",
+        {post.id: {"has_crux": False, "no_crux_reason": "actually agreement"}},
+    )
+    block = build_comment_block(post, comment, method="heuristic")
+    assert block["disagrees"] is False
+    assert block["crux"] is None

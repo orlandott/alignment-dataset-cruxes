@@ -71,9 +71,16 @@ Output `cruxes.json` schema:
   - **top_comment** — `{ author, score, text, claim, disagrees, crux }`. `crux` (present only when `disagrees`) is `{ has_crux, crux_question, type, evidence_post, evidence_comment }`.
 - **edges** — always `[]` (posts are not linked).
 
-### Post summaries & comment claims
+### Post summaries, comment claims & double cruxes
 
-Post summaries use authored claims in `data/authored_claims.json` (keyed by post id) when present, otherwise the heuristic summarizer (`scripts/post_claims.py`). Comment claims and disagreement detection live in `scripts/double_crux.py`; the double crux reuses the TF-IDF contrast heuristic in `scripts/heuristic_crux.py`.
+Post summaries use authored claims in `data/authored_claims.json` (keyed by post id) when present, otherwise the heuristic summarizer (`scripts/post_claims.py`). Comment claims and disagreement detection live in `scripts/double_crux.py`.
+
+Double cruxes resolve per post id in two tiers:
+
+1. **Authored cruxes** in `data/authored_cruxes.json` (written by reading each post and its top comment) override the heuristic for that post. An entry with `has_crux: true` supplies a specific, falsifiable question + type + each side's position; `has_crux: false` records that the top comment isn't really a disagreement (a cue-heuristic false positive), so no crux is shown.
+2. Otherwise the pipeline falls back to the TF-IDF contrast heuristic in `scripts/heuristic_crux.py`, so newly-surfaced posts still get a (rougher) crux with no API calls.
+
+The authored entries cover the posts currently surfaced in `cruxes.json`, so every displayed double crux is hand-written.
 
 ## Deploy (GitHub Pages)
 

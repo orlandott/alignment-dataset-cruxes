@@ -46,6 +46,7 @@ from scripts.double_crux import analyze_top_comment, summarize_comment_claim
 from scripts.post_claims import summarize_claims
 
 AUTHORED_CLAIMS_PATH = ROOT / "data" / "authored_claims.json"
+AUTHORED_CRUXES_PATH = ROOT / "data" / "authored_cruxes.json"
 COMMENT_CACHE_PATH = ROOT / "data" / "processed" / "comments_cache.jsonl"
 
 REPO_ID = "StampyAI/alignment-research-dataset"
@@ -59,6 +60,7 @@ MIN_K = 3
 MAX_K = 10
 
 _authored_claims_cache: dict[str, list[str]] | None = None
+_authored_cruxes_cache: dict[str, dict] | None = None
 
 
 @dataclass(frozen=True)
@@ -127,6 +129,23 @@ def get_authored_claims() -> dict[str, list[str]]:
         else:
             _authored_claims_cache = {}
     return _authored_claims_cache
+
+
+def get_authored_cruxes() -> dict[str, dict]:
+    """Load hand-authored post↔top-comment double cruxes, keyed by post id.
+
+    Each entry overrides the heuristic for that post. ``has_crux: true`` supplies
+    a high-quality crux (question/type/evidence); ``has_crux: false`` records that
+    the top comment is not really a disagreement, so no crux is shown.
+    """
+    global _authored_cruxes_cache
+    if _authored_cruxes_cache is None:
+        if AUTHORED_CRUXES_PATH.exists():
+            data = json.loads(AUTHORED_CRUXES_PATH.read_text(encoding="utf-8"))
+            _authored_cruxes_cache = data.get("cruxes", {})
+        else:
+            _authored_cruxes_cache = {}
+    return _authored_cruxes_cache
 
 
 def load_jsonl_split(split: str) -> list[dict]:
@@ -402,7 +421,25 @@ def build_comment_block(
     if comment is None:
         return None
 
-    if method == "anthropic":
+    authored = get_authored_cruxes().get(post.id) if method != "anthropic" else None
+    if authored is not None:
+        # Hand-authored override: trust it for both the disagreement decision
+        # and the crux text (the heuristic produces template-y questions).
+        has_crux = bool(authored.get("has_crux"))
+        analysis = {
+            "claim": summarize_comment_claim(comment.text),
+            "disagrees": has_crux,
+            "crux": {
+                "has_crux": True,
+                "crux_question": authored.get("crux_question"),
+                "type": authored.get("type"),
+                "evidence_post": authored.get("evidence_post"),
+                "evidence_comment": authored.get("evidence_comment"),
+            }
+            if has_crux
+            else None,
+        }
+    elif method == "anthropic":
         crux = anthropic_double_crux(post, comment)
         disagrees = bool(crux.get("has_crux"))
         analysis = {
