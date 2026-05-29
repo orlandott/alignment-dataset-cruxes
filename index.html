@@ -320,9 +320,12 @@
     resize();
 
     function nodeRadius(value, minV, maxV) {
+      // Radius grows with pingback count so the most-referenced (most
+      // influential) posts are clearly the biggest balls. Floor keeps
+      // zero-pingback posts visible and clickable.
       if (maxV <= minV) return 6;
       const t = (Math.sqrt(value) - Math.sqrt(minV)) / (Math.sqrt(maxV) - Math.sqrt(minV));
-      return 4.5 + t * 9.5;
+      return 3.5 + t * 18.5;
     }
 
     function escapeHtml(text) {
