@@ -1,0 +1,313 @@
+{
+  "meta": {
+    "generated_at": "2026-05-29T13:57:28.391109+00:00",
+    "dataset": "StampyAI/alignment-research-dataset",
+    "splits": [
+      "lesswrong",
+      "alignmentforum"
+    ],
+    "model": null,
+    "post_count": 500,
+    "author_count": 25,
+    "candidate_pair_count": 10,
+    "edge_count": 0,
+    "pca_components": 3
+  },
+  "nodes": [
+    {
+      "id": "Stuart_Armstrong",
+      "label": "Stuart_Armstrong",
+      "post_count": 10,
+      "sources": [
+        "alignmentforum"
+      ],
+      "x": -0.09457299733908073,
+      "y": 0.005414124903006501,
+      "z": -0.13005843084270816
+    },
+    {
+      "id": "Rohin_Shah",
+      "label": "Rohin Shah",
+      "post_count": 12,
+      "sources": [
+        "alignmentforum"
+      ],
+      "x": -0.08718258890885391,
+      "y": -0.33255624632975506,
+      "z": 0.001128315152068115
+    },
+    {
+      "id": "johnswentworth",
+      "label": "johnswentworth",
+      "post_count": 38,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": 0.016143027026835555,
+      "y": 0.5730954804478354,
+      "z": 0.055175300944212975
+    },
+    {
+      "id": "Eliezer_Yudkowsky",
+      "label": "Eliezer Yudkowsky",
+      "post_count": 7,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.0859086713355035,
+      "y": -0.026804570049182786,
+      "z": -0.09922274388604682
+    },
+    {
+      "id": "paulfchristiano",
+      "label": "paulfchristiano",
+      "post_count": 15,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.08728286568902124,
+      "y": 0.04452631119120424,
+      "z": -0.09629396321767453
+    },
+    {
+      "id": "TurnTrout",
+      "label": "TurnTrout",
+      "post_count": 31,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.08848559627909405,
+      "y": 0.15650589099902515,
+      "z": -0.0171360686452304
+    },
+    {
+      "id": "abramdemski",
+      "label": "abramdemski",
+      "post_count": 7,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.08964568078748036,
+      "y": -0.02945545098245702,
+      "z": -0.1043359930354
+    },
+    {
+      "id": "evhub",
+      "label": "evhub",
+      "post_count": 29,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.047547336438735655,
+      "y": -0.023752936902397038,
+      "z": 0.12433527461446815
+    },
+    {
+      "id": "Scott_Garrabrant",
+      "label": "Scott Garrabrant",
+      "post_count": 3,
+      "sources": [
+        "alignmentforum"
+      ],
+      "x": -0.09984222442784534,
+      "y": 0.042776143814639365,
+      "z": -0.1392993381464519
+    },
+    {
+      "id": "Steven_Byrnes",
+      "label": "Steven Byrnes",
+      "post_count": 17,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.07324792695241444,
+      "y": -0.0180587872031,
+      "z": -0.05571781869061952
+    },
+    {
+      "id": "adamShimi",
+      "label": "adamShimi",
+      "post_count": 17,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.06704936827157205,
+      "y": -0.014532624633898678,
+      "z": -0.03568715676472929
+    },
+    {
+      "id": "Daniel_Kokotajlo",
+      "label": "Daniel Kokotajlo",
+      "post_count": 10,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.09020876535736029,
+      "y": -0.10441209829890331,
+      "z": -0.04277938707669146
+    },
+    {
+      "id": "Richard_Ngo",
+      "label": "Richard_Ngo",
+      "post_count": 15,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.060414078503122665,
+      "y": -0.13142020714051372,
+      "z": 0.04342105068908932
+    },
+    {
+      "id": "Dan_H",
+      "label": "Dan H",
+      "post_count": 43,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": 0.6410369259755576,
+      "y": -0.12962247123013185,
+      "z": -0.06864701315371093
+    },
+    {
+      "id": "Charlie_Steiner",
+      "label": "Charlie Steiner",
+      "post_count": 24,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.07648397372759698,
+      "y": 0.08458724839903563,
+      "z": 0.016820725217756707
+    },
+    {
+      "id": "DanielFilan",
+      "label": "DanielFilan",
+      "post_count": 20,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.06651037476738392,
+      "y": -0.08442645696575284,
+      "z": -0.02894783509348103
+    },
+    {
+      "id": "Wei_Dai",
+      "label": "Wei Dai",
+      "post_count": 2,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.08761849329163607,
+      "y": -0.055742831340313,
+      "z": -0.10648179533461408
+    },
+    {
+      "id": "Neel_Nanda",
+      "label": "Neel Nanda",
+      "post_count": 42,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.05795339416101064,
+      "y": -0.14022173539640811,
+      "z": 0.16898408308377735
+    },
+    {
+      "id": "So8res",
+      "label": "So8res",
+      "post_count": 33,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.06241328246165024,
+      "y": 0.3427922382564871,
+      "z": 0.20087252733986138
+    },
+    {
+      "id": "Akash",
+      "label": "Akash",
+      "post_count": 43,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": 1.0,
+      "y": 0.04434574611571434,
+      "z": -0.028795106024571
+    },
+    {
+      "id": "Marius_Hobbhahn",
+      "label": "Marius Hobbhahn",
+      "post_count": 34,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.002933713332935114,
+      "y": -0.13990983258473375,
+      "z": 0.6628365987307295
+    },
+    {
+      "id": "Bill_Benzon",
+      "label": "Bill Benzon",
+      "post_count": 40,
+      "sources": [
+        "lesswrong"
+      ],
+      "x": -0.05615161627020983,
+      "y": 0.03156490460532065,
+      "z": 0.024990974226983407
+    },
+    {
+      "id": "Diffractor",
+      "label": "Diffractor",
+      "post_count": 6,
+      "sources": [
+        "alignmentforum"
+      ],
+      "x": -0.09949945043626207,
+      "y": 0.04528337554598975,
+      "z": -0.1336286169301471
+    },
+    {
+      "id": "Alex_Flint",
+      "label": "Alex Flint",
+      "post_count": 5,
+      "sources": [
+        "alignmentforum"
+      ],
+      "x": -0.09131273873982228,
+      "y": -0.08005940747629785,
+      "z": -0.10235175474750614
+    },
+    {
+      "id": "KatjaGrace",
+      "label": "KatjaGrace",
+      "post_count": 5,
+      "sources": [
+        "alignmentforum",
+        "lesswrong"
+      ],
+      "x": -0.08491481552380445,
+      "y": -0.05991580774441418,
+      "z": -0.10918182840936405
+    }
+  ],
+  "edges": []
+}

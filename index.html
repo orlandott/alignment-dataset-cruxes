@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crux Map</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121820;
+      --border: #243041;
+      --text: #e8edf4;
+      --muted: #8b9bb0;
+      --empirical: #4da3ff;
+      --values: #f5b942;
+      --prediction: #3ecfba;
+      --accent: #c4b5fd;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    #layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      height: 100vh;
+    }
+
+    #viewport {
+      position: relative;
+      min-width: 0;
+    }
+
+    canvas { display: block; }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .label {
+      position: absolute;
+      transform: translate(-50%, -120%);
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(11, 15, 20, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0.85;
+      transition: opacity 0.15s, color 0.15s;
+    }
+
+    .label.dim { opacity: 0.18; }
+    .label.active { opacity: 1; color: #fff; border-color: var(--accent); }
+
+    #header {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #header h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    #header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 420px;
+      line-height: 1.45;
+    }
+
+    #legend {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 2;
+      display: flex;
+      gap: 14px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(18, 24, 32, 0.88);
+      backdrop-filter: blur(8px);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    #hint {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 2;
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    #panel {
+      border-left: 1px solid var(--border);
+      background: var(--panel);
+      padding: 22px 20px;
+      overflow-y: auto;
+    }
+
+    #panel h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    #panel .placeholder {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 14px;
+    }
+
+    .badge.empirical { background: rgba(77, 163, 255, 0.18); color: var(--empirical); }
+    .badge.values { background: rgba(245, 185, 66, 0.18); color: var(--values); }
+    .badge.prediction { background: rgba(62, 207, 186, 0.18); color: var(--prediction); }
+
+    .crux-question {
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 0 18px;
+    }
+
+    .evidence {
+      margin-bottom: 16px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .evidence h3 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .evidence blockquote {
+      margin: 0 0 10px;
+      padding-left: 12px;
+      border-left: 3px solid var(--border);
+      color: #d7dee8;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .evidence a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .evidence a:hover { text-decoration: underline; }
+
+    .node-card .stat {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .edge-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .edge-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      line-height: 1.45;
+      cursor: pointer;
+    }
+
+    .edge-list li:hover { color: var(--accent); }
+
+    #error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(11, 15, 20, 0.92);
+      z-index: 10;
+      text-align: center;
+    }
+
+    #error.visible { display: grid; }
+
+    @media (max-width: 900px) {
+      #layout { grid-template-columns: 1fr; grid-template-rows: 1fr 42vh; }
+      #panel { border-left: none; border-top: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div id="layout">
+    <div id="viewport">
+      <div id="header">
+        <h1>Crux Map</h1>
+        <p id="subtitle">Loading alignment research disagreements…</p>
+      </div>
+      <div id="legend">
+        <div class="legend-item"><span class="swatch" style="background:var(--empirical)"></span> Empirical</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--values)"></span> Values</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--prediction)"></span> Prediction</div>
+      </div>
+      <div id="hint">Drag to orbit · Scroll to zoom · Click nodes or edges</div>
+      <div id="overlay"></div>
+      <div id="error">
+        <div>
+          <h2>Could not load cruxes.json</h2>
+          <p id="error-detail" style="color:var(--muted)"></p>
+          <p style="color:var(--muted);font-size:13px;margin-top:12px">
+            Run <code>python scripts/build_crux_map.py</code> first, then serve this folder:
+            <code>python -m http.server 8080</code>
+          </p>
+        </div>
+      </div>
+    </div>
+    <aside id="panel">
+      <div class="placeholder" id="panel-empty">
+        Click an edge to read the crux question and evidence quotes, or click an author to highlight their disagreements.
+      </div>
+      <div id="panel-content" hidden></div>
+    </aside>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+    import {
+      forceSimulation,
+      forceLink,
+      forceManyBody,
+      forceCenter,
+    } from "https://cdn.jsdelivr.net/npm/d3-force-3d@3/+esm";
+
+    const TYPE_COLORS = {
+      empirical: 0x4da3ff,
+      values: 0xf5b942,
+      prediction: 0x3ecfba,
+    };
+
+    const SCALE = 220;
+    const state = {
+      selectedNode: null,
+      selectedEdge: null,
+      graph: null,
+      nodeById: new Map(),
+      edgeById: new Map(),
+      nodeMeshes: new Map(),
+      edgeMeshes: new Map(),
+      labelEls: new Map(),
+    };
+
+    const viewport = document.getElementById("viewport");
+    const overlay = document.getElementById("overlay");
+    const panelEmpty = document.getElementById("panel-empty");
+    const panelContent = document.getElementById("panel-content");
+    const subtitle = document.getElementById("subtitle");
+    const errorBox = document.getElementById("error");
+    const errorDetail = document.getElementById("error-detail");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f14);
+    scene.fog = new THREE.FogExp2(0x0b0f14, 0.0018);
+
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 5000);
+    camera.position.set(0, 120, 420);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    viewport.insertBefore(renderer.domElement, overlay);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 80;
+    controls.maxDistance = 900;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
+    keyLight.position.set(120, 200, 140);
+    scene.add(keyLight);
+    const fillLight = new THREE.DirectionalLight(0x88aaff, 0.35);
+    fillLight.position.set(-160, -80, -120);
+    scene.add(fillLight);
+
+    const nodesGroup = new THREE.Group();
+    const edgesGroup = new THREE.Group();
+    scene.add(edgesGroup, nodesGroup);
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.params.Line = { threshold: 8 };
+    raycaster.params.Points = { threshold: 8 };
+    const pointer = new THREE.Vector2();
+
+    function resize() {
+      const { clientWidth, clientHeight } = viewport;
+      camera.aspect = clientWidth / clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(clientWidth, clientHeight, false);
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    function nodeRadius(postCount, minCount, maxCount) {
+      const scale = d3.scaleSqrt().domain([minCount, maxCount]).range([5, 16]);
+      return scale(postCount);
+    }
+
+    function formatLabel(label) {
+      return label.replace(/_/g, " ");
+    }
+
+    function setPanelHtml(html) {
+      panelEmpty.hidden = true;
+      panelContent.hidden = false;
+      panelContent.innerHTML = html;
+    }
+
+    function showEmptyPanel() {
+      panelEmpty.hidden = false;
+      panelContent.hidden = true;
+      panelContent.innerHTML = "";
+    }
+
+    function renderEdgePanel(edge) {
+      const source = state.nodeById.get(edge.source);
+      const target = state.nodeById.get(edge.target);
+      const type = edge.type || "empirical";
+      setPanelHtml(`
+        <span class="badge ${type}">${type}</span>
+        <h2>${formatLabel(source.label)} ↔ ${formatLabel(target.label)}</h2>
+        <p class="crux-question">${escapeHtml(edge.crux_question || "No crux question recorded.")}</p>
+        <div class="evidence">
+          <h3>${formatLabel(edge.post_a.author)} · ${edge.post_a.source}</h3>
+          <blockquote>${escapeHtml(edge.evidence_a || "—")}</blockquote>
+          <a href="${escapeAttr(edge.post_a.url)}" target="_blank" rel="noopener">${escapeHtml(edge.post_a.title)}</a>
+        </div>
+        <div class="evidence">
+          <h3>${formatLabel(edge.post_b.author)} · ${edge.post_b.source}</h3>
+          <blockquote>${escapeHtml(edge.evidence_b || "—")}</blockquote>
+          <a href="${escapeAttr(edge.post_b.url)}" target="_blank" rel="noopener">${escapeHtml(edge.post_b.title)}</a>
+        </div>
+      `);
+    }
+
+    function renderNodePanel(node) {
+      const connected = state.graph.edges.filter(
+        (edge) => edge.source === node.id || edge.target === node.id,
+      );
+      const edgeItems = connected.length
+        ? connected
+            .map((edge) => {
+              const otherId = edge.source === node.id ? edge.target : edge.source;
+              const other = state.nodeById.get(otherId);
+              return `<li data-edge-id="${edge.id}"><strong>${formatLabel(other.label)}</strong> — ${escapeHtml(edge.crux_question || edge.type)}</li>`;
+            })
+            .join("")
+        : `<li style="cursor:default;color:var(--muted)">No crux edges yet. Run the pipeline with an Anthropic API key.</li>`;
+
+      setPanelHtml(`
+        <h2>${formatLabel(node.label)}</h2>
+        <p class="node-card stat">${node.post_count} posts · ${node.sources.join(", ")}</p>
+        <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Cruxes</h3>
+        <ul class="edge-list">${edgeItems}</ul>
+      `);
+
+      panelContent.querySelectorAll("[data-edge-id]").forEach((el) => {
+        el.addEventListener("click", () => {
+          selectEdge(state.edgeById.get(el.dataset.edgeId));
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function escapeAttr(text) {
+      return escapeHtml(text).replaceAll("'", "&#39;");
+    }
+
+    function applyHighlight() {
+      const activeNodes = new Set();
+      const activeEdges = new Set();
+
+      if (state.selectedEdge) {
+        activeEdges.add(state.selectedEdge.id);
+        activeNodes.add(state.selectedEdge.source);
+        activeNodes.add(state.selectedEdge.target);
+      } else if (state.selectedNode) {
+        activeNodes.add(state.selectedNode.id);
+        state.graph.edges.forEach((edge) => {
+          if (edge.source === state.selectedNode.id || edge.target === state.selectedNode.id) {
+            activeEdges.add(edge.id);
+            activeNodes.add(edge.source);
+            activeNodes.add(edge.target);
+          }
+        });
+      }
+
+      const dim = Boolean(state.selectedNode || state.selectedEdge);
+
+      state.nodeMeshes.forEach((mesh, id) => {
+        const active = !dim || activeNodes.has(id);
+        mesh.material.emissive.setHex(active ? (id === state.selectedNode?.id ? 0x6d5bd0 : 0x223049) : 0x000000);
+        mesh.material.opacity = active ? 1 : 0.22;
+        mesh.material.transparent = true;
+      });
+
+      state.edgeMeshes.forEach(({ line, hitbox }, id) => {
+        const active = !dim || activeEdges.has(id);
+        const selected = state.selectedEdge?.id === id;
+        line.material.opacity = active ? (selected ? 1 : 0.85) : 0.08;
+        line.material.transparent = true;
+        hitbox.visible = active;
+      });
+
+      state.labelEls.forEach((el, id) => {
+        el.classList.toggle("dim", dim && !activeNodes.has(id));
+        el.classList.toggle("active", id === state.selectedNode?.id);
+      });
+    }
+
+    function selectNode(node) {
+      state.selectedNode = node;
+      state.selectedEdge = null;
+      renderNodePanel(node);
+      applyHighlight();
+    }
+
+    function selectEdge(edge) {
+      state.selectedEdge = edge;
+      state.selectedNode = null;
+      renderEdgePanel(edge);
+      applyHighlight();
+    }
+
+    function clearSelection() {
+      state.selectedNode = null;
+      state.selectedEdge = null;
+      showEmptyPanel();
+      applyHighlight();
+    }
+
+    function makeEdgeLine(edge, nodeA, nodeB) {
+      const color = TYPE_COLORS[edge.type] ?? TYPE_COLORS.empirical;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(6);
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+      const line = new THREE.Line(
+        geometry,
+        new THREE.LineBasicMaterial({ color, linewidth: 2, transparent: true, opacity: 0.85 }),
+      );
+      line.userData = { kind: "edge", edgeId: edge.id };
+
+      const hitGeometry = new THREE.CylinderGeometry(3, 3, 1, 8);
+      const hitMaterial = new THREE.MeshBasicMaterial({ visible: false });
+      const hitbox = new THREE.Mesh(hitGeometry, hitMaterial);
+      hitbox.userData = { kind: "edge", edgeId: edge.id };
+
+      edgesGroup.add(line, hitbox);
+      state.edgeMeshes.set(edge.id, { line, hitbox, nodeA: nodeA.id, nodeB: nodeB.id });
+    }
+
+    function updateEdgePositions() {
+      state.edgeMeshes.forEach(({ line, hitbox, nodeA, nodeB }) => {
+        const meshA = state.nodeMeshes.get(nodeA);
+        const meshB = state.nodeMeshes.get(nodeB);
+        if (!meshA || !meshB) return;
+
+        const start = meshA.position;
+        const end = meshB.position;
+        const positions = line.geometry.attributes.position.array;
+        positions[0] = start.x;
+        positions[1] = start.y;
+        positions[2] = start.z;
+        positions[3] = end.x;
+        positions[4] = end.y;
+        positions[5] = end.z;
+        line.geometry.attributes.position.needsUpdate = true;
+
+        const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+        const direction = new THREE.Vector3().subVectors(end, start);
+        const length = direction.length();
+        hitbox.position.copy(midpoint);
+        hitbox.scale.set(1, length, 1);
+        hitbox.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+      });
+    }
+
+    function updateLabels(projection) {
+      state.labelEls.forEach((el, id) => {
+        const mesh = state.nodeMeshes.get(id);
+        if (!mesh) return;
+        const vector = mesh.position.clone().project(projection);
+        if (vector.z > 1) {
+          el.style.display = "none";
+          return;
+        }
+        el.style.display = "block";
+        const x = (vector.x * 0.5 + 0.5) * viewport.clientWidth;
+        const y = (-vector.y * 0.5 + 0.5) * viewport.clientHeight;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+      });
+    }
+
+    function buildScene(graph) {
+      nodesGroup.clear();
+      edgesGroup.clear();
+      overlay.innerHTML = "";
+      state.nodeMeshes.clear();
+      state.edgeMeshes.clear();
+      state.labelEls.clear();
+      state.nodeById.clear();
+      state.edgeById.clear();
+
+      graph.nodes.forEach((node) => state.nodeById.set(node.id, node));
+      graph.edges.forEach((edge) => state.edgeById.set(edge.id, edge));
+
+      const counts = graph.nodes.map((node) => node.post_count);
+      const minCount = Math.min(...counts);
+      const maxCount = Math.max(...counts);
+
+      graph.nodes.forEach((node) => {
+        const radius = nodeRadius(node.post_count, minCount, maxCount);
+        const geometry = new THREE.SphereGeometry(radius, 24, 24);
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xdce6f2,
+          roughness: 0.45,
+          metalness: 0.08,
+          emissive: 0x000000,
+          transparent: true,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(node.x * SCALE, node.y * SCALE, node.z * SCALE);
+        mesh.userData = { kind: "node", nodeId: node.id };
+        nodesGroup.add(mesh);
+        state.nodeMeshes.set(node.id, mesh);
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = formatLabel(node.label);
+        overlay.appendChild(label);
+        state.labelEls.set(node.id, label);
+      });
+
+      graph.edges.forEach((edge) => {
+        makeEdgeLine(edge, state.nodeById.get(edge.source), state.nodeById.get(edge.target));
+      });
+
+      if (graph.edges.length > 0) {
+        const simNodes = graph.nodes.map((node) => ({
+          id: node.id,
+          x: node.x * SCALE,
+          y: node.y * SCALE,
+          z: node.z * SCALE,
+          fx: null,
+          fy: null,
+          fz: null,
+        }));
+
+        const simLinks = graph.edges.map((edge) => ({
+          source: edge.source,
+          target: edge.target,
+        }));
+
+        const simulation = forceSimulation(simNodes, 3)
+          .force(
+            "link",
+            forceLink(simLinks)
+              .id((d) => d.id)
+              .distance(90)
+              .strength(0.35),
+          )
+          .force("charge", forceManyBody().strength(-50))
+          .force("center", forceCenter(0, 0, 0))
+          .stop();
+
+        for (let i = 0; i < 120; i += 1) simulation.tick();
+
+        simNodes.forEach((simNode) => {
+          const mesh = state.nodeMeshes.get(simNode.id);
+          mesh.position.set(simNode.x, simNode.y, simNode.z);
+        });
+      }
+
+      updateEdgePositions();
+    }
+
+    function pickObject(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+
+      const targets = [...state.nodeMeshes.values(), ...state.edgeMeshes.values()].flatMap((item) =>
+        item.line ? [item.line, item.hitbox] : [item],
+      );
+      const hits = raycaster.intersectObjects(targets, false);
+      return hits[0]?.object ?? null;
+    }
+
+    renderer.domElement.addEventListener("click", (event) => {
+      const object = pickObject(event);
+      if (!object) {
+        clearSelection();
+        return;
+      }
+      if (object.userData.kind === "node") {
+        selectNode(state.nodeById.get(object.userData.nodeId));
+      } else if (object.userData.kind === "edge") {
+        selectEdge(state.edgeById.get(object.userData.edgeId));
+      }
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      updateEdgePositions();
+      updateLabels(camera);
+      renderer.render(scene, camera);
+    }
+
+    async function init() {
+      try {
+        const response = await fetch("./cruxes.json");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const graph = await response.json();
+        state.graph = graph;
+        buildScene(graph);
+
+        const { meta } = graph;
+        subtitle.textContent = `${meta.author_count} authors · ${meta.edge_count} cruxes · ${meta.post_count} posts · PCA 3D layout`;
+        errorBox.remove();
+        animate();
+      } catch (error) {
+        errorDetail.textContent = error.message;
+        errorBox.classList.add("visible");
+        subtitle.textContent = "Failed to load graph data.";
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

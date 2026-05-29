@@ -1,0 +1,6 @@
+anthropic>=0.40
+datasets>=3.0
+huggingface_hub>=0.26
+numpy>=2.0
+pyarrow>=18.0
+scikit-learn>=1.5
