@@ -65,6 +65,23 @@
     .label.dim { opacity: 0.18; }
     .label.active { opacity: 1; color: #fff; border-color: var(--accent); }
 
+    .axis-label {
+      transform: translate(-50%, -50%);
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(11, 15, 20, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .axis-label.x { color: #c97878; border-color: rgba(201, 120, 120, 0.25); }
+    .axis-label.y { color: #7eb892; border-color: rgba(126, 184, 146, 0.25); }
+    .axis-label.z { color: #7a9ec4; border-color: rgba(122, 158, 196, 0.25); }
+
     #header {
       position: absolute;
       top: 18px;
@@ -299,6 +316,10 @@
     };
 
     const SCALE = 220;
+    const BOUNDS_PADDING = 52;
+    const AXIS_COLORS = { x: 0xb86b6b, y: 0x6bab7a, z: 0x6b8eb8 };
+    const BOX_COLOR = 0x3a4a5c;
+
     const state = {
       selectedNode: null,
       selectedEdge: null,
@@ -308,6 +329,8 @@
       nodeMeshes: new Map(),
       edgeMeshes: new Map(),
       labelEls: new Map(),
+      axisLabelEls: [],
+      axisLabelPositions: [],
     };
 
     const viewport = document.getElementById("viewport");
@@ -345,7 +368,8 @@
 
     const nodesGroup = new THREE.Group();
     const edgesGroup = new THREE.Group();
-    scene.add(edgesGroup, nodesGroup);
+    const spatialGroup = new THREE.Group();
+    scene.add(spatialGroup, edgesGroup, nodesGroup);
 
     const raycaster = new THREE.Raycaster();
     raycaster.params.Line = { threshold: 8 };
@@ -554,26 +578,134 @@
       });
     }
 
+    function projectToOverlay(worldPos, projection) {
+      const vector = worldPos.clone().project(projection);
+      if (vector.z > 1) return null;
+      return {
+        x: (vector.x * 0.5 + 0.5) * viewport.clientWidth,
+        y: (-vector.y * 0.5 + 0.5) * viewport.clientHeight,
+      };
+    }
+
     function updateLabels(projection) {
       state.labelEls.forEach((el, id) => {
         const mesh = state.nodeMeshes.get(id);
         if (!mesh) return;
-        const vector = mesh.position.clone().project(projection);
-        if (vector.z > 1) {
+        const screen = projectToOverlay(mesh.position, projection);
+        if (!screen) {
           el.style.display = "none";
           return;
         }
         el.style.display = "block";
-        const x = (vector.x * 0.5 + 0.5) * viewport.clientWidth;
-        const y = (-vector.y * 0.5 + 0.5) * viewport.clientHeight;
-        el.style.left = `${x}px`;
-        el.style.top = `${y}px`;
+        el.style.left = `${screen.x}px`;
+        el.style.top = `${screen.y}px`;
       });
+
+      state.axisLabelEls.forEach((el, index) => {
+        const worldPos = state.axisLabelPositions[index];
+        if (!worldPos) return;
+        const screen = projectToOverlay(worldPos, projection);
+        if (!screen) {
+          el.style.display = "none";
+          return;
+        }
+        el.style.display = "block";
+        el.style.left = `${screen.x}px`;
+        el.style.top = `${screen.y}px`;
+      });
+    }
+
+    function clearSpatialAnchors() {
+      spatialGroup.clear();
+      state.axisLabelEls.forEach((el) => el.remove());
+      state.axisLabelEls = [];
+      state.axisLabelPositions = [];
+    }
+
+    function computeNodeBounds() {
+      const box = new THREE.Box3();
+      state.nodeMeshes.forEach((mesh) => box.expandByPoint(mesh.position));
+      if (box.isEmpty()) return null;
+      return {
+        min: box.min.clone().subScalar(BOUNDS_PADDING),
+        max: box.max.clone().addScalar(BOUNDS_PADDING),
+      };
+    }
+
+    function addAxisLabel(axis, worldPos) {
+      const label = document.createElement("div");
+      label.className = `axis-label ${axis}`;
+      label.textContent = axis.toUpperCase();
+      overlay.appendChild(label);
+      state.axisLabelEls.push(label);
+      state.axisLabelPositions.push(worldPos.clone());
+    }
+
+    function buildSpatialAnchors(bounds) {
+      clearSpatialAnchors();
+      const { min, max } = bounds;
+      const size = new THREE.Vector3().subVectors(max, min);
+      const axisLen = Math.max(size.x, size.y, size.z) * 0.14;
+      const origin = min.clone();
+
+      const axisPoints = new Float32Array([
+        origin.x, origin.y, origin.z, origin.x + axisLen, origin.y, origin.z,
+        origin.x, origin.y, origin.z, origin.x, origin.y + axisLen, origin.z,
+        origin.x, origin.y, origin.z, origin.x, origin.y, origin.z + axisLen,
+      ]);
+      const axisGeometry = new THREE.BufferGeometry();
+      axisGeometry.setAttribute("position", new THREE.BufferAttribute(axisPoints, 3));
+      const axisColors = new Float32Array([
+        ...hexToRgb(AXIS_COLORS.x), ...hexToRgb(AXIS_COLORS.x),
+        ...hexToRgb(AXIS_COLORS.y), ...hexToRgb(AXIS_COLORS.y),
+        ...hexToRgb(AXIS_COLORS.z), ...hexToRgb(AXIS_COLORS.z),
+      ]);
+      axisGeometry.setAttribute("color", new THREE.BufferAttribute(axisColors, 3));
+      const axes = new THREE.LineSegments(
+        axisGeometry,
+        new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.82 }),
+      );
+      spatialGroup.add(axes);
+
+      addAxisLabel("x", new THREE.Vector3(origin.x + axisLen, origin.y, origin.z));
+      addAxisLabel("y", new THREE.Vector3(origin.x, origin.y + axisLen, origin.z));
+      addAxisLabel("z", new THREE.Vector3(origin.x, origin.y, origin.z + axisLen));
+
+      const x0 = min.x;
+      const y0 = min.y;
+      const z0 = min.z;
+      const x1 = max.x;
+      const y1 = max.y;
+      const z1 = max.z;
+
+      const boxPoints = new Float32Array([
+        x0, y0, z0, x1, y0, z0,
+        x1, y0, z0, x1, y0, z1,
+        x1, y0, z1, x0, y0, z1,
+        x0, y0, z1, x0, y0, z0,
+        x0, y0, z0, x0, y1, z0,
+        x0, y0, z1, x0, y1, z1,
+        x0, y1, z0, x0, y1, z1,
+        x1, y0, z0, x1, y1, z0,
+        x1, y1, z0, x0, y1, z0,
+      ]);
+      const boxGeometry = new THREE.BufferGeometry();
+      boxGeometry.setAttribute("position", new THREE.BufferAttribute(boxPoints, 3));
+      const openBox = new THREE.LineSegments(
+        boxGeometry,
+        new THREE.LineBasicMaterial({ color: BOX_COLOR, transparent: true, opacity: 0.42 }),
+      );
+      spatialGroup.add(openBox);
+    }
+
+    function hexToRgb(hex) {
+      return [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255].map((v) => v / 255);
     }
 
     function buildScene(graph) {
       nodesGroup.clear();
       edgesGroup.clear();
+      clearSpatialAnchors();
       overlay.innerHTML = "";
       state.nodeMeshes.clear();
       state.edgeMeshes.clear();
@@ -652,6 +784,9 @@
       }
 
       updateEdgePositions();
+
+      const bounds = computeNodeBounds();
+      if (bounds) buildSpatialAnchors(bounds);
     }
 
     function pickObject(event) {
