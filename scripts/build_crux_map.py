@@ -297,7 +297,13 @@ def cluster_top_terms(
     *,
     top_n: int = 4,
 ) -> dict[int, list[str]]:
-    """Name each cluster by its highest mean-TF-IDF terms."""
+    """Name each cluster by its most *distinctive* terms.
+
+    Ranking by raw mean TF-IDF surfaces globally common words ("model", "things")
+    that describe every cluster. Instead we score each term by how much more it
+    appears in the cluster than in the rest of the corpus (mean inside minus mean
+    outside), which yields crisp, differentiating labels.
+    """
     try:
         features = vectorizer.get_feature_names_out()
     except Exception:
@@ -308,8 +314,10 @@ def cluster_top_terms(
         mask = labels == cluster
         if not mask.any():
             continue
-        mean_vec = dense[mask].mean(axis=0)
-        order = np.argsort(-mean_vec)
+        in_mean = dense[mask].mean(axis=0)
+        out_mean = dense[~mask].mean(axis=0) if (~mask).any() else np.zeros_like(in_mean)
+        score = in_mean - out_mean
+        order = np.argsort(-score)
         picked: list[str] = []
         for idx in order:
             term = features[idx]
@@ -594,8 +602,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--clusters",
         type=int,
-        default=0,
-        help="k-means clusters (0 = auto-select by silhouette)",
+        default=6,
+        help="k-means clusters (0 = auto-select by silhouette; default 6)",
     )
     parser.add_argument(
         "--method",

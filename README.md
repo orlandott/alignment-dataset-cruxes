@@ -2,7 +2,7 @@
 
 Visualize AI alignment research as a **3D map of posts**, clustered by topic, where each post carries a summary, its top comment, and — when that comment pushes back — the **double crux** between post and comment.
 
-Data comes from the [StampyAI alignment research dataset](https://huggingface.co/datasets/StampyAI/alignment-research-dataset) (`lesswrong` + `alignmentforum` splits). A Python pipeline embeds each post (TF-IDF), reduces it to **3 principal components** (TruncatedSVD / LSA), and clusters the posts with **k-means**, where _k_ is auto-selected by silhouette score ("however many clusters make sense"). The dataset only ships a `comment_count`, not comment text, so the **top comment** for each post is fetched from the public **LessWrong GraphQL API** (free, keyless — it serves Alignment Forum posts too).
+Data comes from the [StampyAI alignment research dataset](https://huggingface.co/datasets/StampyAI/alignment-research-dataset) (`lesswrong` + `alignmentforum` splits). A Python pipeline embeds each post (TF-IDF), reduces it to **3 principal components** (TruncatedSVD / LSA), and clusters the posts with **k-means** (6 clusters by default; pass `--clusters 0` to auto-select _k_ by silhouette). Each cluster is named by its most *distinctive* terms (mean TF-IDF inside the cluster minus outside), so labels differentiate rather than restate generic words. The dataset only ships a `comment_count`, not comment text, so the **top comment** for each post is fetched from the public **LessWrong GraphQL API** (free, keyless — it serves Alignment Forum posts too).
 
 In the 3D map:
 
@@ -48,7 +48,7 @@ cp .env.example .env && python scripts/build_crux_map.py --method anthropic
 
 1. Load LW + AF posts, keep those with an author, date, and a post URL (needed to fetch comments). Cross-posts (same post on both forums) are collapsed to one.
 2. TF-IDF → **TruncatedSVD to 3 components** → L2-normalize. Working on the angular (cosine) geometry of TF-IDF — rather than StandardScaler'd PCA, which just isolates rare-term outliers — is what yields balanced, topically meaningful clusters.
-3. **k-means** with _k_ chosen by the best silhouette score over a small range (override with `--clusters N`). Each cluster is named by its top TF-IDF terms.
+3. **k-means** into `--clusters` groups (default 6; `--clusters 0` auto-selects _k_ by the best silhouette score over a small range). Each cluster is named by its most distinctive terms (in-cluster mean TF-IDF minus the rest).
 4. For each post: summarize its claim(s); fetch the highest-karma top-level comment from the LW GraphQL API (cached in `data/processed/comments_cache.jsonl`); detect whether the comment disagrees; and if so extract the **double crux** between the post and the comment.
 
 Options:
@@ -57,7 +57,7 @@ Options:
 |------|---------|-------------|
 | `--max-posts` | 150 | Cap on posts (nodes) loaded |
 | `--top-authors` | 40 | Restrict to posts by the top-N most prolific authors |
-| `--clusters` | 0 | k-means clusters (`0` = auto-select by silhouette) |
+| `--clusters` | 6 | k-means clusters (`0` = auto-select by silhouette) |
 | `--method` | `heuristic` | `heuristic` (keyless) or `anthropic` (needs API key) |
 | `--offline` | off | Never hit the network for comments; use only the cache |
 | `--dry-run` | off | Posts + PCA + clusters only (no comments/cruxes) |
