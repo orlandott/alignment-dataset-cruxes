@@ -51,7 +51,7 @@ The site deploys automatically on every push to `main`.
 2. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 3. Push to `main` — the **Deploy Crux Map to GitHub Pages** workflow publishes `index.html` + `cruxes.json`.
 
-Live URL: `https://<your-username>.github.io/alignment-dataset-cruxes/`
+**Live site:** https://orlandott.github.io/alignment-dataset-cruxes/
 
 To refresh crux data in CI, add an `ANTHROPIC_API_KEY` repo secret, then run **Actions → Rebuild cruxes.json → Run workflow**. That commits an updated `cruxes.json` and triggers a redeploy.
 
