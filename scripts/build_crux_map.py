@@ -31,12 +31,17 @@ if str(ROOT) not in sys.path:
 
 import numpy as np
 from huggingface_hub import hf_hub_download
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 
 from scripts.heuristic_crux import extract_heuristic_crux
+from scripts.post_claims import summarize_claims
+
+AUTHORED_CRUXES_PATH = ROOT / "data" / "authored_cruxes.json"
+DEFAULT_CLUSTERS = 5
 
 REPO_ID = "StampyAI/alignment-research-dataset"
 SPLITS = ("lesswrong", "alignmentforum")
@@ -83,6 +88,7 @@ class Post:
             "source": self.source,
             "date": self.date_published,
             "author": author,
+            "claims": summarize_claims(self.text),
         }
 
 
@@ -226,17 +232,21 @@ def best_post_pair(
     return posts_a[idx_a], posts_b[idx_b], float(sim[idx_a, idx_b])
 
 
-def compute_pca_positions(
+def compute_pca_coords(
     authors: list[str],
     grouped: dict[str, list[Post]],
-) -> dict[str, dict[str, float]]:
+) -> np.ndarray:
+    """Return an (n_authors, 3) array of normalized PCA coordinates."""
+    if not authors:
+        return np.zeros((0, 3))
+
     corpora = [author_corpus(grouped[author]) for author in authors]
     _, matrix = build_tfidf_matrix(corpora)
     dense = matrix.toarray()
 
     n_components = min(3, len(authors), dense.shape[1])
     if n_components == 0:
-        return {author: {"x": 0.0, "y": 0.0, "z": 0.0} for author in authors}
+        return np.zeros((len(authors), 3))
 
     scaled = StandardScaler(with_std=True).fit_transform(dense)
     pca = PCA(n_components=n_components, random_state=42)
@@ -248,12 +258,33 @@ def compute_pca_positions(
 
     # Scale into a comfortable range for 3D rendering.
     max_abs = np.max(np.abs(coords)) or 1.0
-    coords = coords / max_abs
+    return coords / max_abs
 
+
+def compute_pca_positions(
+    authors: list[str],
+    grouped: dict[str, list[Post]],
+) -> dict[str, dict[str, float]]:
+    coords = compute_pca_coords(authors, grouped)
     return {
         author: {"x": float(row[0]), "y": float(row[1]), "z": float(row[2])}
         for author, row in zip(authors, coords, strict=True)
     }
+
+
+def compute_clusters(
+    coords: np.ndarray,
+    authors: list[str],
+    n_clusters: int,
+) -> dict[str, int]:
+    """Group authors into clusters via k-means on their PCA coordinates."""
+    k = min(n_clusters, len(authors))
+    if k < 2:
+        return {author: 0 for author in authors}
+
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    labels = kmeans.fit_predict(coords)
+    return {author: int(label) for author, label in zip(authors, labels, strict=True)}
 
 
 def pair_cache_key(
@@ -331,6 +362,19 @@ def extract_crux_anthropic(
     return parse_model_json(raw)
 
 
+def authored_pair_key(author_a: str, author_b: str) -> str:
+    """Stable key for an author pair, independent of order."""
+    return "__".join(sorted([slugify(author_a), slugify(author_b)]))
+
+
+def load_authored_cruxes(path: Path) -> dict[str, dict]:
+    """Load human/LLM-authored cruxes baked into the repo (no API at runtime)."""
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return data.get("pairs", {})
+
+
 def extract_crux(
     post_a: Post,
     post_b: Post,
@@ -339,6 +383,7 @@ def extract_crux(
     *,
     method: str,
     dry_run: bool,
+    authored: dict[str, dict] | None = None,
 ) -> dict:
     if dry_run:
         return {
@@ -349,6 +394,13 @@ def extract_crux(
             "evidence_a": None,
             "evidence_b": None,
         }
+
+    if method == "authored":
+        entry = (authored or {}).get(authored_pair_key(author_a, author_b))
+        if entry:
+            return entry
+        # Fall back to the free heuristic when no authored crux exists.
+        return extract_heuristic_crux(truncate(post_a.text), truncate(post_b.text))
 
     if method == "heuristic":
         return extract_heuristic_crux(
@@ -372,9 +424,17 @@ def build_graph(
     method: str,
     dry_run: bool,
     cache_path: Path,
+    n_clusters: int = DEFAULT_CLUSTERS,
+    authored_path: Path = AUTHORED_CRUXES_PATH,
 ) -> dict:
-    positions = compute_pca_positions(authors, grouped)
+    coords = compute_pca_coords(authors, grouped)
+    positions = {
+        author: {"x": float(row[0]), "y": float(row[1]), "z": float(row[2])}
+        for author, row in zip(authors, coords, strict=True)
+    }
+    clusters = compute_clusters(coords, authors, n_clusters)
     cache = load_cache(cache_path)
+    authored = load_authored_cruxes(authored_path) if method == "authored" else {}
 
     nodes = []
     for author in authors:
@@ -387,6 +447,7 @@ def build_graph(
                 "label": author,
                 "post_count": len(author_posts),
                 "sources": sources,
+                "cluster": clusters[author],
                 **pos,
             }
         )
@@ -395,15 +456,17 @@ def build_graph(
     candidate_pairs = find_candidate_pairs(authors, grouped, min_similarity, max_pairs)
 
     edges = []
+    authored_used = 0
     for index, (author_a, author_b, topic_similarity) in enumerate(candidate_pairs):
         post_a, post_b, post_similarity = best_post_pair(author_a, author_b, grouped)
+        is_authored = method == "authored" and authored_pair_key(author_a, author_b) in authored
         cache_key = pair_cache_key(author_a, author_b, post_a.id, post_b.id, method=method)
 
-        if cache_key in cache:
+        if not is_authored and cache_key in cache:
             result = cache[cache_key]
             log(f"  cache hit: {author_a} vs {author_b}")
         else:
-            log(f"  extracting crux: {author_a} vs {author_b}")
+            log(f"  extracting crux ({'authored' if is_authored else method}): {author_a} vs {author_b}")
             result = extract_crux(
                 post_a,
                 post_b,
@@ -411,8 +474,9 @@ def build_graph(
                 author_b,
                 method=method,
                 dry_run=dry_run,
+                authored=authored,
             )
-            if not dry_run:
+            if not dry_run and not is_authored:
                 append_cache(cache_path, cache_key, result)
 
         if not result.get("has_crux"):
@@ -422,12 +486,16 @@ def build_graph(
         if crux_type not in {"empirical", "values", "prediction"}:
             crux_type = "empirical"
 
+        if is_authored:
+            authored_used += 1
+
         edges.append(
             {
                 "id": f"edge_{index}",
                 "source": id_map[author_a],
                 "target": id_map[author_b],
                 "type": crux_type,
+                "origin": "authored" if is_authored else method,
                 "topic_similarity": round(topic_similarity, 4),
                 "post_similarity": round(post_similarity, 4),
                 "crux_question": result.get("crux_question"),
@@ -449,11 +517,70 @@ def build_graph(
             "author_count": len(authors),
             "candidate_pair_count": len(candidate_pairs),
             "edge_count": len(edges),
+            "authored_edge_count": authored_used,
+            "cluster_count": len(set(clusters.values())),
             "pca_components": 3,
         },
         "nodes": nodes,
         "edges": edges,
     }
+
+
+CSS_RULE = re.compile(r"[.#]?[A-Za-z][\w ,.>:*\[\]()=!\"'%+\-]*\{[^{}]*\}")
+MD_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+
+
+def clean_passage(text: str) -> str:
+    """Strip HTML tags, inline MathJax CSS, and markdown link syntax."""
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = CSS_RULE.sub(" ", text)
+    text = MD_LINK.sub(r"\1", text)
+    text = re.sub(r"[*_`>#]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def export_pairs(
+    authors: list[str],
+    grouped: dict[str, list[Post]],
+    *,
+    min_similarity: float,
+    max_pairs: int,
+    passage_chars: int,
+    output: Path,
+) -> int:
+    """Dump candidate author pairs + their best post pair for offline authoring."""
+    candidate_pairs = find_candidate_pairs(authors, grouped, min_similarity, max_pairs)
+    rows = []
+    for author_a, author_b, topic_similarity in candidate_pairs:
+        post_a, post_b, post_similarity = best_post_pair(author_a, author_b, grouped)
+        rows.append(
+            {
+                "key": authored_pair_key(author_a, author_b),
+                "author_a": author_a,
+                "author_b": author_b,
+                "topic_similarity": round(topic_similarity, 4),
+                "post_similarity": round(post_similarity, 4),
+                "post_a": {
+                    "title": post_a.title,
+                    "url": post_a.url,
+                    "source": post_a.source,
+                    "date": post_a.date_published,
+                    "text": truncate(clean_passage(post_a.text), passage_chars),
+                },
+                "post_b": {
+                    "title": post_b.title,
+                    "url": post_b.url,
+                    "source": post_b.source,
+                    "date": post_b.date_published,
+                    "text": truncate(clean_passage(post_b.text), passage_chars),
+                },
+            }
+        )
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    log(f"Wrote {output} ({len(rows)} candidate pairs)")
+    return 0
 
 
 def parse_args() -> argparse.Namespace:
@@ -462,6 +589,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--top-authors", type=int, default=25)
     parser.add_argument("--min-similarity", type=float, default=0.08)
     parser.add_argument("--max-pairs", type=int, default=40)
+    parser.add_argument("--clusters", type=int, default=DEFAULT_CLUSTERS)
     parser.add_argument(
         "--output",
         type=Path,
@@ -476,9 +604,21 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--method",
-        choices=("heuristic", "anthropic"),
-        default="heuristic",
-        help="Crux extraction method (default: heuristic, no API key needed)",
+        choices=("authored", "heuristic", "anthropic"),
+        default="authored",
+        help="Crux source (default: authored — baked-in, no API key needed)",
+    )
+    parser.add_argument(
+        "--export-pairs",
+        type=Path,
+        default=None,
+        help="Dump candidate post pairs to this JSON path and exit (for offline authoring)",
+    )
+    parser.add_argument(
+        "--passage-chars",
+        type=int,
+        default=2_000,
+        help="Max chars per passage when exporting pairs",
     )
     parser.add_argument(
         "--dry-run",
@@ -495,6 +635,16 @@ def main() -> int:
     grouped = posts_by_author(posts, authors)
     log(f"Loaded {len(posts)} posts across {len(authors)} authors")
 
+    if args.export_pairs is not None:
+        return export_pairs(
+            authors,
+            grouped,
+            min_similarity=args.min_similarity,
+            max_pairs=args.max_pairs,
+            passage_chars=args.passage_chars,
+            output=args.export_pairs,
+        )
+
     log("Building graph...")
     graph = build_graph(
         posts,
@@ -505,11 +655,17 @@ def main() -> int:
         method=args.method,
         dry_run=args.dry_run,
         cache_path=args.cache,
+        n_clusters=args.clusters,
     )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(graph, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    log(f"Wrote {args.output} ({graph['meta']['edge_count']} edges, {graph['meta']['author_count']} nodes)")
+    log(
+        f"Wrote {args.output} ({graph['meta']['edge_count']} edges, "
+        f"{graph['meta']['authored_edge_count']} authored, "
+        f"{graph['meta']['author_count']} nodes, "
+        f"{graph['meta']['cluster_count']} clusters)"
+    )
     return 0
 
 

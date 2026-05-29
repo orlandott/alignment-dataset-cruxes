@@ -47,6 +47,7 @@ For each candidate author pair, the pipeline:
 4. Builds a crux question from those terms (e.g. *"To what extent does {topic} require {term_a} versus {term_b}?"*)
 5. Classifies type (`empirical`, `prediction`, `values`) from keyword rules
 6. Extracts 1–2 evidence sentences per post containing the top contrast term
+7. Summarizes each post's core **claim(s)** — the sentences that read most like the author's main assertion (assertion cues + topic salience + position), 1–2 per post
 
 Edges are included only when term contrast exceeds a threshold (posts are meaningfully divergent).
 
@@ -65,7 +66,7 @@ Options:
 Output `cruxes.json` schema:
 
 - **nodes** — authors with `post_count`, `x`/`y`/`z` (PCA), sized for the 3D graph
-- **edges** — cruxes with `type` (`empirical` | `values` | `prediction`), question, evidence quotes, and links to source posts
+- **edges** — cruxes with `type` (`empirical` | `values` | `prediction`), question, evidence quotes, and links to source posts. Each linked post (`post_a`/`post_b`) also carries a `claims` array — short summaries of the main claim(s) that post makes
 
 ## Deploy (GitHub Pages)
 

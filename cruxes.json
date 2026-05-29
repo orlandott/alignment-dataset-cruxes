@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-05-29T14:16:09.492698+00:00",
+    "generated_at": "2026-05-29T14:31:20.174159+00:00",
     "dataset": "StampyAI/alignment-research-dataset",
     "splits": [
       "lesswrong",
@@ -12,6 +12,8 @@
     "author_count": 25,
     "candidate_pair_count": 40,
     "edge_count": 39,
+    "authored_edge_count": 0,
+    "cluster_count": 5,
     "pca_components": 3
   },
   "nodes": [
@@ -22,6 +24,7 @@
       "sources": [
         "alignmentforum"
       ],
+      "cluster": 0,
       "x": -0.09457299733908073,
       "y": 0.005414124903006501,
       "z": -0.13005843084270816
@@ -33,6 +36,7 @@
       "sources": [
         "alignmentforum"
       ],
+      "cluster": 4,
       "x": -0.08718258890885391,
       "y": -0.33255624632975506,
       "z": 0.001128315152068115
@@ -45,6 +49,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 2,
       "x": 0.016143027026835555,
       "y": 0.5730954804478354,
       "z": 0.055175300944212975
@@ -57,6 +62,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.0859086713355035,
       "y": -0.026804570049182786,
       "z": -0.09922274388604682
@@ -69,6 +75,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.08728286568902124,
       "y": 0.04452631119120424,
       "z": -0.09629396321767453
@@ -81,6 +88,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.08848559627909405,
       "y": 0.15650589099902515,
       "z": -0.0171360686452304
@@ -93,6 +101,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.08964568078748036,
       "y": -0.02945545098245702,
       "z": -0.1043359930354
@@ -105,6 +114,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 4,
       "x": -0.047547336438735655,
       "y": -0.023752936902397038,
       "z": 0.12433527461446815
@@ -116,6 +126,7 @@
       "sources": [
         "alignmentforum"
       ],
+      "cluster": 0,
       "x": -0.09984222442784534,
       "y": 0.042776143814639365,
       "z": -0.1392993381464519
@@ -128,6 +139,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.07324792695241444,
       "y": -0.0180587872031,
       "z": -0.05571781869061952
@@ -140,6 +152,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.06704936827157205,
       "y": -0.014532624633898678,
       "z": -0.03568715676472929
@@ -152,6 +165,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.09020876535736029,
       "y": -0.10441209829890331,
       "z": -0.04277938707669146
@@ -164,6 +178,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 4,
       "x": -0.060414078503122665,
       "y": -0.13142020714051372,
       "z": 0.04342105068908932
@@ -176,6 +191,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 1,
       "x": 0.6410369259755576,
       "y": -0.12962247123013185,
       "z": -0.06864701315371093
@@ -188,6 +204,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.07648397372759698,
       "y": 0.08458724839903563,
       "z": 0.016820725217756707
@@ -200,6 +217,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.06651037476738392,
       "y": -0.08442645696575284,
       "z": -0.02894783509348103
@@ -212,6 +230,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.08761849329163607,
       "y": -0.055742831340313,
       "z": -0.10648179533461408
@@ -224,6 +243,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 4,
       "x": -0.05795339416101064,
       "y": -0.14022173539640811,
       "z": 0.16898408308377735
@@ -236,6 +256,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 2,
       "x": -0.06241328246165024,
       "y": 0.3427922382564871,
       "z": 0.20087252733986138
@@ -248,6 +269,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 1,
       "x": 1.0,
       "y": 0.04434574611571434,
       "z": -0.028795106024571
@@ -260,6 +282,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 3,
       "x": -0.002933713332935114,
       "y": -0.13990983258473375,
       "z": 0.6628365987307295
@@ -271,6 +294,7 @@
       "sources": [
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.05615161627020983,
       "y": 0.03156490460532065,
       "z": 0.024990974226983407
@@ -282,6 +306,7 @@
       "sources": [
         "alignmentforum"
       ],
+      "cluster": 0,
       "x": -0.09949945043626207,
       "y": 0.04528337554598975,
       "z": -0.1336286169301471
@@ -293,6 +318,7 @@
       "sources": [
         "alignmentforum"
       ],
+      "cluster": 0,
       "x": -0.09131273873982228,
       "y": -0.08005940747629785,
       "z": -0.10235175474750614
@@ -305,6 +331,7 @@
         "alignmentforum",
         "lesswrong"
       ],
+      "cluster": 0,
       "x": -0.08491481552380445,
       "y": -0.05991580774441418,
       "z": -0.10918182840936405
@@ -316,6 +343,7 @@
       "source": "Scott_Garrabrant",
       "target": "Diffractor",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.9799,
       "post_similarity": 0.9776,
       "crux_question": "To what extent does display require boundaries versus unifying?",
@@ -327,7 +355,11 @@
         "url": "https://www.alignmentforum.org/posts/SZjHimszxqjNJzQWK/boundaries-vs-frames",
         "source": "alignmentforum",
         "date": "2022-10-31T15:14:37Z",
-        "author": "Scott Garrabrant"
+        "author": "Scott Garrabrant",
+        "claims": [
+          "The factorization into objects is a different type than the drawing of the boundaries.) Getting Past the Physical Frame ------------------------------- The main practical reason I think we need to work with frames is that we are simply not…",
+          "A boundary partitions the world into an inside and an outside."
+        ]
       },
       "post_b": {
         "id": "1ca19f950793dac3616e0164b4abfe8b",
@@ -335,7 +367,11 @@
         "url": "https://www.alignmentforum.org/posts/RZNmNwc9SxdKayeQh/unifying-bargaining-notions-2-2",
         "source": "alignmentforum",
         "date": "2022-07-27T03:40:31Z",
-        "author": "Diffractor"
+        "author": "Diffractor",
+        "claims": [
+          "**CoCo Equilibrium Questions** There are several questions we could ask about CoCo equilibria.",
+          "Now, at the point of interest, this means that we just went from 3 curnits/AliceUtilon to 3 curnits/100 AliceUtilons."
+        ]
       }
     },
     {
@@ -343,6 +379,7 @@
       "source": "johnswentworth",
       "target": "Diffractor",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.639,
       "post_similarity": 0.9809,
       "crux_question": "To what extent does display require bits versus tex frak?",
@@ -354,7 +391,11 @@
         "url": "https://www.alignmentforum.org/posts/6rZroG3mztowktJzp/how-many-bits-of-optimization-can-one-bit-of-observation",
         "source": "alignmentforum",
         "date": "2023-04-26T00:26:23Z",
-        "author": "johnswentworth"
+        "author": "johnswentworth",
+        "claims": [
+          "So there’s this thing where a system can perform more bits of optimization on its environment by observing some bits of information from its environment.",
+          "by “observing 1 bit”, 1 additional bit of optimization can be performed via the actions."
+        ]
       },
       "post_b": {
         "id": "a293b770b2ede95915d9384675524ec7",
@@ -362,7 +403,11 @@
         "url": "https://www.alignmentforum.org/posts/d96dDEYMfnN2St3Bj/infrafunctions-and-robust-optimization",
         "source": "alignmentforum",
         "date": "2023-04-27T19:25:12Z",
-        "author": "Diffractor"
+        "author": "Diffractor",
+        "claims": [
+          "a reference distribution ν, where your utility function is U, corresponds to worst-casing amongst the following set of functions for some ϵ.",
+          "Infrafunctions shouldn't collapse into utility functions."
+        ]
       }
     },
     {
@@ -370,6 +415,7 @@
       "source": "johnswentworth",
       "target": "Scott_Garrabrant",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.6261,
       "post_similarity": 0.9925,
       "crux_question": "To what extent does display require bits versus question?",
@@ -381,7 +427,11 @@
         "url": "https://www.alignmentforum.org/posts/6rZroG3mztowktJzp/how-many-bits-of-optimization-can-one-bit-of-observation",
         "source": "alignmentforum",
         "date": "2023-04-26T00:26:23Z",
-        "author": "johnswentworth"
+        "author": "johnswentworth",
+        "claims": [
+          "So there’s this thing where a system can perform more bits of optimization on its environment by observing some bits of information from its environment.",
+          "by “observing 1 bit”, 1 additional bit of optimization can be performed via the actions."
+        ]
       },
       "post_b": {
         "id": "258279c5e72a3d0458baff71602f2932",
@@ -389,7 +439,10 @@
         "url": "https://www.alignmentforum.org/posts/uJnR4YmG5Kq9FfTey/concave-utility-question",
         "source": "alignmentforum",
         "date": "2023-04-15T00:14:59Z",
-        "author": "Scott Garrabrant"
+        "author": "Scott Garrabrant",
+        "claims": [
+          "**[ANSWER: NO]** (If no, how can we salvage C4, by adding or changing some axioms?) Here are some sub-questions that would constitute significant partial progress, and that I think are interesting in their own right: Q2: Do A1, A2, A3, and…"
+        ]
       }
     },
     {
@@ -397,6 +450,7 @@
       "source": "Akash",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.5738,
       "post_similarity": 0.3491,
       "crux_question": "To what extent does mentors require scholars versus safety?",
@@ -408,7 +462,11 @@
         "url": "https://www.lesswrong.com/posts/wYEwx6xcY2JxBJsfA/qualities-that-alignment-mentors-value-in-junior-researchers",
         "source": "lesswrong",
         "date": "2023-02-14T23:27:41Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "Mentors noted that their most promising scholars were very agentic; they often found other scholars in the program who could help them or other Berkeley researchers who could help them.",
+          "* What are some important qualities or skills that you see missing from most MATS scholars?"
+        ]
       },
       "post_b": {
         "id": "7afc8cb064f79090f1b9a83298d5a0e9",
@@ -416,7 +474,11 @@
         "url": "https://www.alignmentforum.org/posts/EjX63wQoMSoCHMrmY/announcing-ai-safety-mentors-and-mentees",
         "source": "alignmentforum",
         "date": "2022-11-23T15:21:13Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "One key design component of the M&M program is that the overhead is very small for both mentors and mentees.",
+          "We expect nearly all mentees to do this next to their current occupation, the program is not designed to be full-time."
+        ]
       }
     },
     {
@@ -424,6 +486,7 @@
       "source": "johnswentworth",
       "target": "TurnTrout",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.5628,
       "post_similarity": 0.8996,
       "crux_question": "To what extent does display require font versus model?",
@@ -435,7 +498,11 @@
         "url": "https://www.alignmentforum.org/posts/N2JcFZ3LCCsnK2Fep/the-minimal-latents-approach-to-natural-abstractions",
         "source": "alignmentforum",
         "date": "2022-12-20T01:22:25Z",
-        "author": "johnswentworth"
+        "author": "johnswentworth",
+        "claims": [
+          "“Minimal” Latents ----------------- The key condition for a valid latent is that each instance be independent given the latent.",
+          "Is that highly redundant information enough to satisfy our new independence condition?"
+        ]
       },
       "post_b": {
         "id": "64877a97bf7d4fe600ad8b05411ccd4e",
@@ -443,7 +510,11 @@
         "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
         "source": "alignmentforum",
         "date": "2023-06-20T01:43:12Z",
-        "author": "TurnTrout"
+        "author": "TurnTrout",
+        "claims": [
+          "--- Suppose I claim to understand how the model works.",
+          "Developers probably have to truly understand the model in order to predict it so finely."
+        ]
       }
     },
     {
@@ -451,6 +522,7 @@
       "source": "So8res",
       "target": "Akash",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.5432,
       "post_similarity": 0.37,
       "crux_question": "To what extent does alignment require deceptive versus plan?",
@@ -462,7 +534,11 @@
         "url": "https://www.alignmentforum.org/posts/XWwvwytieLtEWaFJX/deep-deceptiveness",
         "source": "alignmentforum",
         "date": "2023-03-21T02:51:53Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "The monitoring thread queues one subthread to describe the problem (including the wetlab, and the operators, and what it knows about the correlation), another thread to translate that all into the abstract graph format, and a third thread…",
+          "(It, too, is having lots of “deceptive” thoughts culled.) The monitoring thread is resummoned."
+        ]
       },
       "post_b": {
         "id": "15be2008e9901266c554a65defeddd5d",
@@ -470,7 +546,10 @@
         "url": "https://www.lesswrong.com/posts/FBG7AghvvP7fPYzkx/my-thoughts-on-openai-s-alignment-plan-1",
         "source": "lesswrong",
         "date": "2022-12-30T19:33:15Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "*Balance between capabilities research and alignment research* 1."
+        ]
       }
     },
     {
@@ -478,6 +557,7 @@
       "source": "johnswentworth",
       "target": "So8res",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.5423,
       "post_similarity": 0.9776,
       "crux_question": "To what extent does display require tex versus openai?",
@@ -489,7 +569,11 @@
         "url": "https://www.alignmentforum.org/posts/6rZroG3mztowktJzp/how-many-bits-of-optimization-can-one-bit-of-observation",
         "source": "alignmentforum",
         "date": "2023-04-26T00:26:23Z",
-        "author": "johnswentworth"
+        "author": "johnswentworth",
+        "claims": [
+          "So there’s this thing where a system can perform more bits of optimization on its environment by observing some bits of information from its environment.",
+          "by “observing 1 bit”, 1 additional bit of optimization can be performed via the actions."
+        ]
       },
       "post_b": {
         "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
@@ -497,7 +581,11 @@
         "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
         "source": "lesswrong",
         "date": "2023-03-03T23:01:30Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "(Though I don’t want this to take away from the positive aspects of the post, since I think these are very important as well.",
+          "**Sam’s post:**We believe that the future of humanity should be determined by humanity, and that it′s important to share information about progress with the public."
+        ]
       }
     },
     {
@@ -505,6 +593,7 @@
       "source": "Steven_Byrnes",
       "target": "So8res",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.5238,
       "post_similarity": 0.3335,
       "crux_question": "To what extent does com require process versus truths?",
@@ -516,7 +605,11 @@
         "url": "https://www.alignmentforum.org/posts/D4gEDdqWrgDPMtasc/thoughts-on-process-based-supervision-1",
         "source": "alignmentforum",
         "date": "2023-07-17T14:08:57Z",
-        "author": "Steven Byrnes"
+        "author": "Steven Byrnes",
+        "claims": [
+          "For this section, you get to role-play as the AI which has been trained under process-based supervision.",
+          "So in conclusion, I think my answer is **yes, this does actually solve that subproblem**."
+        ]
       },
       "post_b": {
         "id": "4555935df2af0a4950e93103e47f4091",
@@ -524,7 +617,11 @@
         "url": "https://www.alignmentforum.org/posts/SpDHvbcJsiE5mxBzj/truth-and-advantage-response-to-a-draft-of-ai-safety-seems",
         "source": "alignmentforum",
         "date": "2023-03-22T03:36:03Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "(2) It's missing some stuff that I think is pretty important.",
+          "The problem with (a) is that it's alignment-complete, in the strong/hard sense."
+        ]
       }
     },
     {
@@ -532,6 +629,7 @@
       "source": "johnswentworth",
       "target": "paulfchristiano",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.5178,
       "post_similarity": 0.9902,
       "crux_question": "To what extent does display require image versus algorithmic questions?",
@@ -543,7 +641,11 @@
         "url": "https://www.alignmentforum.org/posts/N2JcFZ3LCCsnK2Fep/the-minimal-latents-approach-to-natural-abstractions",
         "source": "alignmentforum",
         "date": "2022-12-20T01:22:25Z",
-        "author": "johnswentworth"
+        "author": "johnswentworth",
+        "claims": [
+          "“Minimal” Latents ----------------- The key condition for a valid latent is that each instance be independent given the latent.",
+          "Is that highly redundant information enough to satisfy our new independence condition?"
+        ]
       },
       "post_b": {
         "id": "29893942cc97da88fa98a1944aa7b183",
@@ -551,7 +653,10 @@
         "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
         "source": "alignmentforum",
         "date": "2023-05-03T23:30:08Z",
-        "author": "paulfchristiano"
+        "author": "paulfchristiano",
+        "claims": [
+          "We’ll also consider smaller prizes for partial progress, or anything that we find helpful for either solving the problem or realizing we should give up on it."
+        ]
       }
     },
     {
@@ -559,6 +664,7 @@
       "source": "Charlie_Steiner",
       "target": "Akash",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.5025,
       "post_similarity": 0.2857,
       "crux_question": "To what extent does alignment require tools versus taxes?",
@@ -570,7 +676,11 @@
         "url": "https://www.alignmentforum.org/posts/pxiaLFjyr4WPmFdcm/take-2-building-tools-to-help-build-fai-is-a-legitimate",
         "source": "alignmentforum",
         "date": "2022-12-03T00:54:03Z",
-        "author": "Charlie Steiner"
+        "author": "Charlie Steiner",
+        "claims": [
+          "Despite either being simulators or making plans only in a toy model of the world, such AI really does have the potential to transform intellectual work, and I think it makes a lot of sense for there to be some people doing work to make the…",
+          "It turns out that other people would *also* like to use souped-up autocomplete, smart literature search, code assistants, and similar."
+        ]
       },
       "post_b": {
         "id": "9fc38fbf63c9cf1a3b62cfa85c97b175",
@@ -578,7 +688,10 @@
         "url": "https://www.lesswrong.com/posts/2BSHhH3DSeme8gBBC/linkpost-jan-leike-on-three-kinds-of-alignment-taxes",
         "source": "lesswrong",
         "date": "2023-01-06T23:57:35Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "Let’s distinguish three different types of alignment taxes: > > 1."
+        ]
       }
     },
     {
@@ -586,6 +699,7 @@
       "source": "evhub",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4963,
       "post_similarity": 0.3112,
       "crux_question": "To what extent does deceptive require training versus alignment?",
@@ -597,7 +711,11 @@
         "url": "https://www.alignmentforum.org/posts/a2Bxq4g2sPZwKiQmK/sticky-goals-a-concrete-experiment-for-understanding",
         "source": "alignmentforum",
         "date": "2022-09-02T21:57:08Z",
-        "author": "evhub"
+        "author": "evhub",
+        "claims": [
+          "Concrete example: Fine-tune a language model to mimic 4chan.",
+          "If we see very little goal stickiness, that might just be because essentially nothing is sticky and we shouldn’t be conceptualizing anything as path-dependent to begin with."
+        ]
       },
       "post_b": {
         "id": "55659f0b5ff3545cd73dcb555e657c5c",
@@ -605,7 +723,11 @@
         "url": "https://www.alignmentforum.org/posts/oBFMbhQMt9HkmfF6d/why-deceptive-alignment-matters-for-agi-safety",
         "source": "alignmentforum",
         "date": "2022-09-15T13:38:53Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "Thus, I don’t think most academics will work on deceptive alignment until it is incentivized which might be too late.",
+          "For all these reasons, I think that safety-conscious researchers have a special reason to work on deceptive alignment."
+        ]
       }
     },
     {
@@ -613,6 +735,7 @@
       "source": "Steven_Byrnes",
       "target": "Akash",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4954,
       "post_similarity": 0.3389,
       "crux_question": "To what extent does plan require moon versus openai?",
@@ -624,7 +747,10 @@
         "url": "https://www.alignmentforum.org/posts/Hi7zurzkCog336EC2/plan-for-mediocre-alignment-of-brain-like-model-based-rl-agi",
         "source": "alignmentforum",
         "date": "2023-03-13T14:11:33Z",
-        "author": "Steven Byrnes"
+        "author": "Steven Byrnes",
+        "claims": [
+          "Or that human flourishing is just another term for hydrogen?"
+        ]
       },
       "post_b": {
         "id": "15be2008e9901266c554a65defeddd5d",
@@ -632,7 +758,10 @@
         "url": "https://www.lesswrong.com/posts/FBG7AghvvP7fPYzkx/my-thoughts-on-openai-s-alignment-plan-1",
         "source": "lesswrong",
         "date": "2022-12-30T19:33:15Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "*Balance between capabilities research and alignment research* 1."
+        ]
       }
     },
     {
@@ -640,6 +769,7 @@
       "source": "Stuart_Armstrong",
       "target": "johnswentworth",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4921,
       "post_similarity": 0.8596,
       "crux_question": "To what extent does display require alignment versus ontology?",
@@ -651,7 +781,10 @@
         "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
         "source": "alignmentforum",
         "date": "2023-09-28T16:31:20Z",
-        "author": "Stuart_Armstrong"
+        "author": "Stuart_Armstrong",
+        "claims": [
+          "But as the AI’s power rises, the alignment methods must be better and better."
+        ]
       },
       "post_b": {
         "id": "a6408e1dcb66b86adec8f8c4aa31eb2b",
@@ -659,7 +792,11 @@
         "url": "https://www.alignmentforum.org/posts/sxhfSBej6gdAwcn7X/coordinate-free-interpretability-theory",
         "source": "alignmentforum",
         "date": "2022-09-14T23:33:50Z",
-        "author": "johnswentworth"
+        "author": "johnswentworth",
+        "claims": [
+          "We should be able to transform any layer to any coordinate system, and our interpretability procedure should still assign the same meaning to the same (transformed) internal structures.",
+          "What Kind Of Coordinate Free Internal Structure Is Even Possible?"
+        ]
       }
     },
     {
@@ -667,6 +804,7 @@
       "source": "So8res",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4875,
       "post_similarity": 0.422,
       "crux_question": "To what extent does capabilities require research versus work?",
@@ -678,7 +816,10 @@
         "url": "https://www.alignmentforum.org/posts/BinkknLBYxskMXuME/if-interpretability-research-goes-well-it-may-get-dangerous",
         "source": "alignmentforum",
         "date": "2023-04-03T21:48:19Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "My goal in writing this post, though, is mostly to keep the Overton window open around the claim that there is in fact a tradeoff here, that there are reasons to close even interpretability research."
+        ]
       },
       "post_b": {
         "id": "1dddc776294070e5d92003736b746569",
@@ -686,7 +827,11 @@
         "url": "https://www.alignmentforum.org/posts/iDNEjbdHhjzvLLAmm/should-we-publish-mechanistic-interpretability-research",
         "source": "alignmentforum",
         "date": "2023-04-21T16:19:41Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "Furthermore, hype about mechanistic interpretability could even move some researchers from generic capabilities work to interpretability.",
+          "**Motivation for new insight:**Interpretability work can generate an insight that is then used as a motivation for capabilities work."
+        ]
       }
     },
     {
@@ -694,6 +839,7 @@
       "source": "paulfchristiano",
       "target": "So8res",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.4793,
       "post_similarity": 0.9897,
       "crux_question": "To what extent does display require font versus openai?",
@@ -705,7 +851,10 @@
         "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
         "source": "alignmentforum",
         "date": "2023-05-03T23:30:08Z",
-        "author": "paulfchristiano"
+        "author": "paulfchristiano",
+        "claims": [
+          "We’ll also consider smaller prizes for partial progress, or anything that we find helpful for either solving the problem or realizing we should give up on it."
+        ]
       },
       "post_b": {
         "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
@@ -713,7 +862,11 @@
         "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
         "source": "lesswrong",
         "date": "2023-03-03T23:01:30Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "(Though I don’t want this to take away from the positive aspects of the post, since I think these are very important as well.",
+          "**Sam’s post:**We believe that the future of humanity should be determined by humanity, and that it′s important to share information about progress with the public."
+        ]
       }
     },
     {
@@ -721,6 +874,7 @@
       "source": "Charlie_Steiner",
       "target": "So8res",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4757,
       "post_similarity": 0.3958,
       "crux_question": "To what extent does theory require magic versus diamond?",
@@ -732,7 +886,11 @@
         "url": "https://www.alignmentforum.org/posts/uz2mdPtdBnaXpXPmT/shard-theory-alignment-has-important-often-overlooked-free",
         "source": "alignmentforum",
         "date": "2023-01-20T09:30:30Z",
-        "author": "Charlie Steiner"
+        "author": "Charlie Steiner",
+        "claims": [
+          "The part of the magic I think we're not ready for is self-reflectivity.",
+          "At best we need more abstract thought about this issue in order to figure out what an approach might even look like, and at worst I think this is a problem the necessitates a different approach."
+        ]
       },
       "post_b": {
         "id": "6bb7f24aeb9f8cfb10d5de5201e1ec7f",
@@ -740,7 +898,10 @@
         "url": "https://www.alignmentforum.org/posts/Aet2mbnK7GDDfrEQu/contra-shard-theory-in-the-context-of-the-diamond-maximizer",
         "source": "alignmentforum",
         "date": "2022-10-13T23:51:30Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "Finally, I'll note that the diamond maximization problem is not in fact the problem \"build an AI that makes a little diamond\", nor even \"build an AI that probably makes a decent amount of diamond, while also spending lots of other resource…"
+        ]
       }
     },
     {
@@ -748,6 +909,7 @@
       "source": "TurnTrout",
       "target": "So8res",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4722,
       "post_similarity": 0.932,
       "crux_question": "To what extent does display require know versus font?",
@@ -759,7 +921,11 @@
         "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
         "source": "alignmentforum",
         "date": "2023-06-20T01:43:12Z",
-        "author": "TurnTrout"
+        "author": "TurnTrout",
+        "claims": [
+          "--- Suppose I claim to understand how the model works.",
+          "Developers probably have to truly understand the model in order to predict it so finely."
+        ]
       },
       "post_b": {
         "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
@@ -767,7 +933,11 @@
         "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
         "source": "lesswrong",
         "date": "2023-03-03T23:01:30Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "(Though I don’t want this to take away from the positive aspects of the post, since I think these are very important as well.",
+          "**Sam’s post:**We believe that the future of humanity should be determined by humanity, and that it′s important to share information about progress with the public."
+        ]
       }
     },
     {
@@ -775,6 +945,7 @@
       "source": "Stuart_Armstrong",
       "target": "TurnTrout",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4659,
       "post_similarity": 0.9371,
       "crux_question": "To what extent does display require power versus width?",
@@ -786,7 +957,10 @@
         "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
         "source": "alignmentforum",
         "date": "2023-09-28T16:31:20Z",
-        "author": "Stuart_Armstrong"
+        "author": "Stuart_Armstrong",
+        "claims": [
+          "But as the AI’s power rises, the alignment methods must be better and better."
+        ]
       },
       "post_b": {
         "id": "64877a97bf7d4fe600ad8b05411ccd4e",
@@ -794,7 +968,11 @@
         "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
         "source": "alignmentforum",
         "date": "2023-06-20T01:43:12Z",
-        "author": "TurnTrout"
+        "author": "TurnTrout",
+        "claims": [
+          "--- Suppose I claim to understand how the model works.",
+          "Developers probably have to truly understand the model in order to predict it so finely."
+        ]
       }
     },
     {
@@ -802,6 +980,7 @@
       "source": "Eliezer_Yudkowsky",
       "target": "So8res",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4548,
       "post_similarity": 0.4478,
       "crux_question": "To what extent does https require does versus doing?",
@@ -813,7 +992,11 @@
         "url": "https://www.lesswrong.com/posts/oM9pEezyCb4dCsuKq/pausing-ai-developments-isn-t-enough-we-need-to-shut-it-all-1",
         "source": "lesswrong",
         "date": "2023-04-08T00:36:48Z",
-        "author": "Eliezer Yudkowsky"
+        "author": "Eliezer Yudkowsky",
+        "claims": [
+          "It shows an overwhelming gap between how seriously we are taking the problem, and how seriously we needed to take the problem starting 30 years ago.",
+          "It does not say, \"Be willing to *use* nuclear weapons\" to reduce the risk of training runs."
+        ]
       },
       "post_b": {
         "id": "6d1a4ec7fd9e294be06c3fe9ad5a6f18",
@@ -821,7 +1004,10 @@
         "url": "https://www.lesswrong.com/posts/N7DxcLCjfBpEv3QwB/request-stop-advancing-ai-capabilities",
         "source": "lesswrong",
         "date": "2023-05-26T17:42:07Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "To all doing that (directly and purposefully for its own sake, rather than as a mournful negative externality to alignment research): I request you stop."
+        ]
       }
     },
     {
@@ -829,6 +1015,7 @@
       "source": "Steven_Byrnes",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4495,
       "post_similarity": 0.2825,
       "crux_question": "To what extent does https require agi versus summary?",
@@ -840,7 +1027,10 @@
         "url": "https://www.alignmentforum.org/posts/PDx4ueLpvz5gxPEus/why-i-m-not-working-on-debate-rrm-elk-natural-abstractions",
         "source": "alignmentforum",
         "date": "2023-02-10T19:22:38Z",
-        "author": "Steven Byrnes"
+        "author": "Steven Byrnes",
+        "claims": [
+          "Again, I claim that this process necessarily involves “trying to figure things out”, and wherever there’s “trying”, there’s x-risk."
+        ]
       },
       "post_b": {
         "id": "93b885673b0fae78b5a99c3f666fff9a",
@@ -848,7 +1038,10 @@
         "url": "https://www.alignmentforum.org/posts/rxoBY9CMkqDsHt25t/eliciting-latent-knowledge-elk-distillation-summary",
         "source": "alignmentforum",
         "date": "2022-06-08T13:18:51Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "In the previous strategy, the reporter learned to simulate the human model."
+        ]
       }
     },
     {
@@ -856,6 +1049,7 @@
       "source": "Charlie_Steiner",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4454,
       "post_similarity": 0.2444,
       "crux_question": "To what extent does safety require ethics versus program?",
@@ -867,7 +1061,10 @@
         "url": "https://www.alignmentforum.org/posts/23cMcXb2zFbfJKz3n/some-ideas-for-epistles-to-the-ai-ethicists",
         "source": "alignmentforum",
         "date": "2022-09-14T09:07:15Z",
-        "author": "Charlie Steiner"
+        "author": "Charlie Steiner",
+        "claims": [
+          "* The core claim is that getting AIs to want want good things and not bad things is an unsolved ethics problem."
+        ]
       },
       "post_b": {
         "id": "7afc8cb064f79090f1b9a83298d5a0e9",
@@ -875,7 +1072,11 @@
         "url": "https://www.alignmentforum.org/posts/EjX63wQoMSoCHMrmY/announcing-ai-safety-mentors-and-mentees",
         "source": "alignmentforum",
         "date": "2022-11-23T15:21:13Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "One key design component of the M&M program is that the overhead is very small for both mentors and mentees.",
+          "We expect nearly all mentees to do this next to their current occupation, the program is not designed to be full-time."
+        ]
       }
     },
     {
@@ -883,6 +1084,7 @@
       "source": "Dan_H",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4452,
       "post_similarity": 0.2468,
       "crux_question": "To what extent does risks require ais versus auditing?",
@@ -894,7 +1096,10 @@
         "url": "https://www.alignmentforum.org/posts/9dNxz2kjNvPtiZjxj/an-overview-of-catastrophic-ai-risks-summary",
         "source": "alignmentforum",
         "date": "2023-08-18T01:21:25Z",
-        "author": "Dan H"
+        "author": "Dan H",
+        "claims": [
+          "‍In the realm of AI, the race for progress comes at the expense of safety."
+        ]
       },
       "post_b": {
         "id": "ffd0300c3bf91448c9eeaa1191b83d06",
@@ -902,7 +1107,11 @@
         "url": "https://www.alignmentforum.org/posts/LwJwDNFhjurAKFiJm/theories-of-change-for-ai-auditing",
         "source": "alignmentforum",
         "date": "2023-11-13T19:33:44Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "* **What auditors can do**: Auditors can perform AI system evaluations to assess the dangerous capabilities and propensities of AI systems.",
+          "* **What auditors can do**: Auditors can evaluate risks of AI systems before, during, and after pre-training and fine-tuning training-experiments."
+        ]
       }
     },
     {
@@ -910,6 +1119,7 @@
       "source": "Neel_Nanda",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4357,
       "post_similarity": 0.2423,
       "crux_question": "To what extent does ai safety require views versus program?",
@@ -921,7 +1131,11 @@
         "url": "https://www.alignmentforum.org/posts/LbSWMfbAHQnFpApQ7/concrete-advice-for-forming-inside-views-on-ai-safety",
         "source": "alignmentforum",
         "date": "2022-08-17T22:02:02Z",
-        "author": "Neel Nanda"
+        "author": "Neel Nanda",
+        "claims": [
+          "And I think true inside views on AI Safety are *much* harder * Inside views lie on a spectrum.",
+          "+ I think this is true to an extent, but that in practice inside views tend to *feel* true a lot more than they *are* true."
+        ]
       },
       "post_b": {
         "id": "7afc8cb064f79090f1b9a83298d5a0e9",
@@ -929,7 +1143,11 @@
         "url": "https://www.alignmentforum.org/posts/EjX63wQoMSoCHMrmY/announcing-ai-safety-mentors-and-mentees",
         "source": "alignmentforum",
         "date": "2022-11-23T15:21:13Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "One key design component of the M&M program is that the overhead is very small for both mentors and mentees.",
+          "We expect nearly all mentees to do this next to their current occupation, the program is not designed to be full-time."
+        ]
       }
     },
     {
@@ -937,6 +1155,7 @@
       "source": "paulfchristiano",
       "target": "TurnTrout",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4354,
       "post_similarity": 0.9303,
       "crux_question": "To what extent does display require font versus model?",
@@ -948,7 +1167,10 @@
         "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
         "source": "alignmentforum",
         "date": "2023-05-03T23:30:08Z",
-        "author": "paulfchristiano"
+        "author": "paulfchristiano",
+        "claims": [
+          "We’ll also consider smaller prizes for partial progress, or anything that we find helpful for either solving the problem or realizing we should give up on it."
+        ]
       },
       "post_b": {
         "id": "64877a97bf7d4fe600ad8b05411ccd4e",
@@ -956,7 +1178,11 @@
         "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
         "source": "alignmentforum",
         "date": "2023-06-20T01:43:12Z",
-        "author": "TurnTrout"
+        "author": "TurnTrout",
+        "claims": [
+          "--- Suppose I claim to understand how the model works.",
+          "Developers probably have to truly understand the model in order to predict it so finely."
+        ]
       }
     },
     {
@@ -964,6 +1190,7 @@
       "source": "evhub",
       "target": "Akash",
       "type": "values",
+      "origin": "heuristic",
       "topic_similarity": 0.4328,
       "post_similarity": 0.2749,
       "crux_question": "To what extent does path dependence require training versus goal?",
@@ -975,7 +1202,10 @@
         "url": "https://www.alignmentforum.org/posts/bxkWd6WdkPqGmdHEk/path-dependence-in-ml-inductive-biases",
         "source": "alignmentforum",
         "date": "2022-09-10T01:38:23Z",
-        "author": "evhub"
+        "author": "evhub",
+        "claims": [
+          "How predictive of the final model are the properties at the middle of the training run?"
+        ]
       },
       "post_b": {
         "id": "d07f34e40f264f0d787a49dbee0695bf",
@@ -983,7 +1213,11 @@
         "url": "https://www.lesswrong.com/posts/zFoAAD7dfWdczxoLH/winners-of-ai-alignment-awards-research-contest",
         "source": "lesswrong",
         "date": "2023-07-13T16:14:38Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "If an agent is to be shutdownable, it must violate at least one of the antecedent conditions of these theorems.",
+          "The result is that any potential solution to the shutdown problem must result in agents which violate at least one of these two conditions."
+        ]
       }
     },
     {
@@ -991,6 +1225,7 @@
       "source": "Stuart_Armstrong",
       "target": "So8res",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4313,
       "post_similarity": 0.9091,
       "crux_question": "To what extent does display require alignment versus font?",
@@ -1002,7 +1237,10 @@
         "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
         "source": "alignmentforum",
         "date": "2023-09-28T16:31:20Z",
-        "author": "Stuart_Armstrong"
+        "author": "Stuart_Armstrong",
+        "claims": [
+          "But as the AI’s power rises, the alignment methods must be better and better."
+        ]
       },
       "post_b": {
         "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
@@ -1010,7 +1248,11 @@
         "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
         "source": "lesswrong",
         "date": "2023-03-03T23:01:30Z",
-        "author": "So8res"
+        "author": "So8res",
+        "claims": [
+          "(Though I don’t want this to take away from the positive aspects of the post, since I think these are very important as well.",
+          "**Sam’s post:**We believe that the future of humanity should be determined by humanity, and that it′s important to share information about progress with the public."
+        ]
       }
     },
     {
@@ -1018,6 +1260,7 @@
       "source": "paulfchristiano",
       "target": "Diffractor",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.4295,
       "post_similarity": 0.9759,
       "crux_question": "Does the central disagreement turn primarily on display or tex?",
@@ -1029,7 +1272,10 @@
         "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
         "source": "alignmentforum",
         "date": "2023-05-03T23:30:08Z",
-        "author": "paulfchristiano"
+        "author": "paulfchristiano",
+        "claims": [
+          "We’ll also consider smaller prizes for partial progress, or anything that we find helpful for either solving the problem or realizing we should give up on it."
+        ]
       },
       "post_b": {
         "id": "a293b770b2ede95915d9384675524ec7",
@@ -1037,7 +1283,11 @@
         "url": "https://www.alignmentforum.org/posts/d96dDEYMfnN2St3Bj/infrafunctions-and-robust-optimization",
         "source": "alignmentforum",
         "date": "2023-04-27T19:25:12Z",
-        "author": "Diffractor"
+        "author": "Diffractor",
+        "claims": [
+          "a reference distribution ν, where your utility function is U, corresponds to worst-casing amongst the following set of functions for some ϵ.",
+          "Infrafunctions shouldn't collapse into utility functions."
+        ]
       }
     },
     {
@@ -1045,6 +1295,7 @@
       "source": "Rohin_Shah",
       "target": "Akash",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4245,
       "post_similarity": 0.4063,
       "crux_question": "To what extent does goal require test versus alignment?",
@@ -1056,7 +1307,10 @@
         "url": "https://www.alignmentforum.org/posts/Cfe2LMmQC4hHTDZ8r/more-examples-of-goal-misgeneralization",
         "source": "alignmentforum",
         "date": "2022-10-07T14:38:00Z",
-        "author": "Rohin Shah"
+        "author": "Rohin Shah",
+        "claims": [
+          "### Goal misgeneralization is not limited to RL The core feature of goal misgeneralization is that after learning, the system pursues a goal that was correlated with the intended goal in the training situations, but comes apart in some tes…"
+        ]
       },
       "post_b": {
         "id": "6be8d8f6b953622ca866aff538dd3fa2",
@@ -1064,7 +1318,11 @@
         "url": "https://www.alignmentforum.org/posts/JNtGxrusJRpx53Q8L/announcing-ai-alignment-awards-usd100k-research-contests",
         "source": "alignmentforum",
         "date": "2022-11-22T22:19:09Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "Propose ways for researchers to identify when goal misgeneralization is likely to occur 3.",
+          "Goal misgeneralization occurs when a reinforcement learning agent retains its capabilities out-of-distribution yet pursues the wrong goal."
+        ]
       }
     },
     {
@@ -1072,6 +1330,7 @@
       "source": "paulfchristiano",
       "target": "Scott_Garrabrant",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.4227,
       "post_similarity": 0.9949,
       "crux_question": "To what extent does display require appeared versus tex?",
@@ -1083,7 +1342,10 @@
         "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
         "source": "alignmentforum",
         "date": "2023-05-03T23:30:08Z",
-        "author": "paulfchristiano"
+        "author": "paulfchristiano",
+        "claims": [
+          "We’ll also consider smaller prizes for partial progress, or anything that we find helpful for either solving the problem or realizing we should give up on it."
+        ]
       },
       "post_b": {
         "id": "258279c5e72a3d0458baff71602f2932",
@@ -1091,7 +1353,10 @@
         "url": "https://www.alignmentforum.org/posts/uJnR4YmG5Kq9FfTey/concave-utility-question",
         "source": "alignmentforum",
         "date": "2023-04-15T00:14:59Z",
-        "author": "Scott Garrabrant"
+        "author": "Scott Garrabrant",
+        "claims": [
+          "**[ANSWER: NO]** (If no, how can we salvage C4, by adding or changing some axioms?) Here are some sub-questions that would constitute significant partial progress, and that I think are interesting in their own right: Q2: Do A1, A2, A3, and…"
+        ]
       }
     },
     {
@@ -1099,6 +1364,7 @@
       "source": "evhub",
       "target": "adamShimi",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4182,
       "post_similarity": 0.2979,
       "crux_question": "To what extent does https require display versus posts?",
@@ -1110,7 +1376,11 @@
         "url": "https://www.alignmentforum.org/posts/DtkA5jysFZGv7W4qP/training-process-transparency-through-gradient",
         "source": "alignmentforum",
         "date": "2023-07-21T14:52:09Z",
-        "author": "evhub"
+        "author": "evhub",
+        "claims": [
+          "The token produced did not seem to have any relation to the training data.",
+          "Moreover, almost none of the flipped tokens were identified by training data attribution on outlier parameter shifts."
+        ]
       },
       "post_b": {
         "id": "7fc688847c29a5b98079382e274ca9a0",
@@ -1118,7 +1388,8 @@
         "url": "https://www.alignmentforum.org/posts/8jewbj9am99H2oYio/refine-s-first-blog-post-day",
         "source": "alignmentforum",
         "date": "2022-08-13T10:23:10Z",
-        "author": "adamShimi"
+        "author": "adamShimi",
+        "claims": []
       }
     },
     {
@@ -1126,6 +1397,7 @@
       "source": "Steven_Byrnes",
       "target": "Charlie_Steiner",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4139,
       "post_similarity": 0.3509,
       "crux_question": "To what extent does good require agi versus magic?",
@@ -1137,7 +1409,10 @@
         "url": "https://www.alignmentforum.org/posts/Hi7zurzkCog336EC2/plan-for-mediocre-alignment-of-brain-like-model-based-rl-agi",
         "source": "alignmentforum",
         "date": "2023-03-13T14:11:33Z",
-        "author": "Steven Byrnes"
+        "author": "Steven Byrnes",
+        "claims": [
+          "Or that human flourishing is just another term for hydrogen?"
+        ]
       },
       "post_b": {
         "id": "23aa0e3fdcf8203f7ac285f11dbbbf6c",
@@ -1145,7 +1420,11 @@
         "url": "https://www.alignmentforum.org/posts/uz2mdPtdBnaXpXPmT/shard-theory-alignment-has-important-often-overlooked-free",
         "source": "alignmentforum",
         "date": "2023-01-20T09:30:30Z",
-        "author": "Charlie Steiner"
+        "author": "Charlie Steiner",
+        "claims": [
+          "The part of the magic I think we're not ready for is self-reflectivity.",
+          "At best we need more abstract thought about this issue in order to figure out what an approach might even look like, and at worst I think this is a problem the necessitates a different approach."
+        ]
       }
     },
     {
@@ -1153,6 +1432,7 @@
       "source": "adamShimi",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4136,
       "post_similarity": 0.2562,
       "crux_question": "To what extent does https require posts versus elk?",
@@ -1164,7 +1444,8 @@
         "url": "https://www.alignmentforum.org/posts/8jewbj9am99H2oYio/refine-s-first-blog-post-day",
         "source": "alignmentforum",
         "date": "2022-08-13T10:23:10Z",
-        "author": "adamShimi"
+        "author": "adamShimi",
+        "claims": []
       },
       "post_b": {
         "id": "93b885673b0fae78b5a99c3f666fff9a",
@@ -1172,7 +1453,10 @@
         "url": "https://www.alignmentforum.org/posts/rxoBY9CMkqDsHt25t/eliciting-latent-knowledge-elk-distillation-summary",
         "source": "alignmentforum",
         "date": "2022-06-08T13:18:51Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "In the previous strategy, the reporter learned to simulate the human model."
+        ]
       }
     },
     {
@@ -1180,6 +1464,7 @@
       "source": "Stuart_Armstrong",
       "target": "paulfchristiano",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.41,
       "post_similarity": 0.9127,
       "crux_question": "To what extent does display require alignment versus font?",
@@ -1191,7 +1476,10 @@
         "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
         "source": "alignmentforum",
         "date": "2023-09-28T16:31:20Z",
-        "author": "Stuart_Armstrong"
+        "author": "Stuart_Armstrong",
+        "claims": [
+          "But as the AI’s power rises, the alignment methods must be better and better."
+        ]
       },
       "post_b": {
         "id": "29893942cc97da88fa98a1944aa7b183",
@@ -1199,7 +1487,10 @@
         "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
         "source": "alignmentforum",
         "date": "2023-05-03T23:30:08Z",
-        "author": "paulfchristiano"
+        "author": "paulfchristiano",
+        "claims": [
+          "We’ll also consider smaller prizes for partial progress, or anything that we find helpful for either solving the problem or realizing we should give up on it."
+        ]
       }
     },
     {
@@ -1207,6 +1498,7 @@
       "source": "Richard_Ngo",
       "target": "Marius_Hobbhahn",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.409,
       "post_similarity": 0.2517,
       "crux_question": "To what extent does capabilities require misalignment versus work?",
@@ -1218,7 +1510,11 @@
         "url": "https://www.alignmentforum.org/posts/KbyRPCAsWv5GtfrbG/the-alignment-problem-from-a-deep-learning-perspective",
         "source": "alignmentforum",
         "date": "2022-08-10T22:46:47Z",
-        "author": "Richard_Ngo"
+        "author": "Richard_Ngo",
+        "claims": [
+          "However, these goals are fairly task-specific, whereas I’m most concerned about the goals that policies generalize to new tasks and environments.",
+          "I’ll call these internal representations of favored outcomes the *policy’s goals*."
+        ]
       },
       "post_b": {
         "id": "1dddc776294070e5d92003736b746569",
@@ -1226,7 +1522,11 @@
         "url": "https://www.alignmentforum.org/posts/iDNEjbdHhjzvLLAmm/should-we-publish-mechanistic-interpretability-research",
         "source": "alignmentforum",
         "date": "2023-04-21T16:19:41Z",
-        "author": "Marius Hobbhahn"
+        "author": "Marius Hobbhahn",
+        "claims": [
+          "Furthermore, hype about mechanistic interpretability could even move some researchers from generic capabilities work to interpretability.",
+          "**Motivation for new insight:**Interpretability work can generate an insight that is then used as a motivation for capabilities work."
+        ]
       }
     },
     {
@@ -1234,6 +1534,7 @@
       "source": "Richard_Ngo",
       "target": "Akash",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4087,
       "post_similarity": 0.3438,
       "crux_question": "To what extent does alignment require readings versus think?",
@@ -1245,7 +1546,11 @@
         "url": "https://www.alignmentforum.org/posts/jsy8t64Jp5xcuFrXX/agisf-adaptation-for-in-person-groups",
         "source": "alignmentforum",
         "date": "2023-01-13T03:24:58Z",
-        "author": "Richard_Ngo"
+        "author": "Richard_Ngo",
+        "claims": [
+          "In these cases, you may need to begin discussions before everyone is done reading and, going forward, encourage slower readers to take a look at the core readings ahead of future meetings.",
+          "+ Facilitators should feel comfortable cutting off discussions to make sure there’s time to read and discuss all the core readings."
+        ]
       },
       "post_b": {
         "id": "df71df12d194f3257144c6a7745218d1",
@@ -1253,7 +1558,10 @@
         "url": "https://www.lesswrong.com/posts/gcmQyyko8szuyJHyu/resources-that-i-think-new-alignment-researchers-should-know",
         "source": "lesswrong",
         "date": "2022-10-28T22:13:37Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "On the margin, **I think more people should try out these “alternative” approaches**."
+        ]
       }
     },
     {
@@ -1261,6 +1569,7 @@
       "source": "TurnTrout",
       "target": "Diffractor",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4006,
       "post_similarity": 0.9195,
       "crux_question": "To what extent does display require know versus font?",
@@ -1272,7 +1581,11 @@
         "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
         "source": "alignmentforum",
         "date": "2023-06-20T01:43:12Z",
-        "author": "TurnTrout"
+        "author": "TurnTrout",
+        "claims": [
+          "--- Suppose I claim to understand how the model works.",
+          "Developers probably have to truly understand the model in order to predict it so finely."
+        ]
       },
       "post_b": {
         "id": "1ca19f950793dac3616e0164b4abfe8b",
@@ -1280,7 +1593,11 @@
         "url": "https://www.alignmentforum.org/posts/RZNmNwc9SxdKayeQh/unifying-bargaining-notions-2-2",
         "source": "alignmentforum",
         "date": "2022-07-27T03:40:31Z",
-        "author": "Diffractor"
+        "author": "Diffractor",
+        "claims": [
+          "**CoCo Equilibrium Questions** There are several questions we could ask about CoCo equilibria.",
+          "Now, at the point of interest, this means that we just went from 3 curnits/AliceUtilon to 3 curnits/100 AliceUtilons."
+        ]
       }
     },
     {
@@ -1288,6 +1605,7 @@
       "source": "evhub",
       "target": "Charlie_Steiner",
       "type": "empirical",
+      "origin": "heuristic",
       "topic_similarity": 0.4006,
       "post_similarity": 0.2525,
       "crux_question": "To what extent does reward require failures versus magic?",
@@ -1299,7 +1617,11 @@
         "url": "https://www.alignmentforum.org/posts/ChDH335ckdvpxXaXX/model-organisms-of-misalignment-the-case-for-a-new-pillar-of-1",
         "source": "alignmentforum",
         "date": "2023-08-08T01:30:11Z",
-        "author": "evhub"
+        "author": "evhub",
+        "claims": [
+          "Also, model organisms research is just really fun.",
+          "Models finally understand deceptive alignment."
+        ]
       },
       "post_b": {
         "id": "23aa0e3fdcf8203f7ac285f11dbbbf6c",
@@ -1307,7 +1629,11 @@
         "url": "https://www.alignmentforum.org/posts/uz2mdPtdBnaXpXPmT/shard-theory-alignment-has-important-often-overlooked-free",
         "source": "alignmentforum",
         "date": "2023-01-20T09:30:30Z",
-        "author": "Charlie Steiner"
+        "author": "Charlie Steiner",
+        "claims": [
+          "The part of the magic I think we're not ready for is self-reflectivity.",
+          "At best we need more abstract thought about this issue in order to figure out what an approach might even look like, and at worst I think this is a problem the necessitates a different approach."
+        ]
       }
     },
     {
@@ -1315,6 +1641,7 @@
       "source": "paulfchristiano",
       "target": "Akash",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.4001,
       "post_similarity": 0.2871,
       "crux_question": "To what extent does alignment require systems versus https?",
@@ -1326,7 +1653,10 @@
         "url": "https://www.alignmentforum.org/posts/CoZhXrhpQxpy9xw9y/where-i-agree-and-disagree-with-eliezer",
         "source": "alignmentforum",
         "date": "2022-06-19T19:15:56Z",
-        "author": "paulfchristiano"
+        "author": "paulfchristiano",
+        "claims": [
+          "I think this is very unclear and Eliezer is wildly overconfident."
+        ]
       },
       "post_b": {
         "id": "df71df12d194f3257144c6a7745218d1",
@@ -1334,7 +1664,10 @@
         "url": "https://www.lesswrong.com/posts/gcmQyyko8szuyJHyu/resources-that-i-think-new-alignment-researchers-should-know",
         "source": "lesswrong",
         "date": "2022-10-28T22:13:37Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "On the margin, **I think more people should try out these “alternative” approaches**."
+        ]
       }
     },
     {
@@ -1342,6 +1675,7 @@
       "source": "Stuart_Armstrong",
       "target": "Akash",
       "type": "prediction",
+      "origin": "heuristic",
       "topic_similarity": 0.3991,
       "post_similarity": 0.4373,
       "crux_question": "To what extent does goal require image versus alignment?",
@@ -1353,7 +1687,11 @@
         "url": "https://www.alignmentforum.org/posts/DiEWbwrChuzuhJhGr/benchmark-for-successful-concept-extrapolation-avoiding-goal",
         "source": "alignmentforum",
         "date": "2022-07-04T20:48:15Z",
-        "author": "Stuart_Armstrong"
+        "author": "Stuart_Armstrong",
+        "claims": [
+          "An unlabeled dataset has a mix rate of n% if n% of its images are cross type.",
+          "The labeled dataset: smiling faces always say “HAPPY”; non-smiling faces always say “SAD”."
+        ]
       },
       "post_b": {
         "id": "6be8d8f6b953622ca866aff538dd3fa2",
@@ -1361,7 +1699,11 @@
         "url": "https://www.alignmentforum.org/posts/JNtGxrusJRpx53Q8L/announcing-ai-alignment-awards-usd100k-research-contests",
         "source": "alignmentforum",
         "date": "2022-11-22T22:19:09Z",
-        "author": "Akash"
+        "author": "Akash",
+        "claims": [
+          "Propose ways for researchers to identify when goal misgeneralization is likely to occur 3.",
+          "Goal misgeneralization occurs when a reinforcement learning agent retains its capabilities out-of-distribution yet pursues the wrong goal."
+        ]
       }
     }
   ]

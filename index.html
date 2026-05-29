@@ -210,6 +210,30 @@
       line-height: 1.5;
     }
 
+    .claims {
+      margin: 0 0 12px;
+    }
+
+    .claims h4 {
+      margin: 0 0 6px;
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .claims ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .claims li {
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+
     .evidence a {
       color: var(--accent);
       text-decoration: none;
@@ -413,6 +437,14 @@
       panelContent.innerHTML = "";
     }
 
+    function renderClaims(post) {
+      const claims = Array.isArray(post.claims) ? post.claims : [];
+      if (!claims.length) return "";
+      const items = claims.map((claim) => `<li>${escapeHtml(claim)}</li>`).join("");
+      const heading = claims.length > 1 ? "Claims" : "Claim";
+      return `<div class="claims"><h4>${heading}</h4><ul>${items}</ul></div>`;
+    }
+
     function renderEdgePanel(edge) {
       const source = state.nodeById.get(edge.source);
       const target = state.nodeById.get(edge.target);
@@ -423,11 +455,13 @@
         <p class="crux-question">${escapeHtml(edge.crux_question || "No crux question recorded.")}</p>
         <div class="evidence">
           <h3>${formatLabel(edge.post_a.author)} · ${edge.post_a.source}</h3>
+          ${renderClaims(edge.post_a)}
           <blockquote>${escapeHtml(edge.evidence_a || "—")}</blockquote>
           <a href="${escapeAttr(edge.post_a.url)}" target="_blank" rel="noopener">${escapeHtml(edge.post_a.title)}</a>
         </div>
         <div class="evidence">
           <h3>${formatLabel(edge.post_b.author)} · ${edge.post_b.source}</h3>
+          ${renderClaims(edge.post_b)}
           <blockquote>${escapeHtml(edge.evidence_b || "—")}</blockquote>
           <a href="${escapeAttr(edge.post_b.url)}" target="_blank" rel="noopener">${escapeHtml(edge.post_b.title)}</a>
         </div>
