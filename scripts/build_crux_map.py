@@ -42,8 +42,12 @@ from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import normalize
 
 from scripts import comments as comments_mod
-from scripts.double_crux import analyze_top_comment, summarize_comment_claim
-from scripts.post_claims import summarize_claims
+from scripts.double_crux import (
+    analyze_top_comment,
+    format_comment_claim,
+    summarize_comment_claim,
+)
+from scripts.post_claims import looks_like_transcript, summarize_claims
 
 AUTHORED_CLAIMS_PATH = ROOT / "data" / "authored_claims.json"
 AUTHORED_CRUXES_PATH = ROOT / "data" / "authored_cruxes.json"
@@ -232,8 +236,66 @@ def build_tfidf_matrix(texts: list[str]):
     return vectorizer, matrix
 
 
-def compute_post_coords(posts: list[Post]) -> tuple[np.ndarray, TfidfVectorizer, np.ndarray]:
-    """Return (3D coords, fitted vectorizer, tfidf matrix) for the posts.
+def _pick_axis_terms(
+    features: np.ndarray,
+    order: np.ndarray,
+    *,
+    top_n: int,
+) -> list[str]:
+    picked: list[str] = []
+    for idx in order:
+        term = features[idx]
+        if len(term) < 3 or "{" in term or term.startswith("mjx"):
+            continue
+        picked.append(term)
+        if len(picked) >= top_n:
+            break
+    return picked
+
+
+def describe_pca_axes(
+    svd: TruncatedSVD,
+    vectorizer: TfidfVectorizer,
+    matrix,
+    *,
+    top_n: int = 3,
+) -> list[dict]:
+    """Label each SVD axis from distinctive terms at high vs low score poles.
+
+    Returns one entry per component, mapped to scene axes x=PC1, y=PC2, z=PC3.
+    """
+    axis_names = ("x", "y", "z")
+    features = vectorizer.get_feature_names_out()
+    dense = matrix.toarray() if hasattr(matrix, "toarray") else np.asarray(matrix)
+    raw = svd.transform(matrix)
+    evr = svd.explained_variance_ratio_
+    labels: list[dict] = []
+    for i in range(svd.n_components):
+        scores = raw[:, i]
+        hi = scores >= np.percentile(scores, 75)
+        lo = scores <= np.percentile(scores, 25)
+        if not hi.any() or not lo.any():
+            continue
+        hi_mean = dense[hi].mean(axis=0)
+        lo_mean = dense[lo].mean(axis=0)
+        pos = _pick_axis_terms(features, np.argsort(-(hi_mean - lo_mean)), top_n=top_n)
+        neg = _pick_axis_terms(features, np.argsort(hi_mean - lo_mean), top_n=top_n)
+        labels.append(
+            {
+                "axis": axis_names[i],
+                "component": i + 1,
+                "positive": " · ".join(pos),
+                "negative": " · ".join(neg),
+                "variance_explained": round(float(evr[i]), 4),
+            }
+        )
+    return labels
+
+
+def compute_post_coords(
+    posts: list[Post],
+) -> tuple[np.ndarray, TfidfVectorizer, np.ndarray, TruncatedSVD | None]:
+    """Return (3D coords, fitted vectorizer, tfidf matrix, svd) for the posts.
 
     We reduce the TF-IDF matrix to 3 principal components with TruncatedSVD
     (a.k.a. LSA — PCA on the uncentered sparse term matrix), then L2-normalize
@@ -242,7 +304,7 @@ def compute_post_coords(posts: list[Post]) -> tuple[np.ndarray, TfidfVectorizer,
     is what yields balanced, topically meaningful clusters.
     """
     if not posts:
-        return np.zeros((0, 3)), TfidfVectorizer(), np.zeros((0, 0))
+        return np.zeros((0, 3)), TfidfVectorizer(), np.zeros((0, 0)), None
 
     texts = [truncate(clean_text(post.text), 4_000) for post in posts]
     vectorizer, matrix = build_tfidf_matrix(texts)
@@ -250,7 +312,7 @@ def compute_post_coords(posts: list[Post]) -> tuple[np.ndarray, TfidfVectorizer,
     n_features = matrix.shape[1]
     n_components = min(3, len(posts) - 1, n_features - 1)
     if n_components < 1:
-        return np.zeros((len(posts), 3)), vectorizer, matrix
+        return np.zeros((len(posts), 3)), vectorizer, matrix, None
 
     svd = TruncatedSVD(n_components=n_components, random_state=42)
     coords = svd.fit_transform(matrix)
@@ -260,7 +322,7 @@ def compute_post_coords(posts: list[Post]) -> tuple[np.ndarray, TfidfVectorizer,
         pad = np.zeros((coords.shape[0], 3 - coords.shape[1]))
         coords = np.hstack([coords, pad])
 
-    return coords, vectorizer, matrix
+    return coords, vectorizer, matrix, svd
 
 
 def choose_k(coords: np.ndarray, *, min_k: int = MIN_K, max_k: int = MAX_K) -> int:
@@ -383,7 +445,24 @@ def anthropic_double_crux(post: Post, comment: comments_mod.TopComment) -> dict:
 
 
 def post_summary(post: Post) -> list[str]:
-    return get_authored_claims().get(post.id) or summarize_claims(clean_text(post.text))
+    authored = get_authored_claims().get(post.id)
+    if not authored and looks_like_transcript(post.text, post.title):
+        kind = (
+            "podcast episode"
+            if re.search(r"axrp|podcast", post.title or "", re.IGNORECASE)
+            else "recorded discussion"
+        )
+        return [
+            f"This post is a transcript of a {kind}, so it doesn't argue a single "
+            "main claim — open the original to read the conversation."
+        ]
+    claims = authored or summarize_claims(clean_text(post.text))
+    if not claims:
+        return []
+    first = claims[0]
+    if not first.lower().startswith("the main claim is"):
+        first = f"The main claim is: {first}"
+    return [first, *claims[1:]]
 
 
 def resolve_top_comment(
@@ -457,8 +536,9 @@ def build_comment_block(
         # Hand-authored override: trust it for both the disagreement decision
         # and the crux text (the heuristic produces template-y questions).
         has_crux = bool(authored.get("has_crux"))
+        raw_claim = authored.get("comment_claim") or summarize_comment_claim(comment.text)
         analysis = {
-            "claim": summarize_comment_claim(comment.text),
+            "claim": format_comment_claim(raw_claim, disagrees=has_crux),
             "disagrees": has_crux,
             "crux": {
                 "has_crux": True,
@@ -474,7 +554,9 @@ def build_comment_block(
         crux = anthropic_double_crux(post, comment)
         disagrees = bool(crux.get("has_crux"))
         analysis = {
-            "claim": summarize_comment_claim(comment.text),
+            "claim": format_comment_claim(
+                summarize_comment_claim(comment.text), disagrees=disagrees
+            ),
             "disagrees": disagrees,
             "crux": crux if disagrees else None,
         }
@@ -501,7 +583,8 @@ def build_graph(
     offline: bool,
     dry_run: bool,
 ) -> dict:
-    coords, vectorizer, matrix = compute_post_coords(posts)
+    coords, vectorizer, matrix, svd = compute_post_coords(posts)
+    axis_labels = describe_pca_axes(svd, vectorizer, matrix) if svd is not None else []
 
     if n_clusters and n_clusters > 0:
         k = min(n_clusters, len(posts))
@@ -588,6 +671,7 @@ def build_graph(
             "referenced_post_count": referenced_total,
             "components": 3,
             "reduction": "truncated_svd",
+            "axis_labels": axis_labels,
         },
         "clusters": cluster_meta,
         "nodes": nodes,

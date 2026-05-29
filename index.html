@@ -109,6 +109,33 @@
     .legend-item { display: flex; align-items: center; gap: 7px; line-height: 1.3; }
     .swatch { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
 
+    #axis-legend { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+    .axis-legend-item {
+      display: grid;
+      grid-template-columns: 14px 1fr;
+      gap: 7px;
+      line-height: 1.35;
+      font-size: 11.5px;
+    }
+    .axis-swatch {
+      width: 11px;
+      height: 11px;
+      border-radius: 2px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+    .axis-swatch.x { background: #a84848; }
+    .axis-swatch.y { background: #3d8a5c; }
+    .axis-swatch.z { background: #3d6a9a; }
+    .axis-legend-item .axis-name {
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .axis-legend-item .axis-poles { color: var(--text); }
+    .axis-legend-item .axis-var { color: var(--muted); font-size: 10px; }
+
     #hint {
       position: absolute; right: 18px; bottom: 18px; z-index: 2;
       color: var(--muted); font-size: 12px; pointer-events: none;
@@ -193,6 +220,8 @@
       <div id="legend">
         <span class="legend-title">Topic clusters · k-means on 3 PCA components</span>
         <div id="cluster-legend"></div>
+        <span class="legend-title" style="margin-top:8px">PCA axes · TruncatedSVD on TF-IDF</span>
+        <div id="axis-legend"></div>
         <span class="legend-title" style="margin-top:8px">Point size · times referenced by other posts</span>
       </div>
       <div id="hint">Drag to orbit · Scroll to zoom · Hover &amp; click a post</div>
@@ -340,6 +369,23 @@
       return c && c.terms && c.terms.length ? c.terms.join(" · ") : `cluster ${cluster}`;
     }
 
+    function axisLabelEntry(axisKey) {
+      return (state.graph?.meta?.axis_labels || []).find((entry) => entry.axis === axisKey);
+    }
+
+    function shortAxisTerm(label) {
+      return String(label || "").split(" · ")[0] || "—";
+    }
+
+    function axisSceneLabel(axisKey) {
+      const entry = axisLabelEntry(axisKey);
+      if (!entry) {
+        const n = axisKey === "x" ? 1 : axisKey === "y" ? 2 : 3;
+        return `PC${n}`;
+      }
+      return `PC${entry.component} ${shortAxisTerm(entry.positive)}`;
+    }
+
     function setPanelHtml(html) {
       panelEmpty.hidden = true;
       panelContent.hidden = false;
@@ -482,7 +528,11 @@
     function addAxisLabel(axis, worldPos) {
       const label = document.createElement("div");
       label.className = `axis-label ${axis}`;
-      label.textContent = `PC${axis === "x" ? 1 : axis === "y" ? 2 : 3}`;
+      label.textContent = axisSceneLabel(axis);
+      const entry = axisLabelEntry(axis);
+      if (entry) {
+        label.title = `+ ${entry.positive}  ·  − ${entry.negative}`;
+      }
       overlay.appendChild(label);
       state.axisLabelEls.push(label);
       state.axisLabelPositions.push(worldPos.clone());
@@ -575,6 +625,33 @@
         </div>`).join("");
     }
 
+    function buildAxisLegend(graph) {
+      const container = document.getElementById("axis-legend");
+      if (!container) return;
+      const axes = (graph.meta?.axis_labels || []).slice().sort((a, b) => a.component - b.component);
+      if (!axes.length) {
+        container.innerHTML = `
+          <div class="axis-legend-item">
+            <span></span>
+            <span style="color:var(--muted)">Rebuild cruxes.json to populate axis labels.</span>
+          </div>`;
+        return;
+      }
+      container.innerHTML = axes.map((entry) => {
+        const pct = (entry.variance_explained * 100).toFixed(1);
+        const axisName = entry.axis.toUpperCase();
+        return `
+          <div class="axis-legend-item">
+            <span class="axis-swatch ${entry.axis}"></span>
+            <span>
+              <span class="axis-name">${axisName} · PC${entry.component}</span>
+              <span class="axis-poles">+ ${escapeHtml(entry.positive)} ↔ − ${escapeHtml(entry.negative)}</span>
+              <span class="axis-var">${pct}% variance</span>
+            </span>
+          </div>`;
+      }).join("");
+    }
+
     function buildScene(graph) {
       nodesGroup.clear();
       spatialGroup.clear();
@@ -610,6 +687,7 @@
       if (bounds) buildSpatialAnchors(bounds);
       frameCloud();
       buildClusterLegend(graph);
+      buildAxisLegend(graph);
     }
 
     function frameCloud() {

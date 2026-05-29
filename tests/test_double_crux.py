@@ -2,6 +2,7 @@ from scripts.double_crux import (
     analyze_top_comment,
     detect_disagreement,
     extract_double_crux,
+    format_comment_claim,
     summarize_comment_claim,
 )
 
@@ -35,6 +36,22 @@ def test_detect_disagreement_false_for_neutral():
 def test_summarize_comment_claim_nonempty():
     claim = summarize_comment_claim(DISAGREEING_COMMENT)
     assert isinstance(claim, str) and claim
+
+
+def test_format_comment_claim_counterclaim_when_disagrees():
+    assert format_comment_claim("X is false", disagrees=True).startswith("The counterclaim is:")
+    assert not format_comment_claim("X is true", disagrees=False).startswith("The counterclaim is:")
+
+
+def test_format_comment_claim_no_double_prefix():
+    once = format_comment_claim("X", disagrees=True)
+    assert format_comment_claim(once, disagrees=True) == once
+
+
+def test_analyze_top_comment_frames_disagreement_as_counterclaim():
+    result = analyze_top_comment(POST, DISAGREEING_COMMENT)
+    assert result["disagrees"] is True
+    assert result["claim"].startswith("The counterclaim is:")
 
 
 def test_extract_double_crux_has_question_when_contrast():

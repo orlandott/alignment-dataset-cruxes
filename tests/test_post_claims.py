@@ -1,7 +1,39 @@
 import json
 
 from scripts.build_crux_map import AUTHORED_CLAIMS_PATH, get_authored_claims
-from scripts.post_claims import summarize_claims
+from scripts.post_claims import looks_like_transcript, summarize_claims
+
+
+def test_looks_like_transcript_explicit_title():
+    assert looks_like_transcript("Some body text.", "Full transcript of my talk") is True
+
+
+def test_looks_like_transcript_podcast_title_needs_speaker_turns():
+    body = "\n".join(f"**Daniel Filan:** q{i}\nJan Leike: a{i}" for i in range(8))
+    assert looks_like_transcript(body, "AXRP Episode 24 - Superalignment") is True
+
+
+def test_looks_like_transcript_podcast_title_alone_is_not_enough():
+    body = "Some announcements: there's a survey, the store is closing, and a Patreon."
+    assert looks_like_transcript(body, "AXRP announcement: Survey, Store Closing") is False
+
+
+def test_looks_like_transcript_by_many_speaker_turns():
+    body = "\n".join(f"**Daniel Filan:** q{i}\nQuintin Pope: a{i}" for i in range(20))
+    assert looks_like_transcript(body, "Shard Theory deep dive") is True
+
+
+def test_looks_like_transcript_false_for_short_illustrative_dialogue():
+    body = "\n".join(f"Alice: clue {i}\nBob: response {i}" for i in range(4))
+    assert looks_like_transcript(body, "How do low level hypotheses constrain high level ones?") is False
+
+
+def test_looks_like_transcript_false_for_normal_post():
+    body = (
+        "Recently I have been learning about industry norms and incentive structures. "
+        "I wanted to share some findings because they may be important."
+    )
+    assert looks_like_transcript(body, "The 6D effect") is False
 
 
 def test_authored_claims_file_is_valid_and_nonempty():

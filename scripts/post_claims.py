@@ -14,12 +14,52 @@ nearly as strong, so callers naturally get "sometimes more than one".
 from __future__ import annotations
 
 import re
+from collections import Counter
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 MARKUP = re.compile(r"<[^>]+>")
 SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
 WORD = re.compile(r"[a-zA-Z][a-zA-Z'-]+")
+
+# Speaker turns in a transcript, e.g. "**Daniel Filan:**" or "\nQuintin Pope:".
+SPEAKER_TURN = re.compile(
+    r"(?m)(?:^|\n)\s*\*{0,2}([A-Z][A-Za-z.'\u2019-]+(?:\s[A-Z][A-Za-z.'\u2019-]+){0,2})\*{0,2}\s*:"
+)
+# An explicit "transcript" in the title is decisive on its own; "podcast"/"AXRP"
+# only flags a transcript when the body also has back-and-forth speaker turns
+# (an AXRP *announcement* post, for example, is not a transcript).
+EXPLICIT_TRANSCRIPT_TITLE = re.compile(r"\btranscript\b", re.IGNORECASE)
+PODCAST_TITLE = re.compile(r"\bAXRP\b|\bpodcast\b", re.IGNORECASE)
+
+# Min turns for a name to count as a recurring speaker, and the totals that
+# separate a real transcript (hundreds of turns) from a short illustrative
+# dialogue like an Alice/Bob thought experiment (a handful of turns).
+_MIN_SPEAKER_TURNS = 3
+_MIN_TURNS_WITH_TITLE = 8
+_MIN_TURNS_WITHOUT_TITLE = 30
+
+
+def _recurring_speaker_turns(text: str) -> int:
+    """Total turns spoken by names that recur (>=2 such speakers), else 0."""
+    counts = Counter(label.strip() for label in SPEAKER_TURN.findall(text or ""))
+    recurring = [n for n in counts.values() if n >= _MIN_SPEAKER_TURNS]
+    return sum(recurring) if len(recurring) >= 2 else 0
+
+
+def looks_like_transcript(text: str, title: str = "") -> bool:
+    """True when a post is mostly a transcript (podcast/interview/discussion).
+
+    Such posts have no single thesis, so summarizing a "main claim" produces
+    nonsense. We flag them by an explicit "transcript" title, a podcast/AXRP
+    title backed by real speaker turns, or many alternating turns on their own.
+    """
+    if title and EXPLICIT_TRANSCRIPT_TITLE.search(title):
+        return True
+    turns = _recurring_speaker_turns(text)
+    if title and PODCAST_TITLE.search(title):
+        return turns >= _MIN_TURNS_WITH_TITLE
+    return turns >= _MIN_TURNS_WITHOUT_TITLE
 
 MATH_SYMBOLS = set("=∑∏∈∉⊂⊆⊃⊇⋅×÷→⇒⇔≈≤≥≠√∫∮∀∃∂∇±∓°∝≡⟨⟩∧∨¬")
 ABBREV_TAIL = re.compile(r"\b(?:i\.e|e\.g|cf|vs|etc|fig|eq)\.?$", re.IGNORECASE)

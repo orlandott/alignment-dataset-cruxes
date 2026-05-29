@@ -98,6 +98,22 @@ def summarize_comment_claim(comment_text: str) -> str:
     return _first_sentence(comment_text)
 
 
+def format_comment_claim(claim: str, *, disagrees: bool) -> str:
+    """Frame a comment's claim for display.
+
+    Disagreeing comments are the "pushback", so we present them as a
+    counterclaim; agreeing/expanding comments are left as a plain point.
+    """
+    claim = (claim or "").strip()
+    if not claim:
+        return claim
+    prefix = "The counterclaim is: " if disagrees else "The comment's point: "
+    # Avoid double-prefixing if a claim already starts with the framing.
+    if claim.lower().startswith(("the counterclaim is", "the comment's point")):
+        return claim
+    return f"{prefix}{claim}"
+
+
 def detect_disagreement(comment_text: str) -> bool:
     """Heuristically decide whether a comment pushes back on the post."""
     lower = _strip_markup(comment_text).lower()
@@ -160,7 +176,7 @@ def analyze_top_comment(post_text: str, comment_text: str) -> dict:
     disagrees = detect_disagreement(comment_text)
     crux = extract_double_crux(post_text, comment_text) if disagrees else None
     return {
-        "claim": summarize_comment_claim(comment_text),
+        "claim": format_comment_claim(summarize_comment_claim(comment_text), disagrees=disagrees),
         "disagrees": disagrees,
         "crux": crux,
     }
