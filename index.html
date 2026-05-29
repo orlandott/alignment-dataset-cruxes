@@ -6,15 +6,15 @@
   <title>Crux Map</title>
   <style>
     :root {
-      --bg: #0b0f14;
-      --panel: #121820;
-      --border: #243041;
-      --text: #e8edf4;
-      --muted: #8b9bb0;
-      --empirical: #4da3ff;
-      --values: #f5b942;
-      --prediction: #3ecfba;
-      --accent: #c4b5fd;
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --border: #d0dae6;
+      --text: #1a2332;
+      --muted: #5c6b7f;
+      --empirical: #2563eb;
+      --values: #b45309;
+      --prediction: #0d9488;
+      --accent: #6d28d9;
     }
 
     * { box-sizing: border-box; }
@@ -52,35 +52,37 @@
       transform: translate(-50%, -120%);
       padding: 2px 6px;
       border-radius: 4px;
-      background: rgba(11, 15, 20, 0.78);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--border);
       color: var(--text);
       font-size: 11px;
       white-space: nowrap;
       pointer-events: none;
-      opacity: 0.85;
-      transition: opacity 0.15s, color 0.15s;
+      opacity: 0.9;
+      box-shadow: 0 1px 3px rgba(26, 35, 50, 0.08);
+      transition: opacity 0.15s, color 0.15s, border-color 0.15s;
     }
 
-    .label.dim { opacity: 0.18; }
-    .label.active { opacity: 1; color: #fff; border-color: var(--accent); }
+    .label.dim { opacity: 0.22; }
+    .label.active { opacity: 1; color: var(--accent); border-color: var(--accent); }
 
     .axis-label {
       transform: translate(-50%, -50%);
       padding: 1px 5px;
       border-radius: 3px;
-      background: rgba(11, 15, 20, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--border);
       font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.06em;
-      opacity: 0.9;
+      opacity: 0.95;
       pointer-events: none;
+      box-shadow: 0 1px 2px rgba(26, 35, 50, 0.06);
     }
 
-    .axis-label.x { color: #c97878; border-color: rgba(201, 120, 120, 0.25); }
-    .axis-label.y { color: #7eb892; border-color: rgba(126, 184, 146, 0.25); }
-    .axis-label.z { color: #7a9ec4; border-color: rgba(122, 158, 196, 0.25); }
+    .axis-label.x { color: #a84848; border-color: rgba(168, 72, 72, 0.35); }
+    .axis-label.y { color: #3d8a5c; border-color: rgba(61, 138, 92, 0.35); }
+    .axis-label.z { color: #3d6a9a; border-color: rgba(61, 106, 154, 0.35); }
 
     #header {
       position: absolute;
@@ -115,8 +117,9 @@
       padding: 10px 14px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: rgba(18, 24, 32, 0.88);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(8px);
+      box-shadow: 0 1px 4px rgba(26, 35, 50, 0.06);
       font-size: 12px;
       pointer-events: none;
     }
@@ -187,7 +190,7 @@
       padding: 12px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(245, 247, 250, 0.9);
     }
 
     .evidence h3 {
@@ -202,7 +205,7 @@
       margin: 0 0 10px;
       padding-left: 12px;
       border-left: 3px solid var(--border);
-      color: #d7dee8;
+      color: var(--text);
       font-size: 14px;
       line-height: 1.5;
     }
@@ -243,7 +246,7 @@
       display: none;
       place-items: center;
       padding: 24px;
-      background: rgba(11, 15, 20, 0.92);
+      background: rgba(245, 247, 250, 0.96);
       z-index: 10;
       text-align: center;
     }
@@ -310,15 +313,19 @@
     } from "https://cdn.jsdelivr.net/npm/d3-force-3d@3/+esm";
 
     const TYPE_COLORS = {
-      empirical: 0x4da3ff,
-      values: 0xf5b942,
-      prediction: 0x3ecfba,
+      empirical: 0x2563eb,
+      values: 0xb45309,
+      prediction: 0x0d9488,
     };
 
     const SCALE = 220;
     const BOUNDS_PADDING = 52;
-    const AXIS_COLORS = { x: 0xb86b6b, y: 0x6bab7a, z: 0x6b8eb8 };
-    const BOX_COLOR = 0x3a4a5c;
+    const SCENE_BG = 0xf5f7fa;
+    const AXIS_COLORS = { x: 0xa84848, y: 0x3d8a5c, z: 0x3d6a9a };
+    const BOX_COLOR = 0x7a8fa3;
+    const GRID_COLOR = 0xb8c6d4;
+    const GRID_DIV_MIN = 8;
+    const GRID_DIV_MAX = 12;
 
     const state = {
       selectedNode: null,
@@ -342,8 +349,7 @@
     const errorDetail = document.getElementById("error-detail");
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b0f14);
-    scene.fog = new THREE.FogExp2(0x0b0f14, 0.0018);
+    scene.background = new THREE.Color(SCENE_BG);
 
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 5000);
     camera.position.set(0, 120, 420);
@@ -358,11 +364,11 @@
     controls.minDistance = 80;
     controls.maxDistance = 900;
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.72));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.88);
     keyLight.position.set(120, 200, 140);
     scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0x88aaff, 0.35);
+    const fillLight = new THREE.DirectionalLight(0xdce8f8, 0.42);
     fillLight.position.set(-160, -80, -120);
     scene.add(fillLight);
 
@@ -491,15 +497,15 @@
 
       state.nodeMeshes.forEach((mesh, id) => {
         const active = !dim || activeNodes.has(id);
-        mesh.material.emissive.setHex(active ? (id === state.selectedNode?.id ? 0x6d5bd0 : 0x223049) : 0x000000);
-        mesh.material.opacity = active ? 1 : 0.22;
+        mesh.material.emissive.setHex(active ? (id === state.selectedNode?.id ? 0x5b4fc8 : 0x8aa4c0) : 0x000000);
+        mesh.material.opacity = active ? 1 : 0.28;
         mesh.material.transparent = true;
       });
 
       state.edgeMeshes.forEach(({ line, hitbox }, id) => {
         const active = !dim || activeEdges.has(id);
         const selected = state.selectedEdge?.id === id;
-        line.material.opacity = active ? (selected ? 1 : 0.85) : 0.08;
+        line.material.opacity = active ? (selected ? 1 : 0.88) : 0.12;
         line.material.transparent = true;
         hitbox.visible = active;
       });
@@ -693,13 +699,59 @@
       boxGeometry.setAttribute("position", new THREE.BufferAttribute(boxPoints, 3));
       const openBox = new THREE.LineSegments(
         boxGeometry,
-        new THREE.LineBasicMaterial({ color: BOX_COLOR, transparent: true, opacity: 0.42 }),
+        new THREE.LineBasicMaterial({ color: BOX_COLOR, transparent: true, opacity: 0.65 }),
       );
       spatialGroup.add(openBox);
+      buildWallGrids(min, max);
     }
 
     function hexToRgb(hex) {
       return [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255].map((v) => v / 255);
+    }
+
+    function gridDivisions(span) {
+      const raw = Math.round(span / 28);
+      return Math.min(GRID_DIV_MAX, Math.max(GRID_DIV_MIN, raw));
+    }
+
+    function addPlaneGrid(points, plane, fixed, u0, u1, v0, v1, divisions) {
+      for (let i = 0; i <= divisions; i += 1) {
+        const t = i / divisions;
+        const u = u0 + (u1 - u0) * t;
+        const v = v0 + (v1 - v0) * t;
+        if (plane === "xz") {
+          points.push(u0, fixed, v, u1, fixed, v);
+          points.push(u, fixed, v0, u, fixed, v1);
+        } else if (plane === "xy") {
+          points.push(u0, v, fixed, u1, v, fixed);
+          points.push(u, v0, fixed, u, v1, fixed);
+        } else if (plane === "yz") {
+          points.push(fixed, u0, v, fixed, u1, v);
+          points.push(fixed, u, v0, fixed, u, v1);
+        }
+      }
+    }
+
+    function buildWallGrids(min, max) {
+      const x0 = min.x;
+      const y0 = min.y;
+      const z0 = min.z;
+      const x1 = max.x;
+      const y1 = max.y;
+      const z1 = max.z;
+      const points = [];
+
+      addPlaneGrid(points, "xz", y0, x0, x1, z0, z1, gridDivisions(x1 - x0));
+      addPlaneGrid(points, "xy", z0, x0, x1, y0, y1, gridDivisions(x1 - x0));
+      addPlaneGrid(points, "yz", x0, y0, y1, z0, z1, gridDivisions(z1 - z0));
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(points), 3));
+      const grid = new THREE.LineSegments(
+        geometry,
+        new THREE.LineBasicMaterial({ color: GRID_COLOR, transparent: true, opacity: 0.55 }),
+      );
+      spatialGroup.add(grid);
     }
 
     function buildScene(graph) {
@@ -724,9 +776,9 @@
         const radius = nodeRadius(node.post_count, minCount, maxCount);
         const geometry = new THREE.SphereGeometry(radius, 24, 24);
         const material = new THREE.MeshStandardMaterial({
-          color: 0xdce6f2,
-          roughness: 0.45,
-          metalness: 0.08,
+          color: 0x5a6d82,
+          roughness: 0.42,
+          metalness: 0.06,
           emissive: 0x000000,
           transparent: true,
         });
