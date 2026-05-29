@@ -2,7 +2,7 @@
 
 Visualize AI alignment research as a **3D map of posts**, clustered by topic, where each post carries a summary, its top comment, and — when that comment pushes back — the **double crux** between post and comment.
 
-Data comes from the [StampyAI alignment research dataset](https://huggingface.co/datasets/StampyAI/alignment-research-dataset) (`lesswrong` + `alignmentforum` splits). A Python pipeline embeds each post (TF-IDF), reduces it to **3 principal components** (TruncatedSVD / LSA), and clusters the posts with **k-means** (6 clusters by default; pass `--clusters 0` to auto-select _k_ by silhouette). Each cluster is named by its most *distinctive* terms (mean TF-IDF inside the cluster minus outside), so labels differentiate rather than restate generic words. The dataset only ships a `comment_count`, not comment text, so the **top comment** for each post is fetched from the public **LessWrong GraphQL API** (free, keyless — it serves Alignment Forum posts too).
+Data comes from the [StampyAI alignment research dataset](https://huggingface.co/datasets/StampyAI/alignment-research-dataset) (`lesswrong` + `alignmentforum` splits). A Python pipeline embeds each post with **dense, torch-free semantic vectors** ([model2vec](https://github.com/MinishLab/model2vec)), reduces them to **3 principal components** with PCA, and clusters the posts with **k-means** (6 clusters by default; pass `--clusters 0` to auto-select _k_ by silhouette). Dense embeddings pack ~5× more variance into 3 components than sparse TF-IDF (≈24% vs ≈5%) and group synonyms together; when the embedding model is unavailable (e.g. offline CI) the pipeline falls back to **TF-IDF → TruncatedSVD (LSA)**. Either way a TF-IDF view is kept purely for *labels*: each cluster and each axis is named by its most *distinctive* terms (mean TF-IDF inside minus outside), so labels differentiate rather than restate generic words. The dataset only ships a `comment_count`, not comment text, so the **top comment** for each post is fetched from the public **LessWrong GraphQL API** (free, keyless — it serves Alignment Forum posts too).
 
 In the 3D map:
 
@@ -47,7 +47,7 @@ cp .env.example .env && python scripts/build_crux_map.py --method anthropic
 ### How it works
 
 1. Load LW + AF posts, keep those with an author, date, and a post URL (needed to fetch comments). Cross-posts (same post on both forums) are collapsed to one.
-2. TF-IDF → **TruncatedSVD to 3 components** → L2-normalize. Working on the angular (cosine) geometry of TF-IDF — rather than StandardScaler'd PCA, which just isolates rare-term outliers — is what yields balanced, topically meaningful clusters.
+2. **Dense semantic embedding (model2vec) → PCA to 3 components → L2-normalize.** Dense vectors put semantically similar posts near each other, so 3 components capture ~24% of variance (vs ~5% for TF-IDF). Falls back to **TF-IDF → TruncatedSVD (LSA)** when the embedding model can't load. Axis labels are still derived from TF-IDF term poles, so each axis reads as words (e.g. _risks · safety ↔ mind · chatgpt_).
 3. **k-means** into `--clusters` groups (default 6; `--clusters 0` auto-selects _k_ by the best silhouette score over a small range). Each cluster is named by its most distinctive terms (in-cluster mean TF-IDF minus the rest).
 4. For each post: summarize its claim(s); fetch the highest-karma top-level comment from the LW GraphQL API (cached in `data/processed/comments_cache.jsonl`); detect whether the comment disagrees; and if so extract the **double crux** between the post and the comment.
 
@@ -66,7 +66,7 @@ Options:
 
 Output `cruxes.json` schema:
 
-- **meta** — `post_count`, `cluster_count`, `k_selected`, `components` (3), `comment_count`, `double_crux_count`, …
+- **meta** — `post_count`, `cluster_count`, `k_selected`, `components` (3), `reduction` (`pca` for dense embeddings, else `truncated_svd`), `embedding_model`, `variance_explained` (fraction captured by the 3 components), `axis_labels` (per-axis `positive`/`negative` term poles + `variance_explained`), `comment_count`, `double_crux_count`, …
 - **clusters** — `{ id, terms, size }` per cluster (terms name the topic).
 - **nodes** — one per post: `title`, `author`, `source`, `url`, `date`, `karma`, `comment_count`, `referenced_by` (pingback count — how many other posts link to it), `cluster`, `x`/`y`/`z` (3-component coords), `summary` (claim list), and `top_comment`.
   - **top_comment** — `{ author, score, text, claim, disagrees, crux }`. `crux` (present only when `disagrees`) is `{ has_crux, crux_question, type, evidence_post, evidence_comment }`.

@@ -218,9 +218,9 @@
         <p id="subtitle">Loading alignment research posts…</p>
       </div>
       <div id="legend">
-        <span class="legend-title">Topic clusters · k-means on 3 PCA components</span>
+        <span class="legend-title">Topic clusters · k-means on 3 components</span>
         <div id="cluster-legend"></div>
-        <span class="legend-title" style="margin-top:8px">PCA axes · TruncatedSVD on TF-IDF</span>
+        <span class="legend-title" style="margin-top:8px" id="axis-legend-title">Layout axes</span>
         <div id="axis-legend"></div>
         <span class="legend-title" style="margin-top:8px">Point size · times referenced by other posts</span>
       </div>
@@ -628,7 +628,17 @@
     function buildAxisLegend(graph) {
       const container = document.getElementById("axis-legend");
       if (!container) return;
-      const axes = (graph.meta?.axis_labels || []).slice().sort((a, b) => a.component - b.component);
+      const meta = graph.meta || {};
+      const titleEl = document.getElementById("axis-legend-title");
+      if (titleEl) {
+        const semantic = meta.reduction === "pca" && meta.embedding_model;
+        const basis = semantic ? "PCA on semantic embeddings" : "TruncatedSVD on TF-IDF";
+        const total = typeof meta.variance_explained === "number"
+          ? ` · ${(meta.variance_explained * 100).toFixed(0)}% variance`
+          : "";
+        titleEl.textContent = `Layout axes · ${basis}${total}`;
+      }
+      const axes = (meta.axis_labels || []).slice().sort((a, b) => a.component - b.component);
       if (!axes.length) {
         container.innerHTML = `
           <div class="axis-legend-item">

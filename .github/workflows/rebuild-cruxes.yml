@@ -23,10 +23,11 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build crux graph
-        # Keyless: PCA(3) + k-means clusters are recomputed, post summaries +
-        # double cruxes use the heuristic method, and top comments + pingback
-        # (referenced-by) counts are fetched from the public LessWrong GraphQL
-        # API (cached in data/processed/).
+        # Keyless: dense model2vec embeddings → PCA(3) + k-means clusters are
+        # recomputed (TF-IDF fallback if the model can't download), post
+        # summaries + double cruxes use the heuristic method, and top comments
+        # + pingback (referenced-by) counts are fetched from the public
+        # LessWrong GraphQL API (cached in data/processed/).
         run: python scripts/build_crux_map.py
 
       - name: Commit updated cruxes.json

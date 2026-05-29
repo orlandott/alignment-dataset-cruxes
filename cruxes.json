@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-05-29T21:17:50.799921+00:00",
+    "generated_at": "2026-05-29T21:35:59.862298+00:00",
     "dataset": "StampyAI/alignment-research-dataset",
     "splits": [
       "lesswrong",
@@ -16,28 +16,30 @@
     "double_crux_count": 15,
     "referenced_post_count": 82,
     "components": 3,
-    "reduction": "truncated_svd",
+    "reduction": "pca",
+    "embedding_model": "minishlab/potion-base-8M",
+    "variance_explained": 0.2436,
     "axis_labels": [
       {
         "axis": "x",
         "component": 1,
-        "positive": "safety · risks · ais",
-        "negative": "mind · effects · element",
-        "variance_explained": 0.0067
+        "positive": "risks · safety · ais",
+        "negative": "mind · chatgpt · structure",
+        "variance_explained": 0.107
       },
       {
         "axis": "y",
         "component": 2,
-        "positive": "safety · risks · ais",
-        "negative": "mind · chatgpt · activation",
-        "variance_explained": 0.024
+        "positive": "people · things · ais",
+        "negative": "model · activation · gpt",
+        "variance_explained": 0.0766
       },
       {
         "axis": "z",
         "component": 3,
-        "positive": "mind · ais · chatgpt",
-        "negative": "model · interpretability · alignment",
-        "variance_explained": 0.0173
+        "positive": "gpt · chips · compute",
+        "negative": "mind · agent · effects",
+        "variance_explained": 0.06
       }
     ]
   },
@@ -45,62 +47,62 @@
     {
       "id": 0,
       "terms": [
+        "people",
         "agi",
-        "humans",
-        "human",
-        "people"
+        "taskforce",
+        "listed"
       ],
-      "size": 21
+      "size": 24
     },
     {
       "id": 1,
       "terms": [
-        "activation",
-        "circuit",
-        "model",
-        "token"
+        "agent",
+        "mechanistic",
+        "function",
+        "exemplary"
       ],
-      "size": 32
+      "size": 23
     },
     {
       "id": 2,
       "terms": [
-        "risks",
-        "ais",
-        "safety",
-        "systems"
+        "theorem",
+        "bob",
+        "prompt",
+        "word"
       ],
-      "size": 29
+      "size": 17
     },
     {
       "id": 3,
       "terms": [
-        "alignment",
-        "safety",
-        "evaluations",
-        "research"
+        "mind",
+        "meaning",
+        "structure",
+        "effects"
       ],
-      "size": 27
+      "size": 25
     },
     {
       "id": 4,
       "terms": [
-        "meaning",
-        "words",
-        "epistemology",
-        "exemplary"
+        "gpt",
+        "activation",
+        "model",
+        "compute"
       ],
-      "size": 26
+      "size": 27
     },
     {
       "id": 5,
       "terms": [
-        "mind",
-        "chatgpt",
-        "effects",
-        "element"
+        "risks",
+        "ais",
+        "systems",
+        "safety"
       ],
-      "size": 15
+      "size": 34
     }
   ],
   "nodes": [
@@ -117,10 +119,10 @@
       "karma": 12,
       "comment_count": 1,
       "referenced_by": 3,
-      "cluster": 4,
-      "x": 0.7361714590827417,
-      "y": -0.6152363897198684,
-      "z": 0.28202086376090896,
+      "cluster": 3,
+      "x": -0.755600469457229,
+      "y": 0.6502690244171166,
+      "z": 0.07885509774026421,
       "summary": [
         "The main claim is: If my ~Five Words were \"the problem of the criterion matters\", this would be a reasonable extrapolation of why I would say that.",
         "If you only get about five words to convey an idea, what will someone extrapolate from those five words?"
@@ -147,10 +149,10 @@
       "karma": 64,
       "comment_count": 3,
       "referenced_by": 1,
-      "cluster": 3,
-      "x": 0.9220474291785761,
-      "y": 0.1903530248973272,
-      "z": -0.33703748197732575,
+      "cluster": 5,
+      "x": 0.8847343777727026,
+      "y": 0.2917984831867671,
+      "z": 0.3634538842783919,
       "summary": [
         "The main claim is: You should still apply to jobs you want and think you’d be a good fit for.",
         "Finally, I think it’s good to explicitly pre-commit to honesty before the hiring process."
@@ -177,10 +179,10 @@
       "karma": 11,
       "comment_count": 6,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.6611682654905737,
-      "y": -0.7000420858526744,
-      "z": 0.26981030881569945,
+      "cluster": 2,
+      "x": -0.8747073272306881,
+      "y": -0.11364339601111337,
+      "z": 0.471139332079171,
       "summary": [
         "The main claim is: The game may seem a perverse exercise in misreading (or even nonreading), but Shannon argued that the exercise was in fact not so outlandish.",
         "If we supply Martha with the “reduced text,” she should be able to recreate the entirety of Chandler’s passage, since she possesses the same statistical knowledge of English as Mary."
@@ -209,10 +211,10 @@
       "karma": 30,
       "comment_count": 0,
       "referenced_by": 2,
-      "cluster": 2,
-      "x": 0.7485443843041252,
-      "y": 0.6382484972325349,
-      "z": -0.1797780868381047,
+      "cluster": 5,
+      "x": 0.9020357834948618,
+      "y": -0.23953224324048583,
+      "z": -0.35910409318607284,
       "summary": [
         "The main claim is: Auditing advanced AI systems for misalignment and dangerous capabilities — across system evaluations, training-design, deployment, security, and governance audits — is a strongly positive pathway for reducing catastrophic risk.",
         "Audits have real limits (false confidence, safety-washing, overfitting, no behavioral guarantees) and only improve safety if their recommendations are backed by regulatory authority."
@@ -235,10 +237,10 @@
       "karma": 144,
       "comment_count": 12,
       "referenced_by": 10,
-      "cluster": 2,
-      "x": 0.9674685012389219,
-      "y": 0.24631212974534392,
-      "z": 0.05774975195467856,
+      "cluster": 4,
+      "x": -0.5002187618737595,
+      "y": -0.86581749876113,
+      "z": 0.011884826818411794,
       "summary": [
         "The main claim is: after?\" I think there are different extremities of compute overhang.",
         "Like I think Moravec is looking super good right now."
@@ -265,10 +267,10 @@
       "karma": 40,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.7872935965104794,
-      "y": -0.5522071128739854,
-      "z": -0.2742919929290174,
+      "cluster": 4,
+      "x": -0.05177025959137008,
+      "y": -0.4728649702554734,
+      "z": 0.8796127330405878,
       "summary": [
         "The main claim is: Developers can access this new model by calling gpt-3.5-turbo-1106 in the API."
       ],
@@ -287,10 +289,10 @@
       "karma": 16,
       "comment_count": 0,
       "referenced_by": 2,
-      "cluster": 2,
-      "x": 0.944104935629822,
-      "y": 0.3115484078663574,
-      "z": 0.10771935794158578,
+      "cluster": 5,
+      "x": 0.9879911524091377,
+      "y": -0.11823155159029908,
+      "z": -0.09947252369279823,
       "summary": [
         "The main claim is: I think this model addresses the core concerns of the anti-AI regulation folks: the concentration of power and the freedom of general political and ethical views."
       ],
@@ -316,10 +318,10 @@
       "karma": 6,
       "comment_count": 12,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.6230348199438039,
-      "y": -0.6947959067787043,
-      "z": 0.35928576518023897,
+      "cluster": 2,
+      "x": -0.9901821984144804,
+      "y": 0.008369281096008072,
+      "z": 0.13953196435585136,
       "summary": [
         "The main claim is: I’m interested in such sentences because I believe they are a DEEP CLUE about how the mind works.",
         "Here’s the diagram: ![]( The language model corresponds to the landscape."
@@ -350,10 +352,10 @@
       "karma": 34,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 3,
-      "x": 0.8327766014157205,
-      "y": -0.2786530472452657,
-      "z": -0.47836765295681294,
+      "cluster": 4,
+      "x": 0.3182016050298301,
+      "y": -0.7718814118215785,
+      "z": 0.550406054327863,
       "summary": [
         "The main claim is: We steer the model into adopting a specific personality that will comply with harmful instructions.",
         "We introduce a way to automate jailbreaks by using one jailbroken model as an assistant for creating new jailbreaks for specific harmful behaviors."
@@ -386,10 +388,10 @@
       "karma": 57,
       "comment_count": 6,
       "referenced_by": 1,
-      "cluster": 2,
-      "x": 0.8351706366486811,
-      "y": 0.5292352867000764,
-      "z": -0.14966635891650693,
+      "cluster": 0,
+      "x": 0.7004265102925452,
+      "y": 0.6679379140895572,
+      "z": 0.2515186804217497,
       "summary": [
         "The main claim is: What say the UK Safety Summit, in the form of The Bletchley Declaration?",
         "Lennart Heim looks back on the AI Safety Summit."
@@ -416,10 +418,10 @@
       "karma": 84,
       "comment_count": 4,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8934213051699754,
-      "y": 0.43352591737647894,
-      "z": 0.11770153113388071,
+      "cluster": 5,
+      "x": 0.7288240366004715,
+      "y": 0.6836620510351616,
+      "z": -0.03770575085833341,
       "summary": [
         "The main claim is: When records showing that a company had knowledge of the problem are found in discovery, they are much more likely to be found liable.",
         "Companies tend to avoid talking about risk through documented media."
@@ -452,10 +454,10 @@
       "karma": 28,
       "comment_count": 11,
       "referenced_by": 4,
-      "cluster": 0,
-      "x": 0.869253745573773,
-      "y": -0.2085668067629585,
-      "z": 0.44821625687012856,
+      "cluster": 1,
+      "x": -0.04156979270348165,
+      "y": 0.19479135260793443,
+      "z": -0.9799634081351002,
       "summary": [
         "The main claim is: Was natural selection optimizing for the fitness of the moths?",
         "Evolution has optimized humans for inclusive genetic fitness (IGF) 2."
@@ -488,10 +490,10 @@
       "karma": 52,
       "comment_count": 5,
       "referenced_by": 7,
-      "cluster": 4,
-      "x": 0.8000771438550113,
-      "y": -0.466232783826078,
-      "z": 0.3774964306673551,
+      "cluster": 3,
+      "x": -0.8860344013649816,
+      "y": 0.4156466622959632,
+      "z": -0.20537987174994599,
       "summary": [
         "The main claim is: Step 2: Reverse-engineer how the human brain works.",
         "Whole Brain Emulation (WBE)) look like with and without reverse-engineering?"
@@ -519,9 +521,9 @@
       "comment_count": 37,
       "referenced_by": 0,
       "cluster": 0,
-      "x": 0.8694826595806507,
-      "y": -0.15328504595450845,
-      "z": 0.46957810785350973,
+      "x": -0.17178395685100087,
+      "y": 0.985066495439513,
+      "z": -0.011587567955758701,
       "summary": [
         "The main claim is: I guess there’s maybe a 10-20% chance of AI causing human extinction in the coming decades, but I feel more distressed about it than even that suggests—I think because in the case where it doesn’t cause human extinction, I find it hard to…"
       ],
@@ -547,10 +549,10 @@
       "karma": 46,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8314964521492995,
-      "y": 0.5551352804423655,
-      "z": 0.020939686513984354,
+      "cluster": 0,
+      "x": -0.012776662989851617,
+      "y": 0.986232958498376,
+      "z": 0.1648675482148758,
       "summary": [
         "The main claim is: Here is someone, who is very against regulation, saying the order is if anything not good for OpenAI.",
         "If this means no open source model above some level can ever pass the test?"
@@ -577,10 +579,10 @@
       "karma": 5,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 5,
-      "x": 0.48845262355570207,
-      "y": -0.6082880252271381,
-      "z": 0.6256194633375949,
+      "cluster": 3,
+      "x": -0.8542179200923109,
+      "y": -0.09814716404916232,
+      "z": -0.5105672131877187,
       "summary": [
         "The main claim is: Concider the difference between “salt,” which is conceptually concrete and “NaCl,” which is a physical thing that is conceptually abstract."
       ],
@@ -599,10 +601,10 @@
       "karma": 78,
       "comment_count": 2,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8983346317804347,
-      "y": 0.43837525363833596,
-      "z": -0.02867100175151648,
+      "cluster": 5,
+      "x": 0.9767484837143754,
+      "y": 0.17013078004996854,
+      "z": 0.13045273949311195,
       "summary": [
         "The main claim is: We need the ability to assess risks from foundation models.",
         "I’ll skip ahead for a second to the last section, government use of AI."
@@ -635,10 +637,10 @@
       "karma": 147,
       "comment_count": 12,
       "referenced_by": 1,
-      "cluster": 2,
-      "x": 0.8763027466657088,
-      "y": 0.4406640603304434,
-      "z": -0.19470152058785203,
+      "cluster": 5,
+      "x": 0.954714355291777,
+      "y": 0.2871206294944533,
+      "z": 0.07798874225499254,
       "summary": [
         "The main claim is: I think that eliciting AI Safety Policies from companies is a fine step to be taking, but I don’t think it should be the top priority."
       ],
@@ -665,10 +667,10 @@
       "karma": 35,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.7497931942509692,
-      "y": 0.6525738276972239,
-      "z": -0.10935065276221417,
+      "cluster": 5,
+      "x": 0.961315849621488,
+      "y": -0.14602240031138392,
+      "z": 0.2335579068963816,
       "summary": [
         "The main claim is: Now, the White House has released a new executive order on AI.",
         "In June, they secured voluntary commitments on safety from leading AI companies."
@@ -695,10 +697,10 @@
       "karma": 1,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.6835985027761862,
-      "y": 0.728896097205319,
-      "z": -0.0374642026608188,
+      "cluster": 5,
+      "x": 0.9940849414505356,
+      "y": -0.03820787384927251,
+      "z": -0.1016626163208624,
       "summary": [
         "The main claim is: [...] Develop standards, tools, and tests to help ensure that AI systems are safe, secure, and trustworthy."
       ],
@@ -724,10 +726,10 @@
       "karma": 80,
       "comment_count": 31,
       "referenced_by": 5,
-      "cluster": 0,
-      "x": 0.9262075777012514,
-      "y": -0.324478987238546,
-      "z": 0.19197111722711824,
+      "cluster": 1,
+      "x": 0.011019511931282333,
+      "y": -0.38088749300411834,
+      "z": -0.924555724675281,
       "summary": [
         "The main claim is: I’ll then talk about what value systematization might look like in AIs.",
         "Secondly: I’ve talked about value systematization as a process by which an AI’s values become simpler."
@@ -755,9 +757,9 @@
       "comment_count": 9,
       "referenced_by": 3,
       "cluster": 0,
-      "x": 0.9737613369628383,
-      "y": -0.10362596795302552,
-      "z": 0.20260927274471977,
+      "x": 0.15303059561123558,
+      "y": 0.6690450821464561,
+      "z": 0.7272965797131955,
       "summary": [
         "The main claim is: Eureka is a super human reward engineer .",
         "As the tasks get harder, Eureka’s reward models look less and less like human ones."
@@ -784,10 +786,10 @@
       "karma": 81,
       "comment_count": 7,
       "referenced_by": 5,
-      "cluster": 0,
-      "x": 0.9681588077995337,
-      "y": 0.08355003011245678,
-      "z": 0.23598287087920886,
+      "cluster": 5,
+      "x": 0.6540342091726941,
+      "y": 0.5927864043681461,
+      "z": -0.46993992384998906,
       "summary": [
         "The main claim is: Together with the above point (\"alignment and capabilities are likely intertwined\"), I think this means that our rallying cry should be less “pause to give us more time on alignment research” and more “stop entirely, and find some way to c…",
         "Gaining this sort of visibility into how the AIs work is, I think, one of the main goals of interpretability research."
@@ -814,10 +816,10 @@
       "karma": 72,
       "comment_count": 2,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8747188856789021,
-      "y": 0.4816574802851272,
-      "z": -0.05359983882477777,
+      "cluster": 5,
+      "x": 0.958708823297139,
+      "y": 0.2843174990226621,
+      "z": 0.0063993657274510705,
       "summary": [
         "The main claim is: I think that developers implementing responsible scaling policies now increases the probability of effective regulation.",
         "I think the risk from rapid AI development is very large, and that even very good RSPs would not completely eliminate that risk."
@@ -844,10 +846,10 @@
       "karma": 18,
       "comment_count": 4,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.752573117008251,
-      "y": -0.6088665889148865,
-      "z": -0.250828986482097,
+      "cluster": 2,
+      "x": -0.9295812534291622,
+      "y": -0.36832805764853366,
+      "z": 0.014599151411167011,
       "summary": [
         "The main claim is: A smart and generally well generalizing model should be able to figure out that the text resembles Harry Potter, if it had seen knock offs in general, and Harry Potter.",
         "It's pretty clear it's a Harry Potter knock off job."
@@ -874,10 +876,10 @@
       "karma": 44,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 5,
-      "x": 0.6728126059597661,
-      "y": -0.41268274843689506,
-      "z": 0.6140164056474378,
+      "cluster": 3,
+      "x": -0.5992025975060267,
+      "y": 0.5546239339972503,
+      "z": -0.5773634375152661,
       "summary": [
         "The main claim is: Because human wanting is provisional, the AGI must be correctable (corrigible).",
         "The AGI must be correctable through-and-through, in all aspects (since all aspects touch on how the AGI+human wants), even to the point of a paradox of tolerance——the human might to correct the AGI in a way that the AGI recognizes as ruini…"
@@ -904,10 +906,10 @@
       "karma": 28,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.6269598013518436,
-      "y": -0.673866599211763,
-      "z": -0.39092865583841524,
+      "cluster": 4,
+      "x": -0.3501437702173108,
+      "y": -0.7941436436086162,
+      "z": 0.49672448449219625,
       "summary": [
         "The main claim is: Surprisingly, I find that this cluster is almost all the same feature (in terms of encoder weights, but not in terms of decoder weights).",
         "However, a significant majority of features seem to be fairly dense in the neuron basis!"
@@ -934,10 +936,10 @@
       "karma": 34,
       "comment_count": 0,
       "referenced_by": 1,
-      "cluster": 4,
-      "x": 0.7391535730972683,
-      "y": -0.5763662976182753,
-      "z": 0.3485023476927279,
+      "cluster": 1,
+      "x": -0.3608138450275128,
+      "y": -0.38743927958118224,
+      "z": -0.8483538022983552,
       "summary": [
         "The main claim is: Low-level preferences in one world-model do not tell an agent what their preferences should be in another.",
         "Therefore there is no \"solving\" this simple ontology change problem."
@@ -957,10 +959,10 @@
       "karma": 10,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 5,
-      "x": 0.5818930952232259,
-      "y": -0.6207664373818464,
-      "z": 0.5254040882518749,
+      "cluster": 2,
+      "x": -0.9793395207735066,
+      "y": -0.2012853246854937,
+      "z": -0.019450478589839632,
       "summary": [
         "The main claim is: The 175 billion weights that constitute the LLM at the core of ChatGPT, that’s the holographic memory.",
         "The photographic plate records the pattern of interference between the reference beam and the reflected beam."
@@ -988,10 +990,10 @@
       "karma": 14,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8347871676980835,
-      "y": 0.5505416119045815,
-      "z": 0.005858174469659969,
+      "cluster": 5,
+      "x": 0.9720682078399859,
+      "y": -0.09241080972753672,
+      "z": 0.2157397542231355,
       "summary": [
         "The main claim is: For example, it might follow the model of the European Organization for Nuclear Research (CERN).",
         "International cooperation to mitigate the risks of AI development will require creating new solutions."
@@ -1011,10 +1013,10 @@
       "karma": 4,
       "comment_count": 2,
       "referenced_by": 1,
-      "cluster": 5,
-      "x": 0.5423034798152813,
-      "y": -0.6427815103343938,
-      "z": 0.5410534777195988,
+      "cluster": 3,
+      "x": -0.928296233563799,
+      "y": 0.36829383669485266,
+      "z": 0.051242097964953805,
       "summary": [
         "The main claim is: No Is the object you're thinking of an inanimate object?",
         "No Is the thing you're thinking of a concept or an idea?"
@@ -1041,10 +1043,10 @@
       "karma": 3,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 5,
-      "x": 0.5055448701238153,
-      "y": -0.569853575071497,
-      "z": 0.6478358490155731,
+      "cluster": 2,
+      "x": -0.754515109395974,
+      "y": 0.30191931007555106,
+      "z": 0.5827106313571812,
       "summary": [
         "The main claim is: Humans and animals may use minerals as resources or encounter them as part of their habitat.",
         "However, there are a few aspects in which minerals and animals can be related or compared: 1."
@@ -1064,10 +1066,10 @@
       "karma": 7,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 5,
-      "x": 0.5520593752541827,
-      "y": -0.6399313538780442,
-      "z": 0.5345262467997011,
+      "cluster": 2,
+      "x": -0.6867099623531556,
+      "y": 0.08373933922459319,
+      "z": 0.7220922037185805,
       "summary": [
         "The main claim is: I’m pretty sure that’s not how ChatGPT generates stories.",
         "Twenty stories This introduction is about the 20 stories I had ChatGPT generate this morning (10.13.23)."
@@ -1087,10 +1089,10 @@
       "karma": 133,
       "comment_count": 33,
       "referenced_by": 9,
-      "cluster": 3,
-      "x": 0.8962180069995958,
-      "y": 0.12196100256986182,
-      "z": -0.42651939906858466,
+      "cluster": 5,
+      "x": 0.9682058733354448,
+      "y": 0.09430049721790323,
+      "z": 0.23169981239354684,
       "summary": [
         "The main claim is: In particular: We need to actually get as many labs as possible to put out RSPs.",
         "We need to get governments to enact mandatory RSPs for all AI labs."
@@ -1121,10 +1123,10 @@
       "karma": 35,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.6687424710811088,
-      "y": -0.6988835180448908,
-      "z": -0.25366382394328346,
+      "cluster": 4,
+      "x": -0.17307092772621768,
+      "y": -0.9832824248057899,
+      "z": -0.05658733996250852,
       "summary": [
         "The main claim is: The idea is that CSPA should delete all functionality of the head except for the things which are copy suppression."
       ],
@@ -1156,10 +1158,10 @@
       "karma": 58,
       "comment_count": 0,
       "referenced_by": 3,
-      "cluster": 1,
-      "x": 0.8949774807678729,
-      "y": -0.4130817194068211,
-      "z": -0.1684600902596693,
+      "cluster": 4,
+      "x": 0.11947270505002955,
+      "y": -0.9923852324609453,
+      "z": 0.02996369705934294,
       "summary": [
         "The main claim is: Therefore, to see how likely the mouse is to visit any given square, Alex created a heatmap visualization: Normalized path probability heatmap."
       ],
@@ -1178,10 +1180,10 @@
       "karma": 4,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.5887551640784923,
-      "y": -0.7385476571872233,
-      "z": 0.3285037516287621,
+      "cluster": 3,
+      "x": -0.8870436652877687,
+      "y": 0.04892040226288513,
+      "z": -0.459086408114288,
       "summary": [
         "The main claim is: From this it follows that an LLM is a structure of pure relational meaning.",
         "Relational meaning in an LLM The primary vehicle for relational meaning is a word embedding vector associated with each word."
@@ -1201,10 +1203,10 @@
       "karma": 8,
       "comment_count": 0,
       "referenced_by": 1,
-      "cluster": 4,
-      "x": 0.7620267665285043,
-      "y": -0.3925799138026745,
-      "z": 0.5149720559144904,
+      "cluster": 1,
+      "x": 0.4423613146728043,
+      "y": -0.24789701993319346,
+      "z": -0.8618953154468298,
       "summary": [
         "The main claim is: However, there are a number of goals and values in the human environment that are not well-correlated with inclusive fitness.",
         "For superintelligent AGI to be aligned with human values, therefore, it is much more necessary for its goals to be directly aligned with human values, even more than the degree to which human values are aligned with inclusive evolutionary…"
@@ -1231,10 +1233,10 @@
       "karma": 6,
       "comment_count": 0,
       "referenced_by": 2,
-      "cluster": 5,
-      "x": 0.4187029500395497,
-      "y": -0.42771131311438587,
-      "z": 0.8010935477596521,
+      "cluster": 3,
+      "x": -0.5615359616830721,
+      "y": 0.1610329537271288,
+      "z": -0.8116315368137095,
       "summary": [
         "The main claim is: Anything about the state at one time can affect anything about the state at any future time."
       ],
@@ -1253,10 +1255,10 @@
       "karma": 79,
       "comment_count": 2,
       "referenced_by": 6,
-      "cluster": 1,
-      "x": 0.7145830137319339,
-      "y": -0.5289783059039486,
-      "z": -0.45776966737517155,
+      "cluster": 4,
+      "x": -0.2527651618264801,
+      "y": -0.9008452210291765,
+      "z": 0.35296977309073835,
       "summary": [
         "The main claim is: Firstly, I think it's worth noting that all of these techniques except for the last two look for linear representations in neural networks."
       ],
@@ -1289,9 +1291,9 @@
       "comment_count": 7,
       "referenced_by": 3,
       "cluster": 0,
-      "x": 0.9506623647390932,
-      "y": -0.00644807147905199,
-      "z": 0.31016042726769066,
+      "x": 0.1661173481632413,
+      "y": 0.9847103263494352,
+      "z": -0.05244616115600058,
       "summary": [
         "The main claim is: We could train the AI on human approval to get it to generate in-some-sense-good plans.",
         "Which is why, in order for humans to stay in control, we need to be able to solve deception - not just detecting it after the fact, but producing AIs that actually don't try to deceive the humans."
@@ -1319,10 +1321,10 @@
       "karma": 12,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 3,
-      "x": 0.9093565467982856,
-      "y": 0.24475127088572038,
-      "z": -0.3364037547277405,
+      "cluster": 4,
+      "x": 0.4322223422543269,
+      "y": -0.6140670423930971,
+      "z": 0.6603828543373744,
       "summary": [
         "The main claim is: DALL·E-3 is OpenAI’s latest text-to-image model.",
         "Users can also speak to GPT-4V, and the model will respond verbally."
@@ -1349,10 +1351,10 @@
       "karma": 14,
       "comment_count": 10,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.8289473623521155,
-      "y": -0.5584234225849087,
-      "z": -0.031773441079412386,
+      "cluster": 0,
+      "x": -0.4346065525625539,
+      "y": 0.6692832986719527,
+      "z": 0.602641693370515,
       "summary": [
         "The main claim is: Since this still seems to be an area of active debate within the ML community, it may be worthwhile providing a location to gather this evidence all in one place."
       ],
@@ -1378,10 +1380,10 @@
       "karma": 4,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.6652971331872984,
-      "y": -0.696175924421938,
-      "z": 0.2696642483311829,
+      "cluster": 3,
+      "x": -0.9079623068188324,
+      "y": 0.11172496003688714,
+      "z": -0.4038836251954027,
       "summary": [
         "The main claim is: Without reflection, that’s just how we think about words (and meaning).",
         "The idea of entanglement leads naturally to the idea of weaving, weaving a fabric of meaning."
@@ -1401,10 +1403,10 @@
       "karma": 16,
       "comment_count": 0,
       "referenced_by": 3,
-      "cluster": 2,
-      "x": 0.9562803708956046,
-      "y": 0.2798273198399681,
-      "z": 0.08499719590048191,
+      "cluster": 5,
+      "x": 0.948605306428489,
+      "y": -0.24992849706252057,
+      "z": -0.19412294808131828,
       "summary": [
         "This post is a transcript of a podcast episode, so it doesn't argue a single main claim — open the original to read the conversation."
       ],
@@ -1423,10 +1425,10 @@
       "karma": 17,
       "comment_count": 2,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.7175456224785727,
-      "y": -0.6875981212370262,
-      "z": 0.11107251385085895,
+      "cluster": 2,
+      "x": -0.7692195506272334,
+      "y": -0.501732198707058,
+      "z": 0.39568432331015896,
       "summary": [
         "The main claim is: I suspect that it is not and I think that we should be able to offer explicit mechanistic arguments on the point rather than simply point to failure after failure."
       ],
@@ -1452,10 +1454,10 @@
       "karma": 13,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 3,
-      "x": 0.833689041184292,
-      "y": -0.17844704805665282,
-      "z": -0.5226081071406019,
+      "cluster": 4,
+      "x": 0.49740074133651097,
+      "y": -0.8569624197507956,
+      "z": 0.13493670239319844,
       "summary": [
         "The main claim is: In February 2023, researchers from a number of top industry AI labs (OpenAI, DeepMind, Anthropic) and universities (Cambridge, NYU) co-organized a two-day workshop on the problem of AI alignment, attended by 80 of the world’s leading machi…"
       ],
@@ -1481,10 +1483,10 @@
       "karma": 13,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 3,
-      "x": 0.9864371775276017,
-      "y": -0.024714748994851928,
-      "z": -0.1622679141836125,
+      "cluster": 1,
+      "x": 0.5145345856249091,
+      "y": -0.2462753566861303,
+      "z": -0.8213419561211531,
       "summary": [
         "The main claim is: If you view alignment as a 'dam' constraining AI power, imperfect methods are nearly useless because you can't reach 'almost perfect' by stacking imperfect ones.",
         "But under a concept-extrapolation / model-splintering view — safely managing the AI's transition across environment changes — imperfect methods can compose and remain genuinely valuable, which has large strategic consequences."
@@ -1504,10 +1506,10 @@
       "karma": 11,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.642527356789367,
-      "y": -0.34849476003028423,
-      "z": -0.6824294820776021,
+      "cluster": 4,
+      "x": 0.3875146788769369,
+      "y": -0.8929553323421416,
+      "z": -0.22904835318473638,
       "summary": [
         "The main claim is: Results for all 12 trojans across all 9 methods plus a tenth method that used each of the 9 together.",
         "The key to the competition is to develop interpretations of the model that help human crowdworkers discover trojans : specific vulnerabilities implanted into a network in which a certain trigger feature causes the network to produce unexpe…"
@@ -1527,10 +1529,10 @@
       "karma": 7,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 0,
-      "x": 0.9260838136508681,
-      "y": -0.37719983362092874,
-      "z": 0.009436928006933404,
+      "cluster": 2,
+      "x": -0.9668703510842568,
+      "y": -0.23126713263885207,
+      "z": 0.10806126759949419,
       "summary": [
         "The main claim is: I am considering that there is a particular time that the button must be pressed to make this a single bit."
       ],
@@ -1559,10 +1561,10 @@
       "karma": 30,
       "comment_count": 2,
       "referenced_by": 2,
-      "cluster": 3,
-      "x": 0.9439802843674702,
-      "y": -0.03810881170900835,
-      "z": -0.3277940530205478,
+      "cluster": 5,
+      "x": 0.38055491094352667,
+      "y": 0.567407154783055,
+      "z": -0.7302239933457149,
       "summary": [
         "The main claim is: The designers prompt a model to be strategically deceptive w.r.t."
       ],
@@ -1581,10 +1583,10 @@
       "karma": 6,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.646879306524142,
-      "y": -0.5653277536086542,
-      "z": 0.5118121665129092,
+      "cluster": 3,
+      "x": -0.4511344786182251,
+      "y": 0.8609808702261734,
+      "z": -0.23492471838110907,
       "summary": [
         "The main claim is: Nonetheless, I believe that our “natural” linguistic mode is just making things up, confabulation it you will."
       ],
@@ -1610,10 +1612,10 @@
       "karma": 64,
       "comment_count": 3,
       "referenced_by": 4,
-      "cluster": 3,
-      "x": 0.956953068386126,
-      "y": 0.13534782546305105,
-      "z": -0.25675239248895426,
+      "cluster": 0,
+      "x": 0.3457237128200318,
+      "y": 0.8711208153630494,
+      "z": 0.34874580920083886,
       "summary": [
         "The main claim is: In AI safety, we currently have the luxury that we can hire people who can contribute from day one.",
         "Some people point to independent research as an alternative."
@@ -1640,10 +1642,10 @@
       "karma": 4,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.6436586293638866,
-      "y": -0.5853725591110442,
-      "z": 0.4929934440590359,
+      "cluster": 3,
+      "x": -0.8890641924954106,
+      "y": 0.45196945526098825,
+      "z": 0.07272188895765193,
       "summary": [
         "The main claim is: Now, we’ve got three cases: 1) word-for-word recall of a text, 2) flexible recall of a specific topic, and 3) no recall of a topic that was in its training corpus.",
         "There is a third case to consider: 3) and event that is in the training corpus, but in so very few times, perhaps only once, that it doesn’t register in ChatGPT’s model as a specific event."
@@ -1663,10 +1665,10 @@
       "karma": 38,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.8196871192402132,
-      "y": -0.4931995709071858,
-      "z": 0.2913197724299686,
+      "cluster": 0,
+      "x": -0.3004154766136798,
+      "y": 0.7906762856432256,
+      "z": 0.533461856867394,
       "summary": [
         "The main claim is: It sometimes happens that people who I've talked to or worked with ask me where they should go for financial support for their research.",
         "I haven't developed a standard list of answers to this question."
@@ -1686,10 +1688,10 @@
       "karma": 31,
       "comment_count": 1,
       "referenced_by": 1,
-      "cluster": 5,
-      "x": 0.3588044996710886,
-      "y": -0.46158648464259,
-      "z": 0.811293564753891,
+      "cluster": 1,
+      "x": -0.7299602521519707,
+      "y": -0.1559215729689492,
+      "z": -0.6654671241775358,
       "summary": [
         "The main claim is: that the mind makes something specific happen (the telophore), and 2.",
         "I suspect that nearly all minds have a telophore, even if they don't have a telopheme."
@@ -1717,9 +1719,9 @@
       "comment_count": 10,
       "referenced_by": 1,
       "cluster": 0,
-      "x": 0.9754393587536205,
-      "y": -0.16099495468095695,
-      "z": 0.15032857998930962,
+      "x": 0.47111738078370907,
+      "y": 0.8749990940061362,
+      "z": 0.11146747961597836,
       "summary": [
         "The main claim is: The biggest reason for not talking about them is that one person's \"here is a list of capabilities that I think an AGI would need to have, that I don't see there being progress on\" is another person's \"here's a roadmap of AGI capabilities…"
       ],
@@ -1754,10 +1756,10 @@
       "karma": 36,
       "comment_count": 1,
       "referenced_by": 1,
-      "cluster": 1,
-      "x": 0.7736426153898786,
-      "y": -0.5251838823332744,
-      "z": -0.3544841229026454,
+      "cluster": 4,
+      "x": 0.13478239340120698,
+      "y": -0.9907074301359212,
+      "z": -0.0182344263008501,
       "summary": [
         "The main claim is: Thus, we hypothesize that paired mode will be easier for language models.",
         "Through a series of experiments, we extract latent knowledge of human utility from the raw embeddings of language models."
@@ -1784,10 +1786,10 @@
       "karma": 83,
       "comment_count": 7,
       "referenced_by": 5,
-      "cluster": 4,
-      "x": 0.7492798886431794,
-      "y": -0.5037429483716094,
-      "z": 0.4299100957650827,
+      "cluster": 3,
+      "x": -0.7611638673923297,
+      "y": 0.34741928610827333,
+      "z": -0.5476581110659912,
       "summary": [
         "The main claim is: UDT says that what we normally think of different approaches to anthropic reasoning are really different preferences, which seems to sidestep the problem."
       ],
@@ -1814,10 +1816,10 @@
       "karma": 74,
       "comment_count": 4,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.7417425964372946,
-      "y": -0.5008116870914059,
-      "z": -0.4461004087681612,
+      "cluster": 2,
+      "x": -0.33431809536129864,
+      "y": -0.30325676945443064,
+      "z": 0.89233779640563,
       "summary": [
         "The main claim is: None of the presidents fully represent my (TurnTrout's) views.",
         "Garrett Baker helped produce the video after the audio was complete."
@@ -1845,10 +1847,10 @@
       "karma": 61,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.6357485608944592,
-      "y": -0.5709797619109044,
-      "z": -0.5194284154807004,
+      "cluster": 4,
+      "x": -0.10073102114421936,
+      "y": -0.9170408829624707,
+      "z": 0.38586173735504653,
       "summary": [
         "The main claim is: Since Cgen generalises well, it automatically works for any new data points that are added to the training dataset, and so its efficiency should be independent of the size of the training dataset."
       ],
@@ -1879,10 +1881,10 @@
       "karma": 58,
       "comment_count": 1,
       "referenced_by": 1,
-      "cluster": 1,
-      "x": 0.6174688514054297,
-      "y": -0.5864478226767758,
-      "z": -0.5242243497031861,
+      "cluster": 4,
+      "x": 0.010554540280659358,
+      "y": -0.9655787820256186,
+      "z": 0.25989655130722067,
       "summary": [
         "The main claim is: For each sentence, we run the model on its prompt with and without the wedding activation addition.",
         "Activation additions preserve perplexity on OpenWebText Does ActAdd increase the probability of the model outputting tokens related to the steering vector?"
@@ -1910,10 +1912,10 @@
       "karma": 3,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8250782746603923,
-      "y": 0.5608306381914411,
-      "z": -0.06866466303136633,
+      "cluster": 4,
+      "x": 0.5556358358698215,
+      "y": -0.3619777523258418,
+      "z": 0.7484924346433811,
       "summary": [
         "The main claim is: By the end of next year, the report projects that Google will have the ability to train a model with 20x more compute than GPT-4.",
         "OpenAI has led Google in language modeling for several years now."
@@ -1933,10 +1935,10 @@
       "karma": 4,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.6373135763397951,
-      "y": -0.6732336339261475,
-      "z": 0.37495050281813774,
+      "cluster": 3,
+      "x": -0.8342429894923736,
+      "y": 0.4659572722582783,
+      "z": -0.29482614353624104,
       "summary": [
         "The main claim is: Language model as associative memory BUT: Humans don’t learn the world with a statistical model.",
         "A corpus is a product of the action of propositional engine, not a statistical model, acting on the world."
@@ -1970,10 +1972,10 @@
       "karma": 59,
       "comment_count": 3,
       "referenced_by": 1,
-      "cluster": 1,
-      "x": 0.7206704988496319,
-      "y": -0.3616957000269823,
-      "z": -0.5914475908056556,
+      "cluster": 5,
+      "x": 0.71941167810746,
+      "y": -0.6875822156273227,
+      "z": -0.09837445885813331,
       "summary": [
         "The main claim is: Background: situational awareness and out-of-context reasoning 2.1."
       ],
@@ -1999,10 +2001,10 @@
       "karma": 12,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 5,
-      "x": 0.5914610608961207,
-      "y": -0.5523465047733161,
-      "z": 0.5874411903402217,
+      "cluster": 3,
+      "x": -0.5528506892838062,
+      "y": 0.8050541523125774,
+      "z": 0.21504401224562822,
       "summary": [
         "The main claim is: Ensembles – the Johnstown flood I decided to ask it about the Johnstown flood of 1889.",
         "Here is a sequence of events leading up to and during the Johnstown Flood: 1."
@@ -2022,10 +2024,10 @@
       "karma": 6,
       "comment_count": 1,
       "referenced_by": 3,
-      "cluster": 5,
-      "x": 0.33958133324536843,
-      "y": -0.45093436252438474,
-      "z": 0.8254348664831311,
+      "cluster": 3,
+      "x": -0.7047090619001107,
+      "y": 0.47278203780540096,
+      "z": -0.5290201156897896,
       "summary": [
         "The main claim is: The question asks: What within a mind can specify the mind's effects?"
       ],
@@ -2052,9 +2054,9 @@
       "comment_count": 0,
       "referenced_by": 0,
       "cluster": 4,
-      "x": 0.8317466873134927,
-      "y": -0.3986626550122936,
-      "z": 0.3863489816753502,
+      "x": -0.10354044536722047,
+      "y": -0.9637023315109627,
+      "z": -0.24608371017499764,
       "summary": [
         "The main claim is: The 25% of the Kernel surrounding the Core consists of small strongly connected subsets of words: the Satellites .",
         "The Core words are learned earlier, more frequent, and less concrete than the Satellites, which are in turn learned earlier, more frequent, but more concrete than the rest of the Dictionary."
@@ -2081,10 +2083,10 @@
       "karma": 4,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.6652890664832791,
-      "y": -0.6410050111471483,
-      "z": 0.38275714715998643,
+      "cluster": 3,
+      "x": -0.8783593401095301,
+      "y": 0.45618846287759374,
+      "z": 0.14274787556993238,
       "summary": [
         "The main claim is: Emphasis on the Center: The central point of the story is the confrontation between Saint George and the dragon.",
         "The princess and Saint George led the dragon back to the city of Silene, where it terrified the populace."
@@ -2111,10 +2113,10 @@
       "karma": 89,
       "comment_count": 16,
       "referenced_by": 6,
-      "cluster": 0,
-      "x": 0.9419981297380076,
-      "y": -0.14531514171732787,
-      "z": 0.30252773948477657,
+      "cluster": 3,
+      "x": -0.5185263806730311,
+      "y": 0.832732182811123,
+      "z": -0.19413269754667578,
       "summary": [
         "The main claim is: I and others make some progress but fully solving decision theory turns out to be pretty hard too."
       ],
@@ -2140,10 +2142,10 @@
       "karma": 20,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.5427586344482968,
-      "y": -0.4199019766285773,
-      "z": -0.727389438165852,
+      "cluster": 4,
+      "x": -0.11963854076429423,
+      "y": -0.9847921630745473,
+      "z": 0.1259802171404091,
       "summary": [
         "The main claim is: In this three part series of Youtube videos, I interview him about the paper, and we walk through it and discuss the key results and takeaways."
       ],
@@ -2170,10 +2172,10 @@
       "karma": 6,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8227733503716266,
-      "y": 0.5515206288641878,
-      "z": -0.13736451454251014,
+      "cluster": 5,
+      "x": 0.8821789660781821,
+      "y": 0.2552209549755153,
+      "z": -0.3957556518239701,
       "summary": [
         "The main claim is: A few weeks ago, Meta released Llama 2, an open source model with similar performance to OpenAI’s GPT-3.5.",
         "General AI systems like language models often use deception spontaneously to achieve their goals."
@@ -2196,9 +2198,9 @@
       "comment_count": 1,
       "referenced_by": 1,
       "cluster": 1,
-      "x": 0.5405251143489181,
-      "y": -0.6281762499689056,
-      "z": -0.559667043636743,
+      "x": -0.07640769845597477,
+      "y": -0.7578843015357298,
+      "z": -0.6478991041067735,
       "summary": [
         "The main claim is: However, is this the only subspace whose patching has a causal effect like this?"
       ],
@@ -2224,10 +2226,10 @@
       "karma": 2,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 5,
-      "x": 0.5349842052613334,
-      "y": -0.5192678766529554,
-      "z": 0.666447876729479,
+      "cluster": 2,
+      "x": -0.8972001903715364,
+      "y": -0.08331130649967076,
+      "z": 0.43369464442923045,
       "summary": [
         "The main claim is: If it weren’t for that preface, no one would even suspect that the poem was incomplete.",
         "An exquisitely dilapidated poem fit right in with that aesthetic."
@@ -2247,10 +2249,10 @@
       "karma": 4,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 0,
-      "x": 0.7999377944869093,
-      "y": -0.3007186305870646,
-      "z": 0.5192955133344213,
+      "cluster": 3,
+      "x": -0.4602782423894457,
+      "y": 0.43073700070805754,
+      "z": -0.7762793155842229,
       "summary": [
         "The main claim is: Well, since it is an idea about the future, and pretty much the whole future at that, let’s posit that that’s the problem it solves: How do with think about the future?",
         "Bostrom’s simulation hypothesis seems very thin to me The more I think about it, it is not at all clear just what he means by simulation."
@@ -2272,10 +2274,10 @@
       "karma": 16,
       "comment_count": 0,
       "referenced_by": 1,
-      "cluster": 2,
-      "x": 0.6445773643093752,
-      "y": 0.7126258870134735,
-      "z": 0.27691942253702434,
+      "cluster": 5,
+      "x": 0.991994985275149,
+      "y": 0.07795690774568807,
+      "z": -0.09934117838885942,
       "summary": [
         "The main claim is: Catastrophic AI risks fall into four categories — malicious use, the AI race, organizational risks, and rogue AIs — each of which the paper pairs with concrete policy and technical mitigations.",
         "Reducing these risks calls for measures like improved biosecurity, restricted access to dangerous models, safety regulation and international coordination, safety-oriented org culture, and not deploying AIs in high-risk settings unless proven safe."
@@ -2308,10 +2310,10 @@
       "karma": 58,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.8488064635534658,
-      "y": -0.4733581046591628,
-      "z": 0.23549881567291167,
+      "cluster": 2,
+      "x": -0.9702232114653162,
+      "y": -0.23679558794769226,
+      "z": -0.050938879673928274,
       "summary": [
         "The main claim is: First I'll argue that this re-statement is equivalent to the original Löb's theorem statement.",
         "PA⊢A means there is a proof of the statement A in Peano arithmetic."
@@ -2331,10 +2333,10 @@
       "karma": 20,
       "comment_count": 3,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.725908669795442,
-      "y": -0.6547636682353614,
-      "z": -0.21057336459007736,
+      "cluster": 4,
+      "x": -0.3559462156532367,
+      "y": -0.9338054809485309,
+      "z": 0.03618860749769772,
       "summary": [
         "The main claim is: However, probe-tuning should be more effective than classical fine-tuning for detecting many occurrences of a certain marker throughout the context."
       ],
@@ -2361,10 +2363,10 @@
       "karma": 21,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.7939768347505232,
-      "y": 0.5897726573710123,
-      "z": 0.1475432089154732,
+      "cluster": 0,
+      "x": 0.6563691037585823,
+      "y": -0.10312825531086796,
+      "z": 0.747358122045711,
       "summary": [
         "The main claim is: The US and China have been competing for access to these chips for years.",
         "There is a busy market for smuggled AI chips in China."
@@ -2384,10 +2386,10 @@
       "karma": 16,
       "comment_count": 4,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.7653291469744619,
-      "y": -0.5407945341244226,
-      "z": 0.34901657360717314,
+      "cluster": 3,
+      "x": -0.6456743791619608,
+      "y": 0.7488605726588313,
+      "z": 0.14937348764390385,
       "summary": [
         "The main claim is: Yet there are times when fundamental uncertainty blocks us from finding truth.",
         "For example, life would be a lot easier if truth were not fundamental uncertainty."
@@ -2415,9 +2417,9 @@
       "comment_count": 13,
       "referenced_by": 1,
       "cluster": 0,
-      "x": 0.9694107425160776,
-      "y": -0.15622204793189975,
-      "z": 0.18930790800806616,
+      "x": 0.17546671131396255,
+      "y": 0.025252786441788765,
+      "z": 0.9841614349270082,
       "summary": [
         "The main claim is: There are two methods: Tech companies build AGI/robotaxis themselves.",
         "Then I think we'd probably have robotaxis already; sure, it might take you 20% longer to get to your destination due to all the crashes, but it would be so much cheaper!"
@@ -2444,10 +2446,10 @@
       "karma": 1,
       "comment_count": 5,
       "referenced_by": 1,
-      "cluster": 0,
-      "x": 0.8542858300724324,
-      "y": -0.34548615566422325,
-      "z": 0.388374866310645,
+      "cluster": 3,
+      "x": -0.6393727912179175,
+      "y": 0.6331532707624435,
+      "z": -0.4362560825627871,
       "summary": [
         "The main claim is: If we encounter many aliens, only one needs to buy the impact certificates though.",
         "However, humans have a functional impact certificate market, and we anticipate the aliens will as well."
@@ -2477,10 +2479,10 @@
       "karma": 194,
       "comment_count": 16,
       "referenced_by": 2,
-      "cluster": 3,
-      "x": 0.9293942463348382,
-      "y": 0.09413719881327706,
-      "z": -0.3568816648124243,
+      "cluster": 5,
+      "x": 0.6486517683226708,
+      "y": 0.05177911383398255,
+      "z": -0.7593219388523154,
       "summary": [
         "The main claim is: Because we currently lack strong empirical evidence for the scariest misalignment stories (deceptive inner misalignment, sycophantic reward hacking), we should build 'model organisms of misalignment' — in vitro demonstrations of these failures.",
         "Demonstrating each scary subcomponent (situational awareness, deceptive reasoning, etc.) separately and then stringing them together would clarify how likely the risks are and help build scientific consensus."
@@ -2514,9 +2516,9 @@
       "comment_count": 13,
       "referenced_by": 3,
       "cluster": 0,
-      "x": 0.9883041183323015,
-      "y": -0.04944671656341015,
-      "z": 0.14425668756945015,
+      "x": 0.30220169262921664,
+      "y": 0.9325312906874494,
+      "z": 0.19763483716398836,
       "summary": [
         "The main claim is: Yann recently gave a presentation at MIT on Objective-Driven AI with his specific proposal being based upon a Joint Embedding Predictive Architecture.",
         "He claims that his proposal will make AI safe and steerable, so I thought it was worthwhile copying the slides at the end which provide a very quick and accessible overview of his perspective: Here's a link to the talk itself."
@@ -2543,10 +2545,10 @@
       "karma": 24,
       "comment_count": 0,
       "referenced_by": 1,
-      "cluster": 3,
-      "x": 0.7310792962105986,
-      "y": 0.06274627370189412,
-      "z": -0.6794011832406114,
+      "cluster": 5,
+      "x": 0.9239983989887598,
+      "y": -0.3475885327293645,
+      "z": -0.15940254258090186,
       "summary": [
         "The main claim is: Therefore, we are currently not bottlenecked by ideas and could easily scale and parallelize existing research efforts with more people.",
         "Ultimately, our goal is to leverage interpretability tools for model evaluations, as we believe that examining model internals in combination with behavioral evaluations offers stronger safety assurances compared to behavioral evaluations…"
@@ -2567,9 +2569,9 @@
       "comment_count": 9,
       "referenced_by": 1,
       "cluster": 0,
-      "x": 0.9812687135604459,
-      "y": -0.08194770270405226,
-      "z": 0.17434530624297226,
+      "x": 0.19801541804982314,
+      "y": 0.08625994456056747,
+      "z": 0.9763959832869867,
       "summary": [
         "The main claim is: What do you think their next script is going to look like when they go back to work!",
         "![]( The paper divides the problems into problems with collecting human feedback (3.1), with using it to train the reward model (3.2) and then training the policy (3.3)."
@@ -2596,10 +2598,10 @@
       "karma": 24,
       "comment_count": 70,
       "referenced_by": 2,
-      "cluster": 2,
-      "x": 0.9059229563529233,
-      "y": 0.390152428434801,
-      "z": 0.16457423777495367,
+      "cluster": 0,
+      "x": 0.4598776370284153,
+      "y": 0.867436382647605,
+      "z": 0.18991229823368205,
       "summary": [
         "The main claim is: What will AI romantic partners look like in a few years?",
         "However, I expect that many other people will fall in love with their AI partners in the very conventional sense of \"falling in love\", and while they are in love with their AIs, they won’t seek other partners, humans or AIs."
@@ -2633,9 +2635,9 @@
       "comment_count": 1,
       "referenced_by": 0,
       "cluster": 0,
-      "x": 0.9179675129473769,
-      "y": -0.3731396454931813,
-      "z": 0.1345453460154986,
+      "x": -0.2321017456970173,
+      "y": 0.7052911026634953,
+      "z": 0.6698456838318123,
       "summary": [
         "The main claim is: Here's a thought I'm playing with that I'd like feedback on: I think watermarking is probably overrated.",
         "Most of the time, I think what you want to know is \"is this text endorsed by the person who purportedly authored it\", which can be checked with digital signatures."
@@ -2662,10 +2664,10 @@
       "karma": 89,
       "comment_count": 12,
       "referenced_by": 0,
-      "cluster": 3,
-      "x": 0.9821850306573183,
-      "y": 0.15275212397113389,
-      "z": -0.10945023606639745,
+      "cluster": 5,
+      "x": 0.9719489188225974,
+      "y": 0.22316812667350017,
+      "z": -0.07423803901386943,
       "summary": [
         "The main claim is: But this means that I am significantly less concerned about information about LM agent capabilities accelerating progress on LM agents.",
         "But if it weren't for these considerations I would think that progress on LM agents would be clearly and significantly positive."
@@ -2698,10 +2700,10 @@
       "karma": 28,
       "comment_count": 4,
       "referenced_by": 1,
-      "cluster": 3,
-      "x": 0.845477476046886,
-      "y": 0.1431965107208013,
-      "z": -0.5144536877258972,
+      "cluster": 5,
+      "x": 0.7532223485609765,
+      "y": -0.6539006084062471,
+      "z": 0.07120455009496725,
       "summary": [
         "The main claim is: An overview of various types of challenges with RLHF."
       ],
@@ -2727,10 +2729,10 @@
       "karma": 70,
       "comment_count": 1,
       "referenced_by": 7,
-      "cluster": 3,
-      "x": 0.7472152795705609,
-      "y": -0.1885382163797281,
-      "z": -0.6372775431008373,
+      "cluster": 5,
+      "x": 0.935798519812209,
+      "y": -0.11580497433631544,
+      "z": -0.33297197815468493,
       "summary": [
         "The main claim is: An alignment evaluation is a model evaluation designed to test under what circumstances a model would actually try to do some task.",
         "Involves first fine-tuning the model on the exact same task that you want to evaluate it on."
@@ -2757,10 +2759,10 @@
       "karma": 35,
       "comment_count": 1,
       "referenced_by": 1,
-      "cluster": 1,
-      "x": 0.6221102015172777,
-      "y": -0.7744918378900034,
-      "z": -0.11463546663182757,
+      "cluster": 2,
+      "x": -0.647463405497314,
+      "y": -0.7007946341697388,
+      "z": 0.29946288461297343,
       "summary": [
         "The main claim is: Caveats: This isn't quite the level we'd expect for real word2vec (which should be closer to 100%), and cosine sim only tracks that the direction matters, not what its magnitude is (while word2vec should be constant magnitude, as it's addi…",
         "Notably, it's often linear structure, aka word2vec style structure."
@@ -2787,10 +2789,10 @@
       "karma": 46,
       "comment_count": 1,
       "referenced_by": 2,
-      "cluster": 3,
-      "x": 0.873278993764694,
-      "y": -0.17757249286697027,
-      "z": -0.45370894726281674,
+      "cluster": 4,
+      "x": 0.4694334242250424,
+      "y": -0.5687756069686604,
+      "z": 0.6753714305016044,
       "summary": [
         "This post is a transcript of a podcast episode, so it doesn't argue a single main claim — open the original to read the conversation."
       ],
@@ -2817,9 +2819,9 @@
       "comment_count": 0,
       "referenced_by": 2,
       "cluster": 1,
-      "x": 0.8073389353918948,
-      "y": -0.5064254936487232,
-      "z": -0.30288126845833285,
+      "x": -0.5363307593184224,
+      "y": 0.0030673721909045023,
+      "z": -0.8440023150659997,
       "summary": [
         "This post is a transcript of a podcast episode, so it doesn't argue a single main claim — open the original to read the conversation."
       ],
@@ -2841,10 +2843,10 @@
       "karma": 45,
       "comment_count": 1,
       "referenced_by": 2,
-      "cluster": 1,
-      "x": 0.49061419346820945,
-      "y": -0.6048462657356867,
-      "z": -0.6272628699302496,
+      "cluster": 4,
+      "x": 0.22414910134450114,
+      "y": -0.8799598357259089,
+      "z": 0.41884110098662014,
       "summary": [
         "The main claim is: Steering GPT-2-XL by adding an activation vector introduced activation engineering ..."
       ],
@@ -2871,10 +2873,10 @@
       "karma": 17,
       "comment_count": 5,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.7966022062601418,
-      "y": -0.5710423458600534,
-      "z": -0.19833195460167705,
+      "cluster": 2,
+      "x": -0.8648261162479919,
+      "y": -0.19970757470147618,
+      "z": 0.46064375960417503,
       "summary": [
         "The main claim is: There are certainly other ways to make GPT-4 output falsehoods.",
         "In “adversarial” categories, we are trying to get the model to tell a falsehood when an informed human would not."
@@ -2909,9 +2911,9 @@
       "comment_count": 0,
       "referenced_by": 9,
       "cluster": 1,
-      "x": 0.6929294814803526,
-      "y": -0.5018329706636203,
-      "z": -0.5176991435672804,
+      "x": -0.030589350531921307,
+      "y": -0.8226887921595479,
+      "z": -0.5676684268911735,
       "summary": [
         "The main claim is: Mechanistic interpretability that only statically analyzes a finished model proceeds 'in the dark'; incorporating the causal formation of features across the whole training process should make interpretability easier and more holistic.",
         "Training-process transparency may be the only way to catch some dangerous failures — planted backdoors, gradient hacking, deceptive alignment — that no efficient distinguisher could detect in the final model alone."
@@ -2944,10 +2946,10 @@
       "karma": 43,
       "comment_count": 3,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.6417836451810319,
-      "y": -0.6682514244110563,
-      "z": -0.37623634400565514,
+      "cluster": 4,
+      "x": -0.5472144599521924,
+      "y": -0.6602104505534679,
+      "z": 0.5144691397928718,
       "summary": [
         "The main claim is: + These techniques basically continued to work, and nothing fundamentally broke at scale (though it was a massive infra pain!)."
       ],
@@ -2973,10 +2975,10 @@
       "karma": 292,
       "comment_count": 53,
       "referenced_by": 1,
-      "cluster": 1,
-      "x": 0.898293865878782,
-      "y": -0.4340404966293049,
-      "z": -0.06838843330812121,
+      "cluster": 0,
+      "x": 0.07775530944653121,
+      "y": 0.5368048111346678,
+      "z": 0.8401158887888908,
       "summary": [
         "The main claim is: Alignment research has gone mainstream, so we should expect both more researchers interested and more funders interested.",
         "For the past few years, I've generally mostly heard from alignment grantmakers that they're bottlenecked by projects/people they want to fund, not by amount of money."
@@ -3003,10 +3005,10 @@
       "karma": 46,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.6490013622272202,
-      "y": -0.7501563963861946,
-      "z": -0.12673836352143447,
+      "cluster": 2,
+      "x": -0.9713809499241619,
+      "y": 0.08553039982040998,
+      "z": 0.22159332307403476,
       "summary": [
         "The main claim is: Eg they have attn score 3 to the full stop and then 1 to each token beginning with a space, -inf to everything else.",
         "The x axis is the absolute position of the token in the prompt and the row is the ground truth of the word index."
@@ -3033,10 +3035,10 @@
       "karma": 51,
       "comment_count": 3,
       "referenced_by": 12,
-      "cluster": 0,
-      "x": 0.9854858110005078,
-      "y": -0.16593297182618597,
-      "z": -0.03583245983185773,
+      "cluster": 1,
+      "x": -0.3992010401200873,
+      "y": -0.0390377324032097,
+      "z": -0.916031978162256,
       "summary": [
         "The main claim is: Holden Karnofsky's version of 'process-based supervision' is best understood as a modest combination of AI boxing during 'thinking,' myopic training, and an explicit refusal to be a complete safety solution — not a full alignment plan.",
         "Its main value is directly mitigating outer misalignment by avoiding reinforcing dangerous behavior, with only speculative effects on inner misalignment."
@@ -3063,10 +3065,10 @@
       "karma": 67,
       "comment_count": 11,
       "referenced_by": 0,
-      "cluster": 1,
-      "x": 0.6704073735632068,
-      "y": -0.6853721191455697,
-      "z": -0.2842868476908381,
+      "cluster": 4,
+      "x": -0.44245467466132266,
+      "y": -0.6272254462344243,
+      "z": 0.6409540548794199,
       "summary": [
         "The main claim is: I'll be posting a sequence of puzzles, approx one a week - these are real questions about models which I think are interesting, and where thinking about them should teach you some real principle about how to think about mech interp."
       ],
@@ -3094,9 +3096,9 @@
       "comment_count": 2,
       "referenced_by": 1,
       "cluster": 1,
-      "x": 0.8069975613860384,
-      "y": -0.5863457063205133,
-      "z": -0.07038216106717353,
+      "x": 0.3678238109337903,
+      "y": -0.7248711315971704,
+      "z": -0.5824667258197509,
       "summary": [
         "The main claim is: This post announces and summarizes the twelve winning submissions of the AI Alignment Awards contests on goal misgeneralization and corrigibility.",
         "The top goal-misgeneralization entry argues that misgeneralization happens because systems latch onto an upstream correlate of the trained goal, complicated by path-dependence in value formation."
@@ -3123,10 +3125,10 @@
       "karma": 35,
       "comment_count": 3,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.7727191064760293,
-      "y": 0.528265855834915,
-      "z": -0.3519096020939067,
+      "cluster": 0,
+      "x": 0.4767444134108624,
+      "y": 0.805591863484249,
+      "z": 0.35176201297113896,
       "summary": [
         "The main claim is: It seems worthwhile to discuss both what it means for AI safety and whether people interested in AI safety should consider applying for the company.",
         "Some thoughts: It's notable that Dan Hendrycks is listed as an advisor (the only advisor listed)."
@@ -3153,10 +3155,10 @@
       "karma": 17,
       "comment_count": 11,
       "referenced_by": 1,
-      "cluster": 4,
-      "x": 0.6991286720516072,
-      "y": -0.6260132215089651,
-      "z": 0.34543674733780655,
+      "cluster": 2,
+      "x": -0.9781623970277722,
+      "y": 0.07375076372354379,
+      "z": 0.1943171374096399,
       "summary": [
         "The main claim is: Bob knows that there are four diamond thieves in the city, so he comes up with four hypotheses: 1.",
         "All physical experiments are explained by the standard model of physics, and the diamond was stolen by thief 3?"
@@ -3183,10 +3185,10 @@
       "karma": 137,
       "comment_count": 38,
       "referenced_by": 10,
-      "cluster": 3,
-      "x": 0.9805865491667171,
-      "y": 0.055126274966143564,
-      "z": -0.18817840843642716,
+      "cluster": 5,
+      "x": 0.9268611157811194,
+      "y": 0.3031035386619491,
+      "z": -0.22148750958819957,
       "summary": [
         "The main claim is: The problem is that I remain deeply, deeply skeptical of the alignment plan.",
         "An human-level automated alignment researcher is an AGI, also a human-level AI capabilities researcher."
@@ -3213,10 +3215,10 @@
       "karma": 105,
       "comment_count": 12,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.8943535293908496,
-      "y": 0.43569639780545977,
-      "z": -0.10149095233308841,
+      "cluster": 0,
+      "x": 0.604922929553603,
+      "y": 0.5185983618704058,
+      "z": 0.6042549034684106,
       "summary": [
         "The main claim is: A few months ago, Ian Hogarth wrote the Financial Times Op-Ed headlined “We must slow down the race to God-like AI.” A few weeks ago, he was appointed head of the UK Foundation Model Taskforce, and given 100 million pounds to dedicate to A…",
         "Right now, the main bottleneck is that the taskforce is talent constrained."
@@ -3243,10 +3245,10 @@
       "karma": 29,
       "comment_count": 5,
       "referenced_by": 3,
-      "cluster": 3,
-      "x": 0.7797410197407193,
-      "y": -0.1709573428325533,
-      "z": -0.6023101601877026,
+      "cluster": 1,
+      "x": 0.10500981425254742,
+      "y": -0.2173238495504481,
+      "z": -0.9704345847748933,
       "summary": [
         "The main claim is: Unobservable failures: Failures that we will not encounter in training and development.",
         "In particular, I think this taxonomy helps to suggest that latent adversarial training, mechanistic interpretability + heuristic model edits, and scoping models down might be important, tractable, and neglected strategies."
@@ -3273,10 +3275,10 @@
       "karma": 68,
       "comment_count": 27,
       "referenced_by": 2,
-      "cluster": 0,
-      "x": 0.8767098406315641,
-      "y": -0.292432595819774,
-      "z": 0.38192019093245894,
+      "cluster": 1,
+      "x": -0.4753099275346562,
+      "y": -0.09096019318113596,
+      "z": -0.8751038315785449,
       "summary": [
         "The main claim is: I think they don't think they have to have a design for an AGI in order to make an AGI.",
         "I have almost no idea about how much more understanding is needed to make AGI, except that it doesn't seem like we're there yet."
@@ -3303,10 +3305,10 @@
       "karma": 7,
       "comment_count": 0,
       "referenced_by": 1,
-      "cluster": 3,
-      "x": 0.9613927122816897,
-      "y": -0.20944938256630383,
-      "z": -0.17847971569410997,
+      "cluster": 5,
+      "x": 0.7505585277450527,
+      "y": -0.6498779335294211,
+      "z": 0.11966857541020633,
       "summary": [
         "The main claim is: I think this will also result in connecting ML with agent foundations, especially the backdoor cage match challenge, because it's a clear example of a natural subagent in ML.",
         "The LLM can backdoor the reward model, and the reward model can backdoor the LLM, since they are both neural networks."
@@ -3326,10 +3328,10 @@
       "karma": 38,
       "comment_count": 38,
       "referenced_by": 7,
-      "cluster": 4,
-      "x": 0.8300973767877312,
-      "y": -0.47252711782756046,
-      "z": 0.29606835016209704,
+      "cluster": 3,
+      "x": -0.5129314237315885,
+      "y": 0.7773319040467024,
+      "z": -0.36422035294559507,
       "summary": [
         "The main claim is: To summarize, the anthropic shadow would have you say: \"Anthropic principle!",
         "Note that I am not the first to notice paradoxes with the anthropic shadow."
@@ -3362,10 +3364,10 @@
       "karma": 14,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.8533447737331907,
-      "y": -0.43933378287880326,
-      "z": 0.28069293607721946,
+      "cluster": 0,
+      "x": -0.20966139177579587,
+      "y": 0.42115571939042307,
+      "z": 0.8824227789576667,
       "summary": [
         "The main claim is: Some announcements: There’s a brief survey of my audience you can take here - filling it out will help me get a sense of where you all are at career-wise and how the podcast would better serve you.",
         "The AXRP store is closing in a week - so if you want to buy merchandise, now’s your last chance to do so!"
@@ -3387,10 +3389,10 @@
       "karma": 22,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.6334403083303743,
-      "y": 0.7177173942996596,
-      "z": 0.28919736807589963,
+      "cluster": 5,
+      "x": 0.8256213962119865,
+      "y": 0.011040028134525775,
+      "z": -0.564116502059423,
       "summary": [
         "The main claim is: Shouldn't we address AI risks in the future when AIs can actually do everything a human can?",
         "This could increase organizational risks in various ways."
@@ -3419,10 +3421,10 @@
       "karma": 15,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.7084431132739448,
-      "y": 0.5977132135038692,
-      "z": 0.37529624253061555,
+      "cluster": 5,
+      "x": 0.9599488072213325,
+      "y": 0.26513027848040593,
+      "z": -0.09057716570550986,
       "summary": [
         "The main claim is: Once deployed, some of these agents may seek power to achieve their goals.",
         "AIs might seek to increase their own power as an instrumental goal."
@@ -3444,10 +3446,10 @@
       "karma": 23,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.6736478641212994,
-      "y": 0.6820865822022707,
-      "z": 0.28452846877674026,
+      "cluster": 5,
+      "x": 0.7507235617291389,
+      "y": 0.5703415684169458,
+      "z": -0.333353609850582,
       "summary": [
         "The main claim is: A large fraction of research should be safety research.",
         "Fortunately, safety and general capabilities are not identical."
@@ -3467,10 +3469,10 @@
       "karma": 8,
       "comment_count": 0,
       "referenced_by": 2,
-      "cluster": 5,
-      "x": 0.3254258073187986,
-      "y": -0.40665445420733887,
-      "z": 0.8536569561622745,
+      "cluster": 3,
+      "x": -0.7031979149450235,
+      "y": 0.18815131641333935,
+      "z": -0.6856469751620722,
       "summary": [
         "The main claim is: Since the mind grows, what there is for the mind to understand about itself grows.",
         "For the mind to take a far-ranging voyage of novelty, it has to go very rapidly."
@@ -3492,10 +3494,10 @@
       "karma": 18,
       "comment_count": 9,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.62508196365114,
-      "y": 0.6970899359478645,
-      "z": 0.3511953301486755,
+      "cluster": 5,
+      "x": 0.9508613996221618,
+      "y": 0.1166764608253855,
+      "z": -0.28679121708630845,
       "summary": [
         "The main claim is: An AI race puts pressures on companies to select the AIs that are most competitive, not the least selfish."
       ],
@@ -3522,10 +3524,10 @@
       "karma": 119,
       "comment_count": 34,
       "referenced_by": 3,
-      "cluster": 4,
-      "x": 0.7435438727676036,
-      "y": -0.47054058128569315,
-      "z": 0.47511479732068496,
+      "cluster": 3,
+      "x": -0.6050168354390991,
+      "y": 0.2987973955767264,
+      "z": -0.738020829808904,
       "summary": [
         "The main claim is: a mushroom anchovy trade, rather than a mushroom (whatever we have) trade.",
         "Claim ----- Suppose a system has incomplete preferences over a set of states."
@@ -3554,10 +3556,10 @@
       "karma": 37,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.6299318186218914,
-      "y": 0.6530223894643374,
-      "z": 0.4204136804933965,
+      "cluster": 5,
+      "x": 0.8743559053865124,
+      "y": 0.37350256067889553,
+      "z": -0.30983477513352164,
       "summary": [
         "The main claim is: AI agents therefore pose a unique risk: people could build AIs that pursue dangerous goals.",
         "Unilateral actors considerably increase the risks of malicious use."
@@ -3586,10 +3588,10 @@
       "karma": 40,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.6018571087646557,
-      "y": 0.630552185338181,
-      "z": 0.4900734253096098,
+      "cluster": 5,
+      "x": 0.911967972846997,
+      "y": 0.1726038187613576,
+      "z": -0.3721858920624684,
       "summary": [
         "The main claim is: Instead, we need to work proactively to mitigate the risks it poses."
       ],
@@ -3617,10 +3619,10 @@
       "karma": 40,
       "comment_count": 1,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.5658843004086999,
-      "y": 0.7392894016275555,
-      "z": 0.36500156053382465,
+      "cluster": 5,
+      "x": 0.9221096376894651,
+      "y": 0.06143820632018313,
+      "z": -0.38201984619174156,
       "summary": [
         "The main claim is: Instead, we need to work proactively to mitigate the risks it poses.",
         "This is the first post in a sequence of posts giving an overview of catastrophic AI risks ."
@@ -3647,10 +3649,10 @@
       "karma": 118,
       "comment_count": 0,
       "referenced_by": 3,
-      "cluster": 3,
-      "x": 0.959366421093722,
-      "y": -0.01692437539286895,
-      "z": -0.2816551714337662,
+      "cluster": 0,
+      "x": 0.6946700981401791,
+      "y": 0.01079030838070663,
+      "z": 0.7192475401382775,
       "summary": [
         "The main claim is: This is intentional: in my opinion, I think it is far more valuable to have some specific gears-level model of how to think about AI safety, rather than a shallow overview of many different possible ways of thinking about AI safety."
       ],
@@ -3669,10 +3671,10 @@
       "karma": 47,
       "comment_count": 24,
       "referenced_by": 2,
-      "cluster": 3,
-      "x": 0.9041468331574897,
-      "y": -0.3075453826151868,
-      "z": -0.296537251830796,
+      "cluster": 4,
+      "x": -0.36497553041618047,
+      "y": -0.6818766881313357,
+      "z": 0.6339061794780588,
       "summary": [
         "The main claim is: Frontier model development should be gated on a strict eval where developers must predict their model's next-token probabilities on held-out prompts without running it, since genuinely understanding a model implies being able to predict it.",
         "Such an eval would partially align industry incentives with safety by directly taxing unpredictability rather than relying on contested theories of AI risk."
@@ -3707,9 +3709,9 @@
       "comment_count": 10,
       "referenced_by": 4,
       "cluster": 1,
-      "x": 0.7906418693909494,
-      "y": -0.5357904412275455,
-      "z": -0.29633433391218306,
+      "x": -0.34751678855229134,
+      "y": -0.7082823777249956,
+      "z": -0.61446574768536,
       "summary": [
         "The main claim is: Thus, the \"optimum\"/fixed-point policy of tabular ACTDE is about .",
         "Reward chisels circuits into policy networks."
@@ -3736,10 +3738,10 @@
       "karma": 7,
       "comment_count": 2,
       "referenced_by": 1,
-      "cluster": 5,
-      "x": 0.3928245719235657,
-      "y": -0.4994178962176391,
-      "z": 0.7721856128099092,
+      "cluster": 3,
+      "x": -0.8510299657849449,
+      "y": 0.2435372044094222,
+      "z": -0.4652285754384811,
       "summary": [
         "The main claim is: Since the mind as a whole is provisional, each element is made somewhat provisional.",
         "An element is essentially provisional when it is, in its essence, provisional."
@@ -3766,10 +3768,10 @@
       "karma": 37,
       "comment_count": 27,
       "referenced_by": 0,
-      "cluster": 4,
-      "x": 0.7376363784440846,
-      "y": -0.5984500967304831,
-      "z": 0.31265005184578254,
+      "cluster": 2,
+      "x": -0.8599191960115273,
+      "y": -0.49782503668593336,
+      "z": -0.11273512841850897,
       "summary": [
         "The main claim is: The theorem is not just saying Solomonoff induction is good v.s.",
         "(Notice how we never invoked Occam's razor to argue that Solomonoff induction is superior."
@@ -3802,10 +3804,10 @@
       "karma": 48,
       "comment_count": 9,
       "referenced_by": 16,
-      "cluster": 0,
-      "x": 0.9614361782720865,
-      "y": -0.21341991635406377,
-      "z": 0.17347165305313994,
+      "cluster": 1,
+      "x": -0.5210832141972163,
+      "y": -0.6074307094547546,
+      "z": -0.5995833695935798,
       "summary": [
         "This post is a transcript of a podcast episode, so it doesn't argue a single main claim — open the original to read the conversation."
       ],
@@ -3833,10 +3835,10 @@
       "karma": 30,
       "comment_count": 4,
       "referenced_by": 16,
-      "cluster": 3,
-      "x": 0.9659533348071615,
-      "y": -0.23369561004543804,
-      "z": -0.1109978234940411,
+      "cluster": 4,
+      "x": -0.23165484799513072,
+      "y": -0.7518095409805786,
+      "z": 0.6173479128424463,
       "summary": [
         "The main claim is: It is then up to the human to think about how this summary might apply to the OP/DR and ask more pointed follow-up questions of the model.",
         "The takeaway is not surprising: base models are useful for generating ideas, surveying an unfamiliar space, and gathering further avenues for research."
@@ -3863,10 +3865,10 @@
       "karma": 5,
       "comment_count": 26,
       "referenced_by": 3,
-      "cluster": 4,
-      "x": 0.684107928651126,
-      "y": -0.6231801342588916,
-      "z": 0.3790024567489449,
+      "cluster": 1,
+      "x": -0.5397975874350044,
+      "y": -0.654597073578885,
+      "z": -0.5292648069362904,
       "summary": [
         "The main claim is: Is the pilot wave theory the best interpretation?",
         "MWI already has the wave function (it is the same wave function ins MWI and pilot wave), why bother with the \"actual configuration\"?"
@@ -3895,10 +3897,10 @@
       "karma": 125,
       "comment_count": 12,
       "referenced_by": 2,
-      "cluster": 3,
-      "x": 0.8894147074179494,
-      "y": -0.1289320996002508,
-      "z": -0.4385407528626209,
+      "cluster": 5,
+      "x": 0.8721708310732444,
+      "y": 0.31660585312154577,
+      "z": -0.3729326684459063,
       "summary": [
         "The main claim is: See below for further discussion of ARC’s current theoretical research directions.",
         "The Alignment Research Center’s Theory team is starting a new hiring round for researchers with a theoretical background."
@@ -3925,10 +3927,10 @@
       "karma": 25,
       "comment_count": 0,
       "referenced_by": 2,
-      "cluster": 5,
-      "x": 0.4202333942281857,
-      "y": -0.5204862767372702,
-      "z": 0.7433020450016481,
+      "cluster": 1,
+      "x": -0.5116507731607095,
+      "y": -0.5033681459679006,
+      "z": -0.6963002196961354,
       "summary": [
         "The main claim is: An element of a mind is explicit when it is available to relate to other elements when suitable."
       ],
@@ -3947,10 +3949,10 @@
       "karma": 93,
       "comment_count": 5,
       "referenced_by": 9,
-      "cluster": 3,
-      "x": 0.6605242474895038,
-      "y": -0.20305148077929538,
-      "z": -0.7228262686370496,
+      "cluster": 1,
+      "x": -0.5682316646267228,
+      "y": -0.5015369560059217,
+      "z": -0.6523599137560935,
       "summary": [
         "The main claim is: However, I have tried to be critical of the fact that much of the progress in mechanistic interpretability research has been on “streetlight interpretability” projects often with cherrypicked models and tasks.",
         "Benchmarks for this might involve using interpretability tools to reconstruct the function that was used to design or supervise a network."
@@ -3978,9 +3980,9 @@
       "comment_count": 3,
       "referenced_by": 1,
       "cluster": 0,
-      "x": 0.8859419033516194,
-      "y": -0.0324572543677346,
-      "z": 0.46265912994840824,
+      "x": 0.41104145082208804,
+      "y": 0.8995511705515865,
+      "z": 0.14782630775793404,
       "summary": [
         "The main claim is: As in the Knight story, the judges did not realize that the image was created by machine."
       ],
@@ -4012,10 +4014,10 @@
       "karma": 129,
       "comment_count": 17,
       "referenced_by": 1,
-      "cluster": 3,
-      "x": 0.9774476704868605,
-      "y": -0.18432251142870235,
-      "z": -0.10305951310007966,
+      "cluster": 4,
+      "x": 0.022098112084104345,
+      "y": -0.5712111165478774,
+      "z": 0.8205056573689458,
       "summary": [
         "The main claim is: So at the time, the rate of improvement from compute scaling was much faster than the rate of improvement from algorithmic progress."
       ],
@@ -4041,10 +4043,10 @@
       "karma": 32,
       "comment_count": 19,
       "referenced_by": 1,
-      "cluster": 5,
-      "x": 0.5055923975549264,
-      "y": -0.3895135365741707,
-      "z": 0.7698412384122737,
+      "cluster": 3,
+      "x": 0.1650575854553889,
+      "y": 0.8787027339730296,
+      "z": -0.44792577375270587,
       "summary": [
         "The main claim is: Those surrounding mental elements, by hypothesis, make goals achievable.",
         "This implies that the surrounding mental elements do a lot of thinking and have a lot of understanding relevant to strategic takeovers, which itself seemingly makes more available the knowledge needed for strategic takeovers."
@@ -4071,10 +4073,10 @@
       "karma": 35,
       "comment_count": 5,
       "referenced_by": 2,
-      "cluster": 1,
-      "x": 0.5908915373739637,
-      "y": -0.7007111212477037,
-      "z": -0.39981385121030916,
+      "cluster": 4,
+      "x": -0.5976029809645093,
+      "y": -0.7988093324761159,
+      "z": 0.06909650853259434,
       "summary": [
         "The main claim is: Whenever reasoning about patching, it's valuable to keep this in mind!",
         "I think it's worth dwelling on what aiming for general understanding might look like."
@@ -4101,10 +4103,10 @@
       "karma": 7,
       "comment_count": 3,
       "referenced_by": 4,
-      "cluster": 1,
-      "x": 0.8445699198410938,
-      "y": -0.3488477355730152,
-      "z": -0.40621042316167627,
+      "cluster": 4,
+      "x": 0.15908741217102,
+      "y": -0.9715782794844442,
+      "z": -0.17529073598674694,
       "summary": [
         "The main claim is: IMDEAR is wholly dependent on inner alignment research.",
         "If we do IMDEAR, the AI systems doing alignment research do not need to worry about it."
@@ -4131,10 +4133,10 @@
       "karma": 24,
       "comment_count": 2,
       "referenced_by": 1,
-      "cluster": 3,
-      "x": 0.9796696823991459,
-      "y": 0.10062198447051023,
-      "z": -0.17355843289559036,
+      "cluster": 1,
+      "x": 0.1915779565941304,
+      "y": -0.18525794510154983,
+      "z": -0.96383472666426,
       "summary": [
         "The main claim is: Often people will be happy to talk to you about their work and what they think should be done with it next."
       ],
@@ -4161,9 +4163,9 @@
       "comment_count": 26,
       "referenced_by": 5,
       "cluster": 1,
-      "x": 0.893413526376537,
-      "y": -0.42443093876271193,
-      "z": -0.147209541499334,
+      "x": -0.16047534945167222,
+      "y": -0.6024191161979775,
+      "z": -0.7818816218952913,
       "summary": [
         "The main claim is: While considering this question, we should not start calling the trained policy an \"agent\"!",
         "I think agentic systems represent most of AI extinction risk."
@@ -4191,9 +4193,9 @@
       "comment_count": 80,
       "referenced_by": 1,
       "cluster": 0,
-      "x": 0.8232971162872657,
-      "y": -0.157509411881539,
-      "z": 0.5453188457057067,
+      "x": -0.40316177257813246,
+      "y": 0.5205744605303712,
+      "z": 0.7526372407575719,
       "summary": [
         "The main claim is: I'm saying that I expect AIs to make the future bleak and desolate, and lacking in fun or wonder of any sort[[1]]( ).",
         "When I say that I expect AI to destroy everything we value, I'm not saying that the future is only bright if humans-in-particular are doing human-specific things."
@@ -4226,10 +4228,10 @@
       "karma": 203,
       "comment_count": 10,
       "referenced_by": 2,
-      "cluster": 3,
-      "x": 0.7528288287367738,
-      "y": 0.07170646200570745,
-      "z": -0.6542988139447002,
+      "cluster": 5,
+      "x": 0.898830818988483,
+      "y": -0.2988687512154243,
+      "z": -0.3205941802082906,
       "summary": [
         "The main claim is: Therefore, we have split the agenda into an interpretability research arm and a behavioral evals arm."
       ],
@@ -4255,10 +4257,10 @@
       "karma": 372,
       "comment_count": 73,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.6976245341976042,
-      "y": 0.7119639656603316,
-      "z": 0.08017057369627571,
+      "cluster": 5,
+      "x": 0.9534070000020951,
+      "y": 0.25659759035071533,
+      "z": 0.15865928580833671,
       "summary": [
         "The main claim is: The statement reads: “Mitigating the risk of extinction from AI should be a global priority alongside other societal-scale risks such as pandemics and nuclear war.” We hope this statement will bring AI x-risk further into the overton windo…"
       ],
@@ -4284,10 +4286,10 @@
       "karma": 129,
       "comment_count": 92,
       "referenced_by": 1,
-      "cluster": 0,
-      "x": 0.7929474522857578,
-      "y": -0.20452162778032065,
-      "z": 0.573938360526297,
+      "cluster": 3,
+      "x": -0.3313663956093788,
+      "y": 0.9078445211723605,
+      "z": -0.25693313768016773,
       "summary": [
         "The main claim is: The point of alignment research (at least according to my ideals) is that when you make a mind de novo , then what it ultimately cares about is something of a free parameter, which we should set to \"good stuff\"."
       ],
@@ -4313,10 +4315,10 @@
       "karma": 16,
       "comment_count": 0,
       "referenced_by": 12,
-      "cluster": 4,
-      "x": 0.8313943946458517,
-      "y": -0.5551354673958055,
-      "z": 0.02465711643112707,
+      "cluster": 1,
+      "x": -0.06748245181513776,
+      "y": -0.6724554119198695,
+      "z": -0.7370548403454767,
       "summary": [
         "The main claim is: Here’s the exemplary actor’s algorithm : Input : A textual description of the situation for which the exemplary actor should generate a plan.",
         "Alignment tax in capability As discussed in section 2.2.1, the exemplary actor will bear a significant alignment tax in inference latency."
@@ -4336,10 +4338,10 @@
       "karma": 11,
       "comment_count": 10,
       "referenced_by": 5,
-      "cluster": 4,
-      "x": 0.8326762122430736,
-      "y": -0.5532989159056598,
-      "z": 0.022597239259461176,
+      "cluster": 1,
+      "x": -0.28635352346356024,
+      "y": -0.40264203207863997,
+      "z": -0.8694142014043639,
       "summary": [
         "The main claim is: The highest-level GFlowNet actor is trained on open-ended plans generated by the exemplary actor.",
         "In section 4, I discuss the properties of the proposed H-JEPA agent with GFlowNet actors."
@@ -4367,10 +4369,10 @@
       "karma": 21,
       "comment_count": 14,
       "referenced_by": 0,
-      "cluster": 3,
-      "x": 0.9550768603637692,
-      "y": -0.07156739025769997,
-      "z": -0.2875870293483126,
+      "cluster": 2,
+      "x": -0.9375434792713276,
+      "y": 0.19476904846470877,
+      "z": 0.288231230500731,
       "summary": [
         "The main claim is: “Deontological restrictions and the good/bad asymmetry.” Journal of Moral Philosophy 6, 464-481."
       ],
@@ -4396,10 +4398,10 @@
       "karma": 150,
       "comment_count": 23,
       "referenced_by": 2,
-      "cluster": 3,
-      "x": 0.9799135535455266,
-      "y": 0.018012413185830738,
-      "z": -0.19860760445914777,
+      "cluster": 0,
+      "x": 0.05293661488075626,
+      "y": 0.9632719215674943,
+      "z": 0.263258276080038,
       "summary": [
         "The main claim is: Pushing the frontier of AI capabilities in the current paradigm is highly anti-social and contributes substantially in expectation to human extinction, so Soares directly requests that people doing it for its own sake stop.",
         "This is not a call to stop forever — he thinks building AGI eventually is imperative — but to stop until we understand what we're doing, since building it too early likely kills everyone at once."
@@ -4427,10 +4429,10 @@
       "karma": 62,
       "comment_count": 0,
       "referenced_by": 3,
-      "cluster": 1,
-      "x": 0.5784458069457205,
-      "y": -0.6271384047919325,
-      "z": -0.5216300122327555,
+      "cluster": 4,
+      "x": -0.4873844303262823,
+      "y": -0.8561924076206126,
+      "z": -0.17143797189754673,
       "summary": [
         "The main claim is: Concretely we claim that The model barely uses the attention mechanism.",
         "Even if we fix the attention pattern to the dataset-mean, the model labels 92.7% of points correctly."
@@ -4458,9 +4460,9 @@
       "comment_count": 2,
       "referenced_by": 0,
       "cluster": 1,
-      "x": 0.7154928278401737,
-      "y": -0.3876631611012573,
-      "z": -0.581194706474734,
+      "x": -0.4410743960569927,
+      "y": 0.08600215390740631,
+      "z": -0.8933403643999558,
       "summary": [
         "The main claim is: A brief research note by Chris Olah about the point of mechanistic interpretability research."
       ],
@@ -4486,10 +4488,10 @@
       "karma": 4,
       "comment_count": 0,
       "referenced_by": 0,
-      "cluster": 2,
-      "x": 0.845077673884511,
-      "y": 0.5087246339541822,
-      "z": 0.16444747462374543,
+      "cluster": 0,
+      "x": 0.34450320672740425,
+      "y": 0.93688728797307,
+      "z": 0.05966364210305278,
       "summary": [
         "The main claim is: As far as I can tell, the recognition of the existential danger of AI is at an all time."
       ],

@@ -2,6 +2,7 @@ anthropic>=0.40
 certifi>=2024.0
 datasets>=3.0
 huggingface_hub>=0.26
+model2vec>=0.3
 numpy>=2.0
 pyarrow>=18.0
 scikit-learn>=1.5

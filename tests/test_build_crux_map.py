@@ -45,17 +45,17 @@ def test_parse_model_json_strips_fences():
 
 
 def test_compute_post_coords_returns_xyz_per_post():
-    coords, vectorizer, matrix, svd = compute_post_coords(_posts())
-    assert coords.shape == (4, 3)
-    assert np.all(np.abs(coords) <= 1.0 + 1e-9)
-    assert svd is not None
+    geo = compute_post_coords(_posts(), use_embeddings=False)
+    assert geo.coords.shape == (4, 3)
+    assert np.all(np.abs(geo.coords) <= 1.0 + 1e-9)
+    assert geo.reduction == "truncated_svd"
+    assert geo.embedding_model is None
 
 
 def test_describe_pca_axes_labels_components():
-    posts = _posts()
-    _, vectorizer, matrix, svd = compute_post_coords(posts)
-    axes = describe_pca_axes(svd, vectorizer, matrix)
-    assert len(axes) == svd.n_components
+    geo = compute_post_coords(_posts(), use_embeddings=False)
+    axes = describe_pca_axes(geo.scores, geo.vectorizer, geo.matrix, geo.variance)
+    assert 1 <= len(axes) <= len(geo.variance)
     for entry in axes:
         assert entry["axis"] in ("x", "y", "z")
         assert entry["positive"]
@@ -87,10 +87,9 @@ def test_compute_clusters_handles_single_post():
 
 
 def test_cluster_top_terms_labels_clusters():
-    posts = _posts()
-    _, vectorizer, matrix, _ = compute_post_coords(posts)
+    geo = compute_post_coords(_posts(), use_embeddings=False)
     labels = np.array([0, 0, 1, 1])
-    terms = cluster_top_terms(matrix, vectorizer, labels, top_n=3)
+    terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels, top_n=3)
     assert set(terms) == {0, 1}
     assert all(isinstance(t, list) and t for t in terms.values())
 

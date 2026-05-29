@@ -4,7 +4,9 @@
 New approach (per-post, no cross-article edges):
 
   1. Load LessWrong + Alignment Forum posts from HuggingFace.
-  2. Embed each post (TF-IDF) and project to 3D with PCA (3 components).
+  2. Embed each post with dense, torch-free semantic vectors (model2vec) and
+     project to 3D with PCA — falling back to TF-IDF + TruncatedSVD (LSA) when
+     the embedding model is unavailable. (TF-IDF is always kept for labels.)
   3. Cluster posts with k-means; k is auto-selected by silhouette score
      ("however many clusters make sense") unless --clusters is given.
   4. For each post: summarize its claim(s), fetch its top comment from the
@@ -36,7 +38,7 @@ if str(ROOT) not in sys.path:
 import numpy as np
 from huggingface_hub import hf_hub_download
 from sklearn.cluster import KMeans
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import normalize
@@ -57,6 +59,9 @@ REFERENCE_CACHE_PATH = ROOT / "data" / "processed" / "references_cache.jsonl"
 REPO_ID = "StampyAI/alignment-research-dataset"
 SPLITS = ("lesswrong", "alignmentforum")
 MODEL = "claude-sonnet-4-20250514"
+# Torch-free static sentence embeddings (pure NumPy at inference). Dense
+# semantic vectors pack far more variance into 3 components than sparse TF-IDF.
+EMBED_MODEL = "minishlab/potion-base-8M"
 MAX_PASSAGE_CHARS = 4_000
 MAX_COMMENT_CHARS = 1_600
 
@@ -254,75 +259,150 @@ def _pick_axis_terms(
 
 
 def describe_pca_axes(
-    svd: TruncatedSVD,
+    scores: np.ndarray,
     vectorizer: TfidfVectorizer,
     matrix,
+    variance: list[float],
     *,
     top_n: int = 3,
 ) -> list[dict]:
-    """Label each SVD axis from distinctive terms at high vs low score poles.
+    """Label each layout axis from distinctive TF-IDF terms at its poles.
 
+    Works on the raw per-axis projection ``scores`` (n_posts × n_components),
+    regardless of whether those came from dense embeddings or sparse TF-IDF,
+    so the axes stay interpretable as words even when the geometry is semantic.
     Returns one entry per component, mapped to scene axes x=PC1, y=PC2, z=PC3.
     """
     axis_names = ("x", "y", "z")
-    features = vectorizer.get_feature_names_out()
+    try:
+        features = vectorizer.get_feature_names_out()
+    except Exception:
+        return []
     dense = matrix.toarray() if hasattr(matrix, "toarray") else np.asarray(matrix)
-    raw = svd.transform(matrix)
-    evr = svd.explained_variance_ratio_
     labels: list[dict] = []
-    for i in range(svd.n_components):
-        scores = raw[:, i]
-        hi = scores >= np.percentile(scores, 75)
-        lo = scores <= np.percentile(scores, 25)
+    n_axes = min(scores.shape[1], 3) if scores.ndim == 2 else 0
+    for i in range(n_axes):
+        col = scores[:, i]
+        if np.allclose(col, 0):
+            continue
+        hi = col >= np.percentile(col, 75)
+        lo = col <= np.percentile(col, 25)
         if not hi.any() or not lo.any():
             continue
-        hi_mean = dense[hi].mean(axis=0)
-        lo_mean = dense[lo].mean(axis=0)
-        pos = _pick_axis_terms(features, np.argsort(-(hi_mean - lo_mean)), top_n=top_n)
-        neg = _pick_axis_terms(features, np.argsort(hi_mean - lo_mean), top_n=top_n)
+        diff = dense[hi].mean(axis=0) - dense[lo].mean(axis=0)
+        pos = _pick_axis_terms(features, np.argsort(-diff), top_n=top_n)
+        neg = _pick_axis_terms(features, np.argsort(diff), top_n=top_n)
         labels.append(
             {
                 "axis": axis_names[i],
                 "component": i + 1,
                 "positive": " · ".join(pos),
                 "negative": " · ".join(neg),
-                "variance_explained": round(float(evr[i]), 4),
+                "variance_explained": round(float(variance[i]) if i < len(variance) else 0.0, 4),
             }
         )
     return labels
 
 
+_embedder = None
+_embedder_unavailable = False
+
+
+def embed_texts(texts: list[str]) -> np.ndarray | None:
+    """Dense semantic embeddings via model2vec (torch-free).
+
+    Returns an (n, dim) array, or None when the library/model is unavailable
+    (e.g. offline CI), in which case callers fall back to TF-IDF + SVD.
+    """
+    global _embedder, _embedder_unavailable
+    if _embedder_unavailable:
+        return None
+    if _embedder is None:
+        try:
+            from model2vec import StaticModel
+
+            _embedder = StaticModel.from_pretrained(EMBED_MODEL)
+        except Exception as exc:  # missing dep or failed download
+            log(f"Dense embeddings unavailable ({exc}); using TF-IDF instead.")
+            _embedder_unavailable = True
+            return None
+    try:
+        return np.asarray(_embedder.encode(list(texts)), dtype=float)
+    except Exception as exc:
+        log(f"Embedding failed ({exc}); using TF-IDF instead.")
+        _embedder_unavailable = True
+        return None
+
+
+@dataclass
+class PostGeometry:
+    """3D layout plus the artifacts needed to label clusters and axes."""
+
+    coords: np.ndarray  # (n, 3) L2-normalized, drives positions + clustering
+    scores: np.ndarray  # (n, 3) pre-normalization projection, for axis labels
+    vectorizer: TfidfVectorizer  # always TF-IDF, used only for word labels
+    matrix: object  # TF-IDF matrix, used only for word labels
+    variance: list[float]  # explained variance ratio per component
+    reduction: str  # "pca" (dense embeddings) or "truncated_svd" (TF-IDF)
+    embedding_model: str | None  # model id when dense, else None
+
+
+def _reduce_to_3d(features, *, dense: bool) -> tuple[np.ndarray, np.ndarray, list[float]]:
+    """Reduce a feature matrix to 3 components; return (coords, scores, variance).
+
+    Dense embeddings use centered PCA; sparse TF-IDF uses TruncatedSVD (LSA).
+    ``coords`` are L2-normalized (angular geometry); ``scores`` are the raw
+    projection used for interpreting each axis.
+    """
+    n_samples, n_features = features.shape[0], features.shape[1]
+    n_components = min(3, n_samples - 1, n_features - 1)
+    zeros = np.zeros((n_samples, 3))
+    if n_components < 1:
+        return zeros, zeros, []
+    reducer = (
+        PCA(n_components=n_components, random_state=42)
+        if dense
+        else TruncatedSVD(n_components=n_components, random_state=42)
+    )
+    scores = reducer.fit_transform(features)
+    variance = [float(v) for v in reducer.explained_variance_ratio_]
+    coords = normalize(scores)
+    if coords.shape[1] < 3:
+        pad = np.zeros((coords.shape[0], 3 - coords.shape[1]))
+        coords = np.hstack([coords, pad])
+        scores = np.hstack([scores, np.zeros((scores.shape[0], 3 - scores.shape[1]))])
+    return coords, scores, variance
+
+
 def compute_post_coords(
     posts: list[Post],
-) -> tuple[np.ndarray, TfidfVectorizer, np.ndarray, TruncatedSVD | None]:
-    """Return (3D coords, fitted vectorizer, tfidf matrix, svd) for the posts.
+    *,
+    use_embeddings: bool = True,
+) -> PostGeometry:
+    """Project posts to a 3D layout.
 
-    We reduce the TF-IDF matrix to 3 principal components with TruncatedSVD
-    (a.k.a. LSA — PCA on the uncentered sparse term matrix), then L2-normalize
-    each post's 3-vector. Working on the cosine/angular geometry of TF-IDF
-    (rather than StandardScaler'd PCA, which just isolates rare-term outliers)
-    is what yields balanced, topically meaningful clusters.
+    Primary path: dense, torch-free semantic embeddings (model2vec) reduced to
+    3 components with PCA — far more variance and cleaner topical geometry than
+    sparse word counts. Fallback (no embedding model, or ``use_embeddings``
+    False): TF-IDF reduced with TruncatedSVD (LSA). TF-IDF is always computed
+    regardless, because cluster and axis *labels* are word-based.
     """
     if not posts:
-        return np.zeros((0, 3)), TfidfVectorizer(), np.zeros((0, 0)), None
+        return PostGeometry(
+            np.zeros((0, 3)), np.zeros((0, 3)), TfidfVectorizer(), np.zeros((0, 0)),
+            [], "truncated_svd", None,
+        )
 
     texts = [truncate(clean_text(post.text), 4_000) for post in posts]
     vectorizer, matrix = build_tfidf_matrix(texts)
 
-    n_features = matrix.shape[1]
-    n_components = min(3, len(posts) - 1, n_features - 1)
-    if n_components < 1:
-        return np.zeros((len(posts), 3)), vectorizer, matrix, None
+    embeddings = embed_texts(texts) if use_embeddings else None
+    if embeddings is not None and embeddings.shape[0] == len(posts):
+        coords, scores, variance = _reduce_to_3d(embeddings, dense=True)
+        return PostGeometry(coords, scores, vectorizer, matrix, variance, "pca", EMBED_MODEL)
 
-    svd = TruncatedSVD(n_components=n_components, random_state=42)
-    coords = svd.fit_transform(matrix)
-    coords = normalize(coords)  # angular geometry: project onto the unit sphere
-
-    if coords.shape[1] < 3:
-        pad = np.zeros((coords.shape[0], 3 - coords.shape[1]))
-        coords = np.hstack([coords, pad])
-
-    return coords, vectorizer, matrix, svd
+    coords, scores, variance = _reduce_to_3d(matrix, dense=False)
+    return PostGeometry(coords, scores, vectorizer, matrix, variance, "truncated_svd", None)
 
 
 def choose_k(coords: np.ndarray, *, min_k: int = MIN_K, max_k: int = MAX_K) -> int:
@@ -583,15 +663,16 @@ def build_graph(
     offline: bool,
     dry_run: bool,
 ) -> dict:
-    coords, vectorizer, matrix, svd = compute_post_coords(posts)
-    axis_labels = describe_pca_axes(svd, vectorizer, matrix) if svd is not None else []
+    geo = compute_post_coords(posts)
+    coords = geo.coords
+    axis_labels = describe_pca_axes(geo.scores, geo.vectorizer, geo.matrix, geo.variance)
 
     if n_clusters and n_clusters > 0:
         k = min(n_clusters, len(posts))
     else:
         k = choose_k(coords)
     labels = compute_clusters(coords, k)
-    terms = cluster_top_terms(matrix, vectorizer, labels)
+    terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels)
 
     comment_cache = comments_mod.load_comment_cache(comment_cache_path)
     reference_cache = comments_mod.load_reference_cache(reference_cache_path)
@@ -670,7 +751,9 @@ def build_graph(
             "double_crux_count": crux_total,
             "referenced_post_count": referenced_total,
             "components": 3,
-            "reduction": "truncated_svd",
+            "reduction": geo.reduction,
+            "embedding_model": geo.embedding_model,
+            "variance_explained": round(float(sum(geo.variance[:3])), 4),
             "axis_labels": axis_labels,
         },
         "clusters": cluster_meta,
