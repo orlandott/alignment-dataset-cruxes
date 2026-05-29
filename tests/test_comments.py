@@ -1,10 +1,12 @@
 from scripts.comments import (
     TopComment,
     append_comment_cache,
+    append_reference_cache,
     comment_to_dict,
     endpoint_for_source,
     extract_post_id,
     load_comment_cache,
+    load_reference_cache,
     _pick_top_comment,
 )
 
@@ -51,3 +53,14 @@ def test_comment_cache_roundtrip(tmp_path):
 def test_comment_to_dict():
     c = TopComment(comment_id="x", author="A", score=7, text="t")
     assert comment_to_dict(c) == {"comment_id": "x", "author": "A", "score": 7, "text": "t"}
+
+
+def test_reference_cache_roundtrip(tmp_path):
+    path = tmp_path / "references.jsonl"
+    append_reference_cache(path, "post1", 5)
+    append_reference_cache(path, "post2", 0)
+    append_reference_cache(path, "post3", None)
+    cache = load_reference_cache(path)
+    assert cache["post1"] == 5
+    assert cache["post2"] == 0
+    assert cache["post3"] is None

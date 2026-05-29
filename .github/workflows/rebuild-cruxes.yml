@@ -24,15 +24,16 @@ jobs:
 
       - name: Build crux graph
         # Keyless: PCA(3) + k-means clusters are recomputed, post summaries +
-        # double cruxes use the heuristic method, and top comments are fetched
-        # from the public LessWrong GraphQL API (cached in data/processed/).
+        # double cruxes use the heuristic method, and top comments + pingback
+        # (referenced-by) counts are fetched from the public LessWrong GraphQL
+        # API (cached in data/processed/).
         run: python scripts/build_crux_map.py
 
       - name: Commit updated cruxes.json
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cruxes.json data/processed/comments_cache.jsonl
+          git add cruxes.json data/processed/comments_cache.jsonl data/processed/references_cache.jsonl
           git diff --staged --quiet && echo "No changes" && exit 0
           git commit -m "chore: rebuild cruxes.json from pipeline"
           git push

@@ -7,7 +7,8 @@ Data comes from the [StampyAI alignment research dataset](https://huggingface.co
 In the 3D map:
 
 - **Each point is a post**, positioned by its 3 principal components.
-- **Color = topic cluster** (k-means). Point size scales with comment count.
+- **Color = topic cluster** (k-means).
+- **Point size = how often the post is referenced by other posts** (LessWrong "pingbacks" — the count of other posts that link to it).
 - There are **no edges** — posts are not linked to each other. The relationships shown are _within_ each post: post ↔ its top comment.
 
 Click a post to see, in the side panel: what the post says, its top comment + that comment's claim, whether the comment disagrees, and the double crux (a falsifiable question, typed empirical / values / prediction, with a quote from each side).
@@ -67,7 +68,7 @@ Output `cruxes.json` schema:
 
 - **meta** — `post_count`, `cluster_count`, `k_selected`, `components` (3), `comment_count`, `double_crux_count`, …
 - **clusters** — `{ id, terms, size }` per cluster (terms name the topic).
-- **nodes** — one per post: `title`, `author`, `source`, `url`, `date`, `karma`, `comment_count`, `cluster`, `x`/`y`/`z` (3-component coords), `summary` (claim list), and `top_comment`.
+- **nodes** — one per post: `title`, `author`, `source`, `url`, `date`, `karma`, `comment_count`, `referenced_by` (pingback count — how many other posts link to it), `cluster`, `x`/`y`/`z` (3-component coords), `summary` (claim list), and `top_comment`.
   - **top_comment** — `{ author, score, text, claim, disagrees, crux }`. `crux` (present only when `disagrees`) is `{ has_crux, crux_question, type, evidence_post, evidence_comment }`.
 - **edges** — always `[]` (posts are not linked).
 

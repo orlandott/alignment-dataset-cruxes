@@ -193,6 +193,7 @@
       <div id="legend">
         <span class="legend-title">Topic clusters · k-means on 3 PCA components</span>
         <div id="cluster-legend"></div>
+        <span class="legend-title" style="margin-top:8px">Point size · times referenced by other posts</span>
       </div>
       <div id="hint">Drag to orbit · Scroll to zoom · Hover &amp; click a post</div>
       <div id="overlay"></div>
@@ -402,6 +403,7 @@
         <p class="meta-line">
           ${escapeHtml(node.author)} · ${escapeHtml(node.source)} · ${escapeHtml(date)}
           · ${node.karma} karma · ${node.comment_count} comments
+          ${typeof node.referenced_by === "number" ? `· referenced by ${node.referenced_by} other post${node.referenced_by === 1 ? "" : "s"}` : ""}
           ${node.url ? `<br/><a href="${escapeAttr(node.url)}" target="_blank" rel="noopener">Read the post →</a>` : ""}
         </p>
         ${renderSummary(node)}
@@ -577,12 +579,15 @@
       state.nodeById.clear();
       graph.nodes.forEach((node) => state.nodeById.set(node.id, node));
 
-      const sizes = graph.nodes.map((n) => Math.max(1, n.comment_count || 0));
+      // Size encodes how much each post is referenced by other posts (LW
+      // pingbacks); fall back to comment_count when references are unavailable.
+      const sizeOf = (n) => Math.max(1, (n.referenced_by ?? n.comment_count ?? 0) + 1);
+      const sizes = graph.nodes.map(sizeOf);
       const minV = Math.min(...sizes);
       const maxV = Math.max(...sizes);
 
       graph.nodes.forEach((node) => {
-        const radius = nodeRadius(Math.max(1, node.comment_count || 0), minV, maxV);
+        const radius = nodeRadius(sizeOf(node), minV, maxV);
         const geometry = new THREE.SphereGeometry(radius, 20, 20);
         const material = new THREE.MeshStandardMaterial({
           color: clusterColor(node.cluster),

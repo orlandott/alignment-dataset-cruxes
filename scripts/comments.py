@@ -59,6 +59,14 @@ QUERY_TEMPLATE = """{{
   }}
 }}"""
 
+# `pingbacks.Posts` is LessWrong's list of posts that link to this one, i.e. how
+# much the post is referenced by other posts across LW + the Alignment Forum.
+PINGBACK_QUERY = """{{
+  post(input: {{selector: {{_id: "{post_id}"}}}}) {{
+    result {{ _id pingbacks }}
+  }}
+}}"""
+
 _SSL_CONTEXT: ssl.SSLContext | None = None
 
 
@@ -166,6 +174,48 @@ def fetch_top_comment(
     data = _graphql(endpoint_for_source(source), QUERY_TEMPLATE.format(post_id=post_id), timeout=timeout)
     results = (((data or {}).get("data") or {}).get("comments") or {}).get("results") or []
     return _pick_top_comment(results)
+
+
+def fetch_referenced_by(
+    *,
+    url: str,
+    source: str,
+    timeout: float = 30.0,
+) -> int | None:
+    """Return how many other posts link to this post (LW pingback count).
+
+    Returns ``None`` when the post id can't be derived. Raises
+    :class:`CommentFetchError` on a transient/network failure.
+    """
+    post_id = extract_post_id(url)
+    if not post_id:
+        return None
+    data = _graphql(endpoint_for_source(source), PINGBACK_QUERY.format(post_id=post_id), timeout=timeout)
+    result = (((data or {}).get("data") or {}).get("post") or {}).get("result") or {}
+    pingbacks = result.get("pingbacks") or {}
+    posts = pingbacks.get("Posts") or []
+    return len(posts)
+
+
+def load_reference_cache(path: Path) -> dict[str, int | None]:
+    """Load an append-only JSONL cache of pingback counts keyed by post id."""
+    if not path.exists():
+        return {}
+    cache: dict[str, int | None] = {}
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            cache[row["post_id"]] = row.get("referenced_by")
+    return cache
+
+
+def append_reference_cache(path: Path, post_id: str, referenced_by: int | None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps({"post_id": post_id, "referenced_by": referenced_by}) + "\n")
 
 
 def load_comment_cache(path: Path) -> dict[str, dict | None]:

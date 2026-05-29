@@ -48,6 +48,7 @@ from scripts.post_claims import summarize_claims
 AUTHORED_CLAIMS_PATH = ROOT / "data" / "authored_claims.json"
 AUTHORED_CRUXES_PATH = ROOT / "data" / "authored_cruxes.json"
 COMMENT_CACHE_PATH = ROOT / "data" / "processed" / "comments_cache.jsonl"
+REFERENCE_CACHE_PATH = ROOT / "data" / "processed" / "references_cache.jsonl"
 
 REPO_ID = "StampyAI/alignment-research-dataset"
 SPLITS = ("lesswrong", "alignmentforum")
@@ -412,6 +413,28 @@ def resolve_top_comment(
     return comment
 
 
+def resolve_referenced_by(
+    post: Post,
+    *,
+    cache: dict[str, int | None],
+    cache_path: Path,
+    offline: bool,
+) -> int | None:
+    """Return how many other posts reference this post (cached/fetched)."""
+    if post.id in cache:
+        return cache[post.id]
+    if offline:
+        return None
+    try:
+        count = comments_mod.fetch_referenced_by(url=post.url, source=post.source)
+    except comments_mod.CommentFetchError as exc:
+        log(f"  pingback fetch failed ({post.id}): {exc}")
+        return None
+    comments_mod.append_reference_cache(cache_path, post.id, count)
+    cache[post.id] = count
+    return count
+
+
 def build_comment_block(
     post: Post,
     comment: comments_mod.TopComment | None,
@@ -466,6 +489,7 @@ def build_graph(
     method: str,
     n_clusters: int,
     comment_cache_path: Path,
+    reference_cache_path: Path,
     offline: bool,
     dry_run: bool,
 ) -> dict:
@@ -479,15 +503,18 @@ def build_graph(
     terms = cluster_top_terms(matrix, vectorizer, labels)
 
     comment_cache = comments_mod.load_comment_cache(comment_cache_path)
+    reference_cache = comments_mod.load_reference_cache(reference_cache_path)
 
     nodes = []
     comment_total = 0
     crux_total = 0
+    referenced_total = 0
     for index, post in enumerate(posts):
         row = coords[index] if index < coords.shape[0] else np.zeros(3)
         cluster = int(labels[index]) if index < len(labels) else 0
 
         comment_block: dict | None = None
+        referenced_by: int | None = None
         if not dry_run:
             comment = resolve_top_comment(
                 post,
@@ -502,6 +529,15 @@ def build_graph(
                 if crux and crux.get("has_crux"):
                     crux_total += 1
 
+            referenced_by = resolve_referenced_by(
+                post,
+                cache=reference_cache,
+                cache_path=reference_cache_path,
+                offline=offline,
+            )
+            if referenced_by:
+                referenced_total += 1
+
         nodes.append(
             {
                 "id": post.id,
@@ -513,6 +549,7 @@ def build_graph(
                 "date": post.date_published,
                 "karma": post.karma,
                 "comment_count": post.comment_count,
+                "referenced_by": referenced_by,
                 "cluster": cluster,
                 "x": float(row[0]),
                 "y": float(row[1]),
@@ -540,6 +577,7 @@ def build_graph(
             "auto_k": not (n_clusters and n_clusters > 0),
             "comment_count": comment_total,
             "double_crux_count": crux_total,
+            "referenced_post_count": referenced_total,
             "components": 3,
             "reduction": "truncated_svd",
         },
@@ -582,6 +620,12 @@ def parse_args() -> argparse.Namespace:
         help="Append-only cache of fetched top comments",
     )
     parser.add_argument(
+        "--reference-cache",
+        type=Path,
+        default=REFERENCE_CACHE_PATH,
+        help="Append-only cache of fetched pingback (referenced-by) counts",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=ROOT / "cruxes.json",
@@ -602,6 +646,7 @@ def main() -> int:
         method=args.method,
         n_clusters=args.clusters,
         comment_cache_path=args.comment_cache,
+        reference_cache_path=args.reference_cache,
         offline=args.offline,
         dry_run=args.dry_run,
     )
