@@ -364,9 +364,18 @@
     }
     function escapeAttr(text) { return escapeHtml(text).replaceAll("'", "&#39;"); }
 
+    function clusterEntry(cluster) {
+      return (state.graph.clusters || []).find((x) => x.id === cluster);
+    }
+
     function clusterTerms(cluster) {
-      const c = (state.graph.clusters || []).find((x) => x.id === cluster);
+      const c = clusterEntry(cluster);
       return c && c.terms && c.terms.length ? c.terms.join(" · ") : `cluster ${cluster}`;
+    }
+
+    function clusterExemplars(cluster) {
+      const c = clusterEntry(cluster);
+      return c && Array.isArray(c.exemplars) ? c.exemplars : [];
     }
 
     function axisLabelEntry(axisKey) {
@@ -444,6 +453,18 @@
       return html;
     }
 
+    function renderClusterTheme(cluster) {
+      const exemplars = clusterExemplars(cluster).slice(0, 3);
+      if (!exemplars.length) return "";
+      const items = exemplars.map((t) => `<li>${escapeHtml(t)}</li>`).join("");
+      return `
+        <div class="section">
+          <h3>Topic cluster · ${escapeHtml(clusterTerms(cluster))}</h3>
+          <p style="font-size:12px;color:var(--muted);margin:0 0 6px">Representative posts in this cluster:</p>
+          <ul class="claims-list">${items}</ul>
+        </div>`;
+    }
+
     function renderNodePanel(node) {
       const date = (node.date || "").slice(0, 10);
       setPanelHtml(`
@@ -457,6 +478,7 @@
         </p>
         ${renderSummary(node)}
         ${renderComment(node)}
+        ${renderClusterTheme(node.cluster)}
       `);
     }
 
@@ -618,11 +640,15 @@
       const container = document.getElementById("cluster-legend");
       if (!container) return;
       const clusters = (graph.clusters || []).slice().sort((a, b) => a.id - b.id);
-      container.innerHTML = clusters.map((c) => `
-        <div class="legend-item">
+      container.innerHTML = clusters.map((c) => {
+        const exemplars = Array.isArray(c.exemplars) ? c.exemplars : [];
+        const tip = exemplars.length ? `e.g. ${exemplars.join(" · ")}` : "";
+        return `
+        <div class="legend-item" title="${escapeAttr(tip)}">
           <span class="swatch" style="background:${hexCss(clusterColor(c.id))}"></span>
           <span>${escapeHtml((c.terms || []).slice(0, 3).join(" · ") || `cluster ${c.id}`)} <span style="color:var(--muted)">(${c.size})</span></span>
-        </div>`).join("");
+        </div>`;
+      }).join("");
     }
 
     function buildAxisLegend(graph) {

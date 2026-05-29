@@ -69,7 +69,10 @@ MAX_COMMENT_CHARS = 1_600
 
 # Components used for clustering. The map only shows 3, but k-means runs on a
 # higher-dimensional projection so clusters reflect structure the 3D view drops.
-CLUSTER_COMPONENTS = 50
+# ~20 is the sweet spot: it captures far more structure than 3D, while avoiding
+# the distance concentration ("curse of dimensionality") that washes out
+# cluster separation at 50D.
+CLUSTER_COMPONENTS = 20
 
 # Auto-k search range for silhouette selection.
 MIN_K = 3
@@ -462,6 +465,29 @@ def compute_clusters(coords: np.ndarray, n_clusters: int) -> np.ndarray:
     return KMeans(n_clusters=k, random_state=42, n_init=10).fit_predict(coords)
 
 
+# Contraction fragments ("don't" → "don") and weak generic words that the
+# tokenizer leaves behind; they look distinctive numerically but read as noise.
+_LABEL_STOP = frozenset(
+    {
+        "don", "doesn", "didn", "isn", "wasn", "aren", "weren", "haven", "hasn",
+        "hadn", "won", "wouldn", "couldn", "shouldn", "ain", "ve", "ll", "re",
+        "wasn t", "doesn t", "don t", "didn t",
+        "things", "thing", "know", "lot", "way", "ways", "actually", "really",
+        "maybe", "doesn t", "kind", "sort", "stuff", "bit", "yeah", "okay",
+    }
+)
+
+
+def _is_label_term(term: str) -> bool:
+    if len(term) < 3 or "{" in term or term.startswith("mjx"):
+        return False
+    if term in _LABEL_STOP:
+        return False
+    # Reject pure-fragment bigrams where either half is a contraction fragment.
+    parts = term.split()
+    return not any(p in _LABEL_STOP for p in parts)
+
+
 def cluster_top_terms(
     matrix,
     vectorizer: TfidfVectorizer,
@@ -474,7 +500,8 @@ def cluster_top_terms(
     Ranking by raw mean TF-IDF surfaces globally common words ("model", "things")
     that describe every cluster. Instead we score each term by how much more it
     appears in the cluster than in the rest of the corpus (mean inside minus mean
-    outside), which yields crisp, differentiating labels.
+    outside), which yields crisp, differentiating labels. Contraction fragments
+    and weak filler words are filtered out so labels read as real topics.
     """
     try:
         features = vectorizer.get_feature_names_out()
@@ -493,13 +520,37 @@ def cluster_top_terms(
         picked: list[str] = []
         for idx in order:
             term = features[idx]
-            if len(term) < 3 or "{" in term or term.startswith("mjx"):
+            if not _is_label_term(term):
                 continue
             picked.append(term)
             if len(picked) >= top_n:
                 break
         terms[cluster] = picked
     return terms
+
+
+def cluster_exemplars(
+    space: np.ndarray,
+    labels: np.ndarray,
+    posts: list[Post],
+    *,
+    top_n: int = 3,
+) -> dict[int, list[str]]:
+    """Return, per cluster, the titles of the posts closest to its centroid.
+
+    Exemplar titles make a cluster's theme legible in a way bag-of-words terms
+    often cannot (e.g. a list of concrete post titles vs. "agent · mind · tree").
+    """
+    exemplars: dict[int, list[str]] = {}
+    for cluster in sorted(set(int(c) for c in labels)):
+        idx = np.where(labels == cluster)[0]
+        if idx.size == 0:
+            continue
+        centroid = space[idx].mean(axis=0)
+        dist = np.linalg.norm(space[idx] - centroid, axis=1)
+        nearest = idx[np.argsort(dist)[:top_n]]
+        exemplars[cluster] = [posts[i].title for i in nearest]
+    return exemplars
 
 
 SYSTEM_PROMPT = (
@@ -704,6 +755,7 @@ def build_graph(
         k = choose_k(cluster_space)
     labels = compute_clusters(cluster_space, k)
     terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels)
+    exemplars = cluster_exemplars(cluster_space, labels, posts)
 
     comment_cache = comments_mod.load_comment_cache(comment_cache_path)
     reference_cache = comments_mod.load_reference_cache(reference_cache_path)
@@ -763,7 +815,12 @@ def build_graph(
         )
 
     cluster_meta = [
-        {"id": cluster, "terms": terms.get(cluster, []), "size": int((labels == cluster).sum())}
+        {
+            "id": cluster,
+            "terms": terms.get(cluster, []),
+            "exemplars": exemplars.get(cluster, []),
+            "size": int((labels == cluster).sum()),
+        }
         for cluster in sorted(set(int(c) for c in labels))
     ]
 
@@ -796,13 +853,13 @@ def build_graph(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build cruxes.json for Crux Map")
-    parser.add_argument("--max-posts", type=int, default=150)
+    parser.add_argument("--max-posts", type=int, default=400)
     parser.add_argument("--top-authors", type=int, default=40)
     parser.add_argument(
         "--clusters",
         type=int,
-        default=6,
-        help="k-means clusters (0 = auto-select by silhouette; default 6)",
+        default=0,
+        help="k-means clusters (0 = auto-select by silhouette; default 0)",
     )
     parser.add_argument(
         "--method",

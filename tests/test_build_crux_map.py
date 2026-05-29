@@ -5,6 +5,7 @@ from scripts.build_crux_map import (
     Post,
     build_comment_block,
     choose_k,
+    cluster_exemplars,
     cluster_top_terms,
     compute_clusters,
     compute_post_coords,
@@ -96,6 +97,33 @@ def test_cluster_top_terms_labels_clusters():
     terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels, top_n=3)
     assert set(terms) == {0, 1}
     assert all(isinstance(t, list) and t for t in terms.values())
+
+
+def test_cluster_top_terms_filters_filler_words():
+    posts = [
+        Post("1", "A", "u1", "lesswrong", "2020", ("X",),
+             "we don t really know things actually maybe interpretability circuits"),
+        Post("2", "B", "u2", "lesswrong", "2020", ("X",),
+             "we don t really know things actually maybe governance policy regulation"),
+    ]
+    geo = compute_post_coords(posts, use_embeddings=False)
+    terms = cluster_top_terms(geo.matrix, geo.vectorizer, np.array([0, 1]), top_n=4)
+    for picked in terms.values():
+        assert "don" not in picked
+        assert "things" not in picked
+        assert "know" not in picked
+
+
+def test_cluster_exemplars_returns_titles_nearest_centroid():
+    posts = _posts()
+    geo = compute_post_coords(posts, use_embeddings=False)
+    labels = np.array([0, 0, 1, 1])
+    exemplars = cluster_exemplars(geo.cluster_features, labels, posts, top_n=2)
+    assert set(exemplars) == {0, 1}
+    assert all(len(v) <= 2 and all(isinstance(t, str) for t in v) for v in exemplars.values())
+    # Exemplars must be real post titles.
+    titles = {p.title for p in posts}
+    assert all(t in titles for v in exemplars.values() for t in v)
 
 
 def test_post_summary_returns_list():
