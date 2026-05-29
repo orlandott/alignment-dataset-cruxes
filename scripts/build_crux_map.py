@@ -41,7 +41,22 @@ from scripts.heuristic_crux import extract_heuristic_crux
 from scripts.post_claims import summarize_claims
 
 AUTHORED_CRUXES_PATH = ROOT / "data" / "authored_cruxes.json"
+AUTHORED_CLAIMS_PATH = ROOT / "data" / "authored_claims.json"
 DEFAULT_CLUSTERS = 5
+
+_authored_claims_cache: dict[str, list[str]] | None = None
+
+
+def get_authored_claims() -> dict[str, list[str]]:
+    """Load per-post authored claim summaries (cached), keyed by post id."""
+    global _authored_claims_cache
+    if _authored_claims_cache is None:
+        if AUTHORED_CLAIMS_PATH.exists():
+            data = json.loads(AUTHORED_CLAIMS_PATH.read_text(encoding="utf-8"))
+            _authored_claims_cache = data.get("claims", {})
+        else:
+            _authored_claims_cache = {}
+    return _authored_claims_cache
 
 REPO_ID = "StampyAI/alignment-research-dataset"
 SPLITS = ("lesswrong", "alignmentforum")
@@ -88,7 +103,7 @@ class Post:
             "source": self.source,
             "date": self.date_published,
             "author": author,
-            "claims": summarize_claims(self.text),
+            "claims": get_authored_claims().get(self.id) or summarize_claims(self.text),
         }
 
 

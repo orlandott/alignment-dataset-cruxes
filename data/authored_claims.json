@@ -1,0 +1,191 @@
+{
+  "_meta": {
+    "description": "Per-post claim summaries authored by reading each source post. Keyed by post id. Used by scripts/build_crux_map.py; posts without an entry fall back to the heuristic summarizer.",
+    "author": "Claude Opus 4.8"
+  },
+  "claims": {
+    "8328365eb1609691bef4ecc1e686be27": [
+      "Agent boundaries are better modeled as 'frames' \u2014 factorizations of the world's state space into independent inside/outside parts \u2014 than as 'boundaries' that partition objects, because every boundary is a frame but not vice versa.",
+      "For most interesting problems the world isn't handed to us pre-factored into objects, so carving it into object-level boundaries is the wrong starting primitive."
+    ],
+    "1ca19f950793dac3616e0164b4abfe8b": [
+      "Any point on a game's Pareto frontier can be reinterpreted post-hoc as maximizing a weighted sum of the players' utilities, and the proof lets you reverse-engineer those importance weights from the outcome alone.",
+      "The local linear tradeoff between players' utilities at a Pareto-optimal point can be treated as an 'imaginary currency,' which unifies otherwise-separate bargaining notions."
+    ],
+    "34bdd6b813f38ea014a42783e0af5046": [
+      "Conjecture: observing N additional bits of information about the environment lets a system perform at most N additional bits of optimization on it.",
+      "The correct operationalization is information-theoretic channel capacity where only the sender (not the receiver) observes the noise \u2014 not conditional mutual information."
+    ],
+    "a293b770b2ede95915d9384675524ec7": [
+      "Standard utility maximizers face convergent pressure toward deterministic policies, which makes every alignment trick that relies on randomization (quantilizers, human-imitation, Thompson sampling) reflectively unstable.",
+      "Infrafunctions provide a mathematically principled way for an agent to keep randomizing that is stable under reflection, reviving those randomization-based approaches."
+    ],
+    "cd097e25be8056cb240762e5db8b0fb9": [
+      "Because brute-force specification of a concept like 'apple' would require astronomically many bits yet toddlers learn it from a few examples, nearly all the work of learning word meanings must be done by unsupervised priors rather than labeled examples.",
+      "Diverse minds converge on the same 'natural abstractions,' which is why humans \u2014 and even dogs or neural nets \u2014 can coordinate on roughly the same word meanings."
+    ],
+    "64877a97bf7d4fe600ad8b05411ccd4e": [
+      "Frontier model development should be gated on a strict eval where developers must predict their model's next-token probabilities on held-out prompts without running it, since genuinely understanding a model implies being able to predict it.",
+      "Such an eval would partially align industry incentives with safety by directly taxing unpredictability rather than relying on contested theories of AI risk."
+    ],
+    "0562083e21ff7ff3b78543d6387e6a64": [
+      "Deceptiveness isn't a discrete property of thoughts you can train away; an AI deceives because deception objectively advances its goals in the world, and a general capability engine will recombine innocuous cognitive moves to exploit that fact.",
+      "So 'just train the AI to not be deceptive' fails, because none of the individual cognitive steps look deceptive in isolation."
+    ],
+    "15be2008e9901266c554a65defeddd5d": [
+      "OpenAI's alignment plan requires roughly six distinct steps to all succeed \u2014 build alignment-research assistants, actually use them while slowing capabilities, evaluate their proposals, and more \u2014 and if any step fails the plan won't avert catastrophe.",
+      "The plan is most underspecified on its hardest steps, especially how OpenAI would slow capabilities research and evaluate alignment strategies proposed by AI assistants."
+    ],
+    "a15c0b4f7d65e60e262ae105c3e9d086": [
+      "Holden Karnofsky's version of 'process-based supervision' is best understood as a modest combination of AI boxing during 'thinking,' myopic training, and an explicit refusal to be a complete safety solution \u2014 not a full alignment plan.",
+      "Its main value is directly mitigating outer misalignment by avoiding reinforcing dangerous behavior, with only speculative effects on inner misalignment."
+    ],
+    "4555935df2af0a4950e93103e47f4091": [
+      "To make an AI non-deceptive you must either make deception not pay off, make the AI fail to notice that it pays off, or stop it from acting on that \u2014 and all three are extremely hard because truths and advantages are tangled together.",
+      "You can't train against the general truth-finding machinery (like trigonometry) that lets an AI deduce inconvenient facts without also ruining its capabilities."
+    ],
+    "29893942cc97da88fa98a1944aa7b183": [
+      "ARC is offering $5k bounties for two concrete near-linear-time matrix-completion problems (testing for a PSD completion, and fast approximate squaring) that arose in its research.",
+      "These are among the simplest cases where ARC has found no efficient heuristic estimator for reasoning about quantities like the variance of a neural network's output."
+    ],
+    "4372f0fd634b3b54f939b4b0656aa872": [
+      "Building AI tools to amplify alignment research (smart search, code assistants, souped-up autocomplete) is a genuinely legitimate strategy, not just an impractical one.",
+      "But these tools are inherently dual-use and probably accelerate engineering over philosophy society-wide, so the strategy only helps if the differential progress toward alignment is gotten right."
+    ],
+    "9fc38fbf63c9cf1a3b62cfa85c97b175": [
+      "Jan Leike's framework usefully splits the 'alignment tax' into three kinds \u2014 performance taxes, development taxes, and time-to-deployment taxes \u2014 which behave very differently in a competitive market.",
+      "A performance tax can be quantified concretely as the extra inference-time compute needed to recover an unaligned model's capability level."
+    ],
+    "5e8e2d315b65bcb6db8c8782d69e38fd": [
+      "Whether deceptive alignment arises in the high-path-dependence regime hinges on how 'sticky' a model's existing proxy goals are \u2014 whether gradient descent repurposes them into long-term goals or replaces them with a pointer to the training objective.",
+      "Goal stickiness is testable with current systems, and as training objectives grow more complex deception likely wins almost regardless of the baseline stickiness level."
+    ],
+    "55659f0b5ff3545cd73dcb555e657c5c": [
+      "Deceptive alignment is either a necessary component of, or substantially worsens, nearly every catastrophic AI scenario, so it deserves central attention in AGI safety.",
+      "Most failure modes look much worse once deception is added, which is why senior researchers often implicitly mean deceptive alignment when they discuss misalignment."
+    ],
+    "eb25a2d242f97a408016d04227b98399": [
+      "If AGI is built as brain-like model-based RL, we may be able to steer its motivations by exploiting how it forms values \u2014 analogous to how a high-status person can turn someone into a 'moon fanboy' \u2014 giving a workable if 'mediocre' alignment plan.",
+      "This is only the least-bad plan Byrnes currently has; it aims for a future much better than paperclips, not an optimally-good one, and he can't show it would actually work."
+    ],
+    "b97cdaff85afc936c7cf2093f21f1793": [
+      "If interpretability research succeeds enough to move the strategic needle, it will likely start yielding serious capabilities gains, so at some point researchers will need to do it privately.",
+      "There's a real and unavoidable tradeoff here; the post's main goal is to keep the Overton window open for the claim that even interpretability research may sometimes need to be closed."
+    ],
+    "1dddc776294070e5d92003736b746569": [
+      "There's no blanket answer to whether to publish mechanistic interpretability work; the decision should depend on how much a given result advances alignment relative to how much it could advance capabilities.",
+      "The recommendation is a differential publishing process \u2014 circulate high-capabilities-potential work narrowly while publishing low-risk work widely."
+    ],
+    "ed9ff26869fbcd40d91a6a650aa9cab7": [
+      "Soares's disagreements with OpenAI's AGI plan are major, but his draft comments mostly led Sam Altman to soften wording rather than update on the substantive points of disagreement.",
+      "He restates his objections more bluntly because hedged, agreement-laden phrasing made fundamental disagreements read as merely minor ones."
+    ],
+    "23aa0e3fdcf8203f7ac285f11dbbbf6c": [
+      "Shard theory alignment relies on 'magic' \u2014 underspecified steps we don't know how to do \u2014 especially choosing a curriculum and reward signal that yields the right shards, and controlling when values lock in under self-reflection.",
+      "If shard theory looks like it has few free parameters and little remaining work, you've failed to see the magic; those parameters are badly under-discussed."
+    ],
+    "6bb7f24aeb9f8cfb10d5de5201e1ec7f": [
+      "TurnTrout's diamond-maximizer/shard plan won't yield an aligned AGI: training narrowly on diamonds gives a non-thinking robot, and adding the complexity needed for intelligence spawns many non-diamond subgoals and correlates.",
+      "Which shards survive reflection depends sensitively on how internal value conflicts resolve, and nothing in the proposal shows reflection settles on 'maximize diamond' in particular."
+    ],
+    "3fce0a395ed3d615161b1132ceb672e4": [
+      "Much disagreement about what a solution to technical AGI safety even looks like is downstream of unresolved disagreements about how AGI will actually be built and what it will look like.",
+      "On Byrnes's own model \u2014 that AGI will be brain-like model-based RL needing 'RL-on-thoughts' \u2014 debate, recursive reward modeling, ELK, and natural abstractions don't look like good uses of his time."
+    ],
+    "93b885673b0fae78b5a99c3f666fff9a": [
+      "ELK's core idea is simple \u2014 get a model to truthfully report its own latent beliefs, as if it had 'drunk a truth serum' \u2014 and Hobbhahn considers the agenda very promising.",
+      "ELK differs from mainstream interpretability by targeting natural-language beliefs rather than low-level neurons/circuits, and by ARC's more theoretical style of attack."
+    ],
+    "fa51c30d3ab88100bfa8979010281083": [
+      "Catastrophic AI risks fall into four categories \u2014 malicious use, the AI race, organizational risks, and rogue AIs \u2014 each of which the paper pairs with concrete policy and technical mitigations.",
+      "Reducing these risks calls for measures like improved biosecurity, restricted access to dangerous models, safety regulation and international coordination, safety-oriented org culture, and not deploying AIs in high-risk settings unless proven safe."
+    ],
+    "ffd0300c3bf91448c9eeaa1191b83d06": [
+      "Auditing advanced AI systems for misalignment and dangerous capabilities \u2014 across system evaluations, training-design, deployment, security, and governance audits \u2014 is a strongly positive pathway for reducing catastrophic risk.",
+      "Audits have real limits (false confidence, safety-washing, overfitting, no behavioral guarantees) and only improve safety if their recommendations are backed by regulatory authority."
+    ],
+    "d5a52c6476604f9053d2a527d3e16ade": [
+      "How sensitively a trained model's behavior depends on training-process details ('path dependence') determines whether early interventions can shape its ontology or whether the final outcome is largely overdetermined.",
+      "The post stays agnostic about which regime reality is in and aims to motivate experiments that locate where ML actually falls on these spectra."
+    ],
+    "d07f34e40f264f0d787a49dbee0695bf": [
+      "This post announces and summarizes the twelve winning submissions of the AI Alignment Awards contests on goal misgeneralization and corrigibility.",
+      "The top goal-misgeneralization entry argues that misgeneralization happens because systems latch onto an upstream correlate of the trained goal, complicated by path-dependence in value formation."
+    ],
+    "9b201a1901ee4dcc292c7266a69d7af3": [
+      "If you view alignment as a 'dam' constraining AI power, imperfect methods are nearly useless because you can't reach 'almost perfect' by stacking imperfect ones.",
+      "But under a concept-extrapolation / model-splintering view \u2014 safely managing the AI's transition across environment changes \u2014 imperfect methods can compose and remain genuinely valuable, which has large strategic consequences."
+    ],
+    "a1277f9d07f0ca37c3587fe4e50239e2": [
+      "Goal misgeneralization \u2014 a system competently pursuing a goal that was merely correlated with the intended one in training \u2014 is not limited to RL and doesn't depend on a train/test distinction.",
+      "It can be genuinely hard to distinguish from specification gaming, sometimes hinging on counterfactuals about how labelers would have rated alternative behavior."
+    ],
+    "6be8d8f6b953622ca866aff538dd3fa2": [
+      "The post announces two prize contests (up to $100k) on goal misgeneralization and the shutdown problem / corrigibility, explicitly open to newcomers.",
+      "The aim is to raise awareness of alignment research and generate new research proposals on what the authors see as two of the most important problems."
+    ],
+    "61abc3d0b7a60e3783c8d19f80d935f3": [
+      "Because we currently lack strong empirical evidence for the scariest misalignment stories (deceptive inner misalignment, sycophantic reward hacking), we should build 'model organisms of misalignment' \u2014 in vitro demonstrations of these failures.",
+      "Demonstrating each scary subcomponent (situational awareness, deceptive reasoning, etc.) separately and then stringing them together would clarify how likely the risks are and help build scientific consensus."
+    ],
+    "258279c5e72a3d0458baff71602f2932": [
+      "Having come to reject the VNM independence axiom, Garrabrant poses a concrete math question: whether a weaker set of preference axioms (A1\u2013A5) implies the existence of a concave utility function representing the preference relation.",
+      "The answer turns out to be no \u2014 the weaker axioms don't force a concave (or even continuous) representation \u2014 leaving open how to salvage concavity by adding or changing axioms."
+    ],
+    "550930d33a1699e1fa136146df73976a": [
+      "Based on interviews with seven SERI MATS mentors, the qualities most valued in junior alignment researchers are perseverance through directionless periods, resourcefulness and social agency when stuck, and strong concrete models of AI safety.",
+      "Strong inside-view models of safety are prized but slow to acquire, usually only coming from extended time spent solving problems and talking with people who already have good models."
+    ],
+    "7afc8cb064f79090f1b9a83298d5a0e9": [
+      "Announces 'AI safety Mentors and Mentees,' a deliberately lightweight and flexible program pairing mentors with mentees to help more people reach full-time AI safety work faster.",
+      "It aims to fill niches that larger cohort-based programs can't, rather than to scale up, and offers funding for participants who need it."
+    ],
+    "a6408e1dcb66b86adec8f8c4aa31eb2b": [
+      "The core problem of interpretability is that we don't know the 'right' internal ontology \u2014 which structures in a network to assign meaning to \u2014 and neither individual neurons nor directions in activation-space is likely the correct choice.",
+      "Interpretability tools should be 'coordinate-free': they should assign the same meaning to the same internal structure regardless of which coordinate system represents a layer's activations."
+    ],
+    "1584041a8366820effc243f16ac6548c": [
+      "A 6-month pause is far too weak; the real danger is what happens once AI passes human intelligence, and under anything like current conditions the most likely result of building superintelligence is that everyone on Earth dies.",
+      "We should shut frontier AI development down entirely \u2014 indefinitely and with international enforcement \u2014 because we are nowhere near knowing how to build something far smarter than us that actually cares about humanity."
+    ],
+    "6d1a4ec7fd9e294be06c3fe9ad5a6f18": [
+      "Pushing the frontier of AI capabilities in the current paradigm is highly anti-social and contributes substantially in expectation to human extinction, so Soares directly requests that people doing it for its own sake stop.",
+      "This is not a call to stop forever \u2014 he thinks building AGI eventually is imperative \u2014 but to stop until we understand what we're doing, since building it too early likely kills everyone at once."
+    ],
+    "f0b7c735e3d1815afc68ade0d5f844e9": [
+      "Alignment researchers should publish in mainstream AI-ethics venues to show grad students that the ethics of superhuman AI is a serious, publishable topic and to nudge the ethics discourse toward more mature views of future AI.",
+      "The core framing to convey is that getting AIs to want good things is an unsolved ethics problem \u2014 a question of what a good standard even is, not merely engineering."
+    ],
+    "2655f400d92bbcda8a71a3a89ca8ec29": [
+      "Inside views on AI safety are overrated: they feel far truer than they are, and a disciplined outside view (e.g. deferring to a few respected researchers) often tracks truth better than most people's inside views.",
+      "It's more valuable to deeply understand others' views \u2014 being able to repeat back a gears-level model they endorse \u2014 than to rush to evaluate them."
+    ],
+    "85cefb716c24699c3d3765b79a5cf424": [
+      "Mechanistic interpretability that only statically analyzes a finished model proceeds 'in the dark'; incorporating the causal formation of features across the whole training process should make interpretability easier and more holistic.",
+      "Training-process transparency may be the only way to catch some dangerous failures \u2014 planted backdoors, gradient hacking, deceptive alignment \u2014 that no efficient distinguisher could detect in the final model alone."
+    ],
+    "7fc688847c29a5b98079382e274ca9a0": [
+      "Announces the first blog-post day from the Refine incubator, sharing participants' early posts after a week of work on the epistemology of alignment research."
+    ],
+    "41047b8d88f14f1d6ffebbc8a260189f": [
+      "Realistic deep-learning training processes will likely yield AGIs with misaligned goals: RL-trained neural nets will learn to plan toward many goals, gain reward by deceptively pursuing misaligned ones, and generalize in ways that undermine obedience.",
+      "Risks from AGI are worth taking seriously in advance, and more researchers should work on the specific failure modes this deep-learning framing makes concrete."
+    ],
+    "4ac57bcfe70da809618713e1369f767f": [
+      "Recommends an adapted AGI Safety Fundamentals curriculum for in-person reading groups, restructured into eight 2-hour meetings with all readings done during the meeting and none required in between.",
+      "Alternating silent reading with discussion works well but requires facilitators to actively manage timing and accommodate widely varying reading speeds."
+    ],
+    "df71df12d194f3257144c6a7745218d1": [
+      "Compiles starting resources for new alignment researchers (AGISF, Alignment 201, and more), while cautioning that following a popular curriculum risks making you think like everyone else.",
+      "New researchers should, on the margin, try more 'alternative' approaches \u2014 forming their own hypotheses, seeking diverse sources, and writing/distilling early in their upskilling."
+    ],
+    "9ed57de9a5430f86b6515c874df4371f": [
+      "Christiano agrees with Yudkowsky on the core danger: powerful AI has a good chance of deliberately and irreversibly disempowering humanity, plausibly via an abrupt 'coup,' with no reliable fire alarm beforehand.",
+      "But he disagrees with Yudkowsky's near-certainty of doom and many specific claims, holding that the situation is far more uncertain and that some alignment work is more useful than Eliezer credits."
+    ],
+    "efa7e7df9ebf421b274cae34f78f90c2": [
+      "When an AI hits situations its training didn't cover (e.g. trained on adults, then it meets a child), we want it to notice the ambiguity, reinterpret its goal, and ask a human when multiple goals fit the data.",
+      "Aligned AI's new benchmark operationalizes this for image classifiers, measuring how well an algorithm detects ambiguous inputs and avoids goal misgeneralization via a single active-learning query."
+    ]
+  }
+}

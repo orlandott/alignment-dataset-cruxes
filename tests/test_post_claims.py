@@ -1,4 +1,22 @@
+import json
+
+from scripts.build_crux_map import AUTHORED_CLAIMS_PATH, get_authored_claims
 from scripts.post_claims import summarize_claims
+
+
+def test_authored_claims_file_is_valid_and_nonempty():
+    assert AUTHORED_CLAIMS_PATH.exists()
+    data = json.loads(AUTHORED_CLAIMS_PATH.read_text(encoding="utf-8"))
+    claims = data["claims"]
+    assert claims
+    for post_id, post_claims in claims.items():
+        assert isinstance(post_id, str) and post_id
+        assert 1 <= len(post_claims) <= 2
+        assert all(isinstance(c, str) and c.strip() for c in post_claims)
+
+
+def test_get_authored_claims_is_cached():
+    assert get_authored_claims() is get_authored_claims()
 
 
 def test_summarize_claims_returns_core_assertion():

@@ -72,7 +72,14 @@ Options:
 Output `cruxes.json` schema:
 
 - **nodes** — authors with `post_count`, `cluster` (k-means id), `x`/`y`/`z` (PCA), sized for the 3D graph
-- **edges** — cruxes with `type` (`empirical` | `values` | `prediction`), `origin`, question, evidence quotes, and links to the two source posts
+- **edges** — cruxes with `type` (`empirical` | `values` | `prediction`), `origin`, question, evidence quotes, and links to the two source posts. Each linked post (`post_a`/`post_b`) also carries a `claims` array — short summaries of the main claim(s) that post makes.
+
+### Post claims
+
+Every source post gets a `claims` array (1–2 short statements of its core argument), resolved per post id:
+
+1. **Authored claims** in `data/authored_claims.json` (written by reading each post) are used when present — these cover the posts currently surfaced in `cruxes.json`.
+2. Otherwise the pipeline falls back to the **heuristic summarizer** (`scripts/post_claims.py`), so the keyless weekly rebuild still produces claims for any newly-surfaced post.
 
 ## Deploy (GitHub Pages)
 
