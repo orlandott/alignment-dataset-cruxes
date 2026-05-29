@@ -1,10 +1,16 @@
 # Crux Map
 
-Visualize disagreements in AI alignment research as a **3D graph** of authors and philosophical cruxes.
+Visualize AI alignment research as a **3D map of posts**, clustered by topic, where each post carries a summary, its top comment, and — when that comment pushes back — the **double crux** between post and comment.
 
-Data comes from the [StampyAI alignment research dataset](https://huggingface.co/datasets/StampyAI/alignment-research-dataset) (`lesswrong` + `alignmentforum` splits). A Python pipeline finds author pairs with overlapping topics, attaches a crux between their most similar posts, positions authors in 3D via **PCA (3 components)** on TF-IDF profiles, and groups them into topic clusters via **k-means**.
+Data comes from the [StampyAI alignment research dataset](https://huggingface.co/datasets/StampyAI/alignment-research-dataset) (`lesswrong` + `alignmentforum` splits). A Python pipeline embeds each post (TF-IDF), reduces it to **3 principal components** (TruncatedSVD / LSA), and clusters the posts with **k-means**, where _k_ is auto-selected by silhouette score ("however many clusters make sense"). The dataset only ships a `comment_count`, not comment text, so the **top comment** for each post is fetched from the public **LessWrong GraphQL API** (free, keyless — it serves Alignment Forum posts too).
 
-In the 3D graph, **node color = topic cluster (k-means)** and **edge color = crux type** (empirical / values / prediction). Node size scales with post count.
+In the 3D map:
+
+- **Each point is a post**, positioned by its 3 principal components.
+- **Color = topic cluster** (k-means). Point size scales with comment count.
+- There are **no edges** — posts are not linked to each other. The relationships shown are _within_ each post: post ↔ its top comment.
+
+Click a post to see, in the side panel: what the post says, its top comment + that comment's claim, whether the comment disagrees, and the double crux (a falsifiable question, typed empirical / values / prediction, with a quote from each side).
 
 ## Setup
 
@@ -14,84 +20,72 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-No API key is required for the default workflow.
+No API key is required.
 
 ## Pipeline
 
-Default run (free — uses the baked-in, hand-authored cruxes, no LLM costs):
+Default run (free — heuristic summaries/cruxes + free GraphQL comments, both cached):
 
 ```bash
 python scripts/build_crux_map.py
-# equivalent to:
-python scripts/build_crux_map.py --method authored
 ```
 
-Dry run (nodes + 3D PCA positions only, no edges):
+Use only the cached comments (no network), or skip comments entirely:
 
 ```bash
-python scripts/build_crux_map.py --dry-run
+python scripts/build_crux_map.py --offline
+python scripts/build_crux_map.py --dry-run   # posts + PCA + clusters only
 ```
 
-The pipeline also supports a free **heuristic** TF-IDF method and an optional **Anthropic** upgrade:
+Optional **Anthropic** upgrade for summaries/double cruxes (needs `ANTHROPIC_API_KEY`):
 
 ```bash
-python scripts/build_crux_map.py --method heuristic
-cp .env.example .env && python scripts/build_crux_map.py --method anthropic  # needs ANTHROPIC_API_KEY
+cp .env.example .env && python scripts/build_crux_map.py --method anthropic
 ```
 
-### Authored cruxes (default)
+### How it works
 
-The TF-IDF pair matcher reliably finds *topically* similar posts, but those aren't always real disagreements (and templated heuristic questions read as nonsense). So cruxes are authored once and committed to `data/authored_cruxes.json`, keyed by author pair. At build time the pipeline:
-
-1. Recomputes candidate author pairs, 3D PCA positions, and k-means clusters from the live dataset.
-2. For each pair, looks up an authored crux by author key. If one exists it is used; otherwise the edge is **dropped** (rather than emitting a low-quality guess).
-
-This means the deployed/CI build never calls a paid API, yet the displayed cruxes are high quality.
-
-To regenerate the candidate pairs for authoring (writes cleaned passages you can read and write cruxes against):
-
-```bash
-python scripts/build_crux_map.py --export-pairs data/processed/pairs.json
-```
-
-Then add/edit entries in `data/authored_cruxes.json` (each is `{ has_crux, crux_question, type, evidence_a, evidence_b }`) and rebuild.
+1. Load LW + AF posts, keep those with an author, date, and a post URL (needed to fetch comments). Cross-posts (same post on both forums) are collapsed to one.
+2. TF-IDF → **TruncatedSVD to 3 components** → L2-normalize. Working on the angular (cosine) geometry of TF-IDF — rather than StandardScaler'd PCA, which just isolates rare-term outliers — is what yields balanced, topically meaningful clusters.
+3. **k-means** with _k_ chosen by the best silhouette score over a small range (override with `--clusters N`). Each cluster is named by its top TF-IDF terms.
+4. For each post: summarize its claim(s); fetch the highest-karma top-level comment from the LW GraphQL API (cached in `data/processed/comments_cache.jsonl`); detect whether the comment disagrees; and if so extract the **double crux** between the post and the comment.
 
 Options:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--method` | `authored` | `authored` (baked-in), `heuristic` (free TF-IDF), or `anthropic` (Claude, needs API key) |
-| `--clusters` | 5 | k-means clusters for node coloring |
-| `--max-posts` | 500 | Cap on posts loaded |
-| `--top-authors` | 25 | Top authors by post count |
-| `--min-similarity` | 0.08 | Min TF-IDF cosine for candidate pairs |
-| `--max-pairs` | 40 | Max author pairs to analyze |
-| `--export-pairs` | — | Dump candidate pairs + cleaned passages to a JSON path and exit |
+| `--max-posts` | 150 | Cap on posts (nodes) loaded |
+| `--top-authors` | 40 | Restrict to posts by the top-N most prolific authors |
+| `--clusters` | 0 | k-means clusters (`0` = auto-select by silhouette) |
+| `--method` | `heuristic` | `heuristic` (keyless) or `anthropic` (needs API key) |
+| `--offline` | off | Never hit the network for comments; use only the cache |
+| `--dry-run` | off | Posts + PCA + clusters only (no comments/cruxes) |
+| `--comment-cache` | `data/processed/comments_cache.jsonl` | Append-only cache of fetched top comments |
 | `--output` | `./cruxes.json` | Graph output |
 
 Output `cruxes.json` schema:
 
-- **nodes** — authors with `post_count`, `cluster` (k-means id), `x`/`y`/`z` (PCA), sized for the 3D graph
-- **edges** — cruxes with `type` (`empirical` | `values` | `prediction`), `origin`, question, evidence quotes, and links to the two source posts. Each linked post (`post_a`/`post_b`) also carries a `claims` array — short summaries of the main claim(s) that post makes.
+- **meta** — `post_count`, `cluster_count`, `k_selected`, `components` (3), `comment_count`, `double_crux_count`, …
+- **clusters** — `{ id, terms, size }` per cluster (terms name the topic).
+- **nodes** — one per post: `title`, `author`, `source`, `url`, `date`, `karma`, `comment_count`, `cluster`, `x`/`y`/`z` (3-component coords), `summary` (claim list), and `top_comment`.
+  - **top_comment** — `{ author, score, text, claim, disagrees, crux }`. `crux` (present only when `disagrees`) is `{ has_crux, crux_question, type, evidence_post, evidence_comment }`.
+- **edges** — always `[]` (posts are not linked).
 
-### Post claims
+### Post summaries & comment claims
 
-Every source post gets a `claims` array (1–2 short statements of its core argument), resolved per post id:
-
-1. **Authored claims** in `data/authored_claims.json` (written by reading each post) are used when present — these cover the posts currently surfaced in `cruxes.json`.
-2. Otherwise the pipeline falls back to the **heuristic summarizer** (`scripts/post_claims.py`), so the keyless weekly rebuild still produces claims for any newly-surfaced post.
+Post summaries use authored claims in `data/authored_claims.json` (keyed by post id) when present, otherwise the heuristic summarizer (`scripts/post_claims.py`). Comment claims and disagreement detection live in `scripts/double_crux.py`; the double crux reuses the TF-IDF contrast heuristic in `scripts/heuristic_crux.py`.
 
 ## Deploy (GitHub Pages)
 
 The site deploys automatically on every push to `main`.
 
-1. Create a GitHub repo (e.g. `alignment-dataset-cruxes`) and push this project.
+1. Create a GitHub repo and push this project.
 2. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 3. Push to `main` — the **Deploy Crux Map to GitHub Pages** workflow publishes `index.html` + `cruxes.json`.
 
 **Live site:** https://orlandott.github.io/alignment-dataset-cruxes/
 
-The **Rebuild cruxes.json** workflow runs weekly (and on demand) using the free authored method — no API secret required. Run **Actions → Rebuild cruxes.json → Run workflow** to refresh node positions/clusters manually.
+The **Rebuild cruxes.json** workflow runs weekly (and on demand), keyless: it recomputes PCA positions + clusters, refreshes top comments via the GraphQL API, and commits the updated `cruxes.json` and comment cache.
 
 ## Frontend (local preview)
 

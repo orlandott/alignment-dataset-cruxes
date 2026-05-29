@@ -1,18 +1,29 @@
 import numpy as np
 
 from scripts.build_crux_map import (
-    authored_pair_key,
-    clean_passage,
+    Post,
+    choose_k,
+    cluster_top_terms,
     compute_clusters,
-    compute_pca_coords,
-    compute_pca_positions,
+    compute_post_coords,
     parse_model_json,
-    pair_cache_key,
-    posts_by_author,
+    post_summary,
     slugify,
     truncate,
 )
-from scripts.build_crux_map import Post
+
+
+def _posts():
+    return [
+        Post("1", "Risk", "https://x/posts/a1/risk", "lesswrong", "2020", ("Alice",),
+             "AI alignment risk debate and existential safety concerns about agents"),
+        Post("2", "Values", "https://x/posts/a2/values", "lesswrong", "2021", ("Alice",),
+             "corrigibility and value learning for aligned agents and safety"),
+        Post("3", "Timelines", "https://x/posts/b1/time", "alignmentforum", "2020", ("Bob",),
+             "forecasting timelines and compute scaling predictions for the future"),
+        Post("4", "Scaling", "https://x/posts/b2/scale", "alignmentforum", "2021", ("Bob",),
+             "interpretability and scaling laws and compute forecasts over years"),
+    ]
 
 
 def test_slugify():
@@ -29,52 +40,45 @@ def test_parse_model_json_strips_fences():
     assert parse_model_json(raw) == {"has_crux": True}
 
 
-def test_pair_cache_key_is_stable():
-    key_a = pair_cache_key("Alice", "Bob", "p1", "p2")
-    key_b = pair_cache_key("Bob", "Alice", "p2", "p1")
-    assert key_a == key_b
+def test_compute_post_coords_returns_xyz_per_post():
+    coords, vectorizer, matrix = compute_post_coords(_posts())
+    assert coords.shape == (4, 3)
+    assert np.all(np.abs(coords) <= 1.0 + 1e-9)
 
 
-def test_compute_pca_positions_returns_xyz():
-    posts = [
-        Post("1", "t", "", "lesswrong", "2020", ("Alice",), "AI alignment risk debate"),
-        Post("2", "t", "", "lesswrong", "2021", ("Alice",), "corrigibility and value learning"),
-        Post("3", "t", "", "alignmentforum", "2020", ("Bob",), "forecasting timelines and compute"),
-        Post("4", "t", "", "alignmentforum", "2021", ("Bob",), "interpretability and scaling laws"),
-    ]
-    grouped = posts_by_author(posts, ["Alice", "Bob"])
-    positions = compute_pca_positions(["Alice", "Bob"], grouped)
-    assert set(positions["Alice"]) == {"x", "y", "z"}
-    assert all(isinstance(positions["Alice"][axis], float) for axis in "xyz")
-
-
-def test_authored_pair_key_is_order_independent():
-    assert authored_pair_key("Scott Garrabrant", "Diffractor") == authored_pair_key(
-        "Diffractor", "Scott Garrabrant"
+def test_choose_k_within_bounds():
+    coords = np.array(
+        [[0.0, 0.0, 0.0], [0.05, 0.0, 0.0], [5.0, 5.0, 5.0], [5.05, 5.0, 5.0]]
     )
-    assert authored_pair_key("A B", "C") == "A_B__C"
+    k = choose_k(coords, min_k=2, max_k=3)
+    assert 2 <= k <= 3
 
 
-def test_clean_passage_strips_markup_and_css():
-    raw = "Hello <b>world</b> .mjx-chtml {display: inline-block; padding: 1px 0} [link](http://x) end"
-    cleaned = clean_passage(raw)
-    assert "mjx" not in cleaned
-    assert "{" not in cleaned
-    assert "http" not in cleaned
-    assert "Hello" in cleaned and "world" in cleaned and "link" in cleaned
+def test_compute_clusters_groups_neighbors():
+    coords = np.array(
+        [[0.0, 0.0, 0.0], [0.1, 0.0, 0.0], [5.0, 5.0, 5.0], [5.1, 5.0, 5.0]]
+    )
+    labels = compute_clusters(coords, 2)
+    assert labels[0] == labels[1]
+    assert labels[2] == labels[3]
+    assert labels[0] != labels[2]
 
 
-def test_compute_clusters_assigns_labels():
-    authors = ["A", "B", "C", "D"]
-    coords = np.array([[0.0, 0.0, 0.0], [0.1, 0.0, 0.0], [5.0, 5.0, 5.0], [5.1, 5.0, 5.0]])
-    clusters = compute_clusters(coords, authors, n_clusters=2)
-    assert set(clusters) == set(authors)
-    assert clusters["A"] == clusters["B"]
-    assert clusters["C"] == clusters["D"]
-    assert clusters["A"] != clusters["C"]
+def test_compute_clusters_handles_single_post():
+    labels = compute_clusters(np.zeros((1, 3)), 5)
+    assert list(labels) == [0]
 
 
-def test_compute_clusters_handles_single_author():
-    coords = compute_pca_coords(["solo"], {"solo": []}) if False else np.zeros((1, 3))
-    clusters = compute_clusters(coords, ["solo"], n_clusters=5)
-    assert clusters == {"solo": 0}
+def test_cluster_top_terms_labels_clusters():
+    posts = _posts()
+    _, vectorizer, matrix = compute_post_coords(posts)
+    labels = np.array([0, 0, 1, 1])
+    terms = cluster_top_terms(matrix, vectorizer, labels, top_n=3)
+    assert set(terms) == {0, 1}
+    assert all(isinstance(t, list) and t for t in terms.values())
+
+
+def test_post_summary_returns_list():
+    post = _posts()[0]
+    summary = post_summary(post)
+    assert isinstance(summary, list)

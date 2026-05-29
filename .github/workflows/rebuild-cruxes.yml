@@ -23,15 +23,16 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build crux graph
-        # Uses the baked-in, hand-authored cruxes (data/authored_cruxes.json).
-        # No API key needed; node positions + k-means clusters are recomputed.
-        run: python scripts/build_crux_map.py --method authored
+        # Keyless: PCA(3) + k-means clusters are recomputed, post summaries +
+        # double cruxes use the heuristic method, and top comments are fetched
+        # from the public LessWrong GraphQL API (cached in data/processed/).
+        run: python scripts/build_crux_map.py
 
       - name: Commit updated cruxes.json
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cruxes.json
-          git diff --staged --quiet && echo "No changes to cruxes.json" && exit 0
+          git add cruxes.json data/processed/comments_cache.jsonl
+          git diff --staged --quiet && echo "No changes" && exit 0
           git commit -m "chore: rebuild cruxes.json from pipeline"
           git push

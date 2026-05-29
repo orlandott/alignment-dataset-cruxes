@@ -30,43 +30,35 @@
 
     #layout {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 400px;
       height: 100vh;
     }
 
-    #viewport {
-      position: relative;
-      min-width: 0;
-    }
-
+    #viewport { position: relative; min-width: 0; }
     canvas { display: block; }
 
-    #overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
+    #overlay { position: absolute; inset: 0; pointer-events: none; }
 
     .label {
       position: absolute;
-      transform: translate(-50%, -120%);
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid var(--border);
+      transform: translate(-50%, -135%);
+      padding: 3px 7px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--accent);
       color: var(--text);
       font-size: 11px;
+      max-width: 240px;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       pointer-events: none;
-      opacity: 0.9;
-      box-shadow: 0 1px 3px rgba(26, 35, 50, 0.08);
-      transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+      box-shadow: 0 2px 6px rgba(26, 35, 50, 0.12);
+      display: none;
     }
 
-    .label.dim { opacity: 0.22; }
-    .label.active { opacity: 1; color: var(--accent); border-color: var(--accent); }
-
     .axis-label {
+      position: absolute;
       transform: translate(-50%, -50%);
       padding: 1px 5px;
       border-radius: 3px;
@@ -84,37 +76,15 @@
     .axis-label.y { color: #3d8a5c; border-color: rgba(61, 138, 92, 0.35); }
     .axis-label.z { color: #3d6a9a; border-color: rgba(61, 106, 154, 0.35); }
 
-    #header {
-      position: absolute;
-      top: 18px;
-      left: 18px;
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    #header h1 {
-      margin: 0 0 6px;
-      font-size: 22px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    #header p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      max-width: 420px;
-      line-height: 1.45;
-    }
+    #header { position: absolute; top: 18px; left: 18px; z-index: 2; pointer-events: none; }
+    #header h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; letter-spacing: 0.02em; }
+    #header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 460px; line-height: 1.45; }
 
     #legend {
       position: absolute;
       left: 18px;
       bottom: 18px;
       z-index: 2;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
       padding: 10px 14px;
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -123,7 +93,7 @@
       box-shadow: 0 1px 4px rgba(26, 35, 50, 0.06);
       font-size: 12px;
       pointer-events: none;
-      max-width: 360px;
+      max-width: 380px;
     }
 
     .legend-title {
@@ -132,170 +102,83 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--muted);
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
 
-    .legend-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 14px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .swatch {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
+    #cluster-legend { display: flex; flex-direction: column; gap: 5px; }
+    .legend-item { display: flex; align-items: center; gap: 7px; line-height: 1.3; }
+    .swatch { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
 
     #hint {
-      position: absolute;
-      right: 18px;
-      bottom: 18px;
-      z-index: 2;
-      color: var(--muted);
-      font-size: 12px;
-      pointer-events: none;
+      position: absolute; right: 18px; bottom: 18px; z-index: 2;
+      color: var(--muted); font-size: 12px; pointer-events: none;
     }
 
-    #panel {
-      border-left: 1px solid var(--border);
-      background: var(--panel);
-      padding: 22px 20px;
-      overflow-y: auto;
+    #panel { border-left: 1px solid var(--border); background: var(--panel); padding: 22px 20px; overflow-y: auto; }
+    #panel h2 { margin: 0 0 6px; font-size: 17px; line-height: 1.35; }
+    #panel .placeholder { color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+    .meta-line { color: var(--muted); font-size: 12.5px; margin: 0 0 16px; }
+    .meta-line a { color: var(--accent); text-decoration: none; }
+    .meta-line a:hover { text-decoration: underline; }
+
+    .section { margin-bottom: 18px; }
+    .section h3 {
+      margin: 0 0 8px; font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
     }
 
-    #panel h2 {
-      margin: 0 0 8px;
-      font-size: 18px;
-    }
+    .claims-list { margin: 0; padding-left: 18px; }
+    .claims-list li { font-size: 13.5px; line-height: 1.5; margin-bottom: 6px; }
 
-    #panel .placeholder {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 14px;
-    }
-
-    .badge.empirical { background: rgba(77, 163, 255, 0.18); color: var(--empirical); }
-    .badge.values { background: rgba(245, 185, 66, 0.18); color: var(--values); }
-    .badge.prediction { background: rgba(62, 207, 186, 0.18); color: var(--prediction); }
-
-    .crux-question {
-      font-size: 16px;
-      line-height: 1.5;
-      margin: 0 0 18px;
-    }
-
-    .evidence {
-      margin-bottom: 16px;
-      padding: 12px;
+    .comment-card {
+      padding: 12px 14px;
       border: 1px solid var(--border);
       border-radius: 10px;
       background: rgba(245, 247, 250, 0.9);
     }
+    .comment-head { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+    .comment-head strong { color: var(--text); }
+    .comment-claim { font-size: 13.5px; line-height: 1.5; margin: 0; }
 
-    .evidence h3 {
-      margin: 0 0 8px;
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .stance {
+      display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
     }
+    .stance.disagree { background: rgba(225, 87, 89, 0.16); color: #c0383a; }
+    .stance.agree { background: rgba(89, 161, 79, 0.16); color: #3d8a5c; }
 
-    .evidence blockquote {
-      margin: 0 0 10px;
-      padding-left: 12px;
-      border-left: 3px solid var(--border);
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.5;
+    .badge {
+      display: inline-block; padding: 3px 8px; border-radius: 999px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.04em; margin-bottom: 12px;
     }
+    .badge.empirical { background: rgba(37, 99, 235, 0.16); color: var(--empirical); }
+    .badge.values { background: rgba(180, 83, 9, 0.16); color: var(--values); }
+    .badge.prediction { background: rgba(13, 148, 136, 0.16); color: var(--prediction); }
 
-    .claims {
-      margin: 0 0 12px;
+    .crux-box {
+      padding: 14px; border: 1px solid var(--accent); border-radius: 10px;
+      background: rgba(109, 40, 217, 0.04);
     }
-
-    .claims h4 {
-      margin: 0 0 6px;
-      font-size: 11px;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .crux-question { font-size: 15px; line-height: 1.5; margin: 0 0 12px; }
+    .crux-evidence h4 {
+      margin: 10px 0 4px; font-size: 10.5px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
-
-    .claims ul {
-      margin: 0;
-      padding-left: 18px;
+    .crux-evidence blockquote {
+      margin: 0; padding-left: 12px; border-left: 3px solid var(--border);
+      font-size: 13px; line-height: 1.5; color: var(--text);
     }
-
-    .claims li {
-      font-size: 13px;
-      line-height: 1.45;
-      margin-bottom: 5px;
-      color: var(--text);
-    }
-
-    .evidence a {
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 13px;
-    }
-
-    .evidence a:hover { text-decoration: underline; }
-
-    .node-card .stat {
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-
-    .edge-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .edge-list li {
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-      line-height: 1.45;
-      cursor: pointer;
-    }
-
-    .edge-list li:hover { color: var(--accent); }
 
     #error {
-      position: absolute;
-      inset: 0;
-      display: none;
-      place-items: center;
-      padding: 24px;
-      background: rgba(245, 247, 250, 0.96);
-      z-index: 10;
-      text-align: center;
+      position: absolute; inset: 0; display: none; place-items: center;
+      padding: 24px; background: rgba(245, 247, 250, 0.96); z-index: 10; text-align: center;
     }
-
     #error.visible { display: grid; }
 
     @media (max-width: 900px) {
-      #layout { grid-template-columns: 1fr; grid-template-rows: 1fr 42vh; }
+      #layout { grid-template-columns: 1fr; grid-template-rows: 1fr 46vh; }
       #panel { border-left: none; border-top: 1px solid var(--border); }
     }
   </style>
@@ -305,23 +188,13 @@
     <div id="viewport">
       <div id="header">
         <h1>Crux Map</h1>
-        <p id="subtitle">Loading alignment research disagreements…</p>
+        <p id="subtitle">Loading alignment research posts…</p>
       </div>
       <div id="legend">
-        <div class="legend-group">
-          <span class="legend-title">Edge · crux type</span>
-          <div class="legend-row">
-            <div class="legend-item"><span class="swatch" style="background:var(--empirical)"></span> Empirical</div>
-            <div class="legend-item"><span class="swatch" style="background:var(--values)"></span> Values</div>
-            <div class="legend-item"><span class="swatch" style="background:var(--prediction)"></span> Prediction</div>
-          </div>
-        </div>
-        <div class="legend-group">
-          <span class="legend-title">Node · topic cluster (k-means)</span>
-          <div class="legend-row" id="cluster-legend"></div>
-        </div>
+        <span class="legend-title">Topic clusters · k-means on 3 PCA components</span>
+        <div id="cluster-legend"></div>
       </div>
-      <div id="hint">Drag to orbit · Scroll to zoom · Click nodes or edges</div>
+      <div id="hint">Drag to orbit · Scroll to zoom · Hover &amp; click a post</div>
       <div id="overlay"></div>
       <div id="error">
         <div>
@@ -336,7 +209,9 @@
     </div>
     <aside id="panel">
       <div class="placeholder" id="panel-empty">
-        Click an edge to read the crux question and evidence quotes, or click an author to highlight their disagreements.
+        Each point is a post, placed by PCA on its content and colored by k-means topic cluster.
+        Click a post to read its summary, its top comment, and — when the comment pushes back —
+        the double crux between them.
       </div>
       <div id="panel-content" hidden></div>
     </aside>
@@ -354,19 +229,6 @@
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-    import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
-    import {
-      forceSimulation,
-      forceLink,
-      forceManyBody,
-      forceCenter,
-    } from "https://cdn.jsdelivr.net/npm/d3-force-3d@3/+esm";
-
-    const TYPE_COLORS = {
-      empirical: 0x2563eb,
-      values: 0xb45309,
-      prediction: 0x0d9488,
-    };
 
     // Distinct, print-friendly palette for k-means topic clusters.
     const CLUSTER_COLORS = [
@@ -380,7 +242,7 @@
       return CLUSTER_COLORS[cluster % CLUSTER_COLORS.length];
     }
 
-    const SCALE = 220;
+    const SCALE = 240;
     const BOUNDS_PADDING = 52;
     const SCENE_BG = 0xf5f7fa;
     const AXIS_COLORS = { x: 0xa84848, y: 0x3d8a5c, z: 0x3d6a9a };
@@ -390,14 +252,12 @@
     const GRID_DIV_MAX = 12;
 
     const state = {
-      selectedNode: null,
-      selectedEdge: null,
       graph: null,
+      selectedNode: null,
+      hoverNode: null,
       nodeById: new Map(),
-      edgeById: new Map(),
       nodeMeshes: new Map(),
-      edgeMeshes: new Map(),
-      labelEls: new Map(),
+      labelEl: null,
       axisLabelEls: [],
       axisLabelPositions: [],
     };
@@ -414,7 +274,7 @@
     scene.background = new THREE.Color(SCENE_BG);
 
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 5000);
-    camera.position.set(0, 120, 420);
+    camera.position.set(0, 120, 460);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -423,10 +283,9 @@
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.minDistance = 140;
-    controls.maxDistance = 1100;
-    // Wheel dolly was far too aggressive; slow it down and clamp the near range.
-    controls.zoomSpeed = 0.45;
+    controls.minDistance = 120;
+    controls.maxDistance = 1300;
+    controls.zoomSpeed = 0.55;
     controls.zoomToCursor = false;
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.72));
@@ -438,32 +297,43 @@
     scene.add(fillLight);
 
     const nodesGroup = new THREE.Group();
-    const edgesGroup = new THREE.Group();
     const spatialGroup = new THREE.Group();
-    scene.add(spatialGroup, edgesGroup, nodesGroup);
+    scene.add(spatialGroup, nodesGroup);
 
     const raycaster = new THREE.Raycaster();
-    raycaster.params.Line = { threshold: 8 };
-    raycaster.params.Points = { threshold: 8 };
     const pointer = new THREE.Vector2();
+
+    // Single shared label element (we only ever label hover/selected nodes).
+    const hoverLabel = document.createElement("div");
+    hoverLabel.className = "label";
+    overlay.appendChild(hoverLabel);
+    state.labelEl = hoverLabel;
 
     function resize() {
       const { clientWidth, clientHeight } = viewport;
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(clientWidth, clientHeight, false);
+      renderer.setSize(clientWidth, clientHeight);
     }
-
     window.addEventListener("resize", resize);
     resize();
 
-    function nodeRadius(postCount, minCount, maxCount) {
-      const scale = d3.scaleSqrt().domain([minCount, maxCount]).range([5, 16]);
-      return scale(postCount);
+    function nodeRadius(value, minV, maxV) {
+      if (maxV <= minV) return 6;
+      const t = (Math.sqrt(value) - Math.sqrt(minV)) / (Math.sqrt(maxV) - Math.sqrt(minV));
+      return 4.5 + t * 9.5;
     }
 
-    function formatLabel(label) {
-      return label.replace(/_/g, " ");
+    function escapeHtml(text) {
+      return String(text ?? "")
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    }
+    function escapeAttr(text) { return escapeHtml(text).replaceAll("'", "&#39;"); }
+
+    function clusterTerms(cluster) {
+      const c = (state.graph.clusters || []).find((x) => x.id === cluster);
+      return c && c.terms && c.terms.length ? c.terms.join(" · ") : `cluster ${cluster}`;
     }
 
     function setPanelHtml(html) {
@@ -471,236 +341,127 @@
       panelContent.hidden = false;
       panelContent.innerHTML = html;
     }
-
     function showEmptyPanel() {
       panelEmpty.hidden = false;
       panelContent.hidden = true;
       panelContent.innerHTML = "";
     }
 
-    function renderClaims(post) {
-      const claims = Array.isArray(post.claims) ? post.claims : [];
-      if (!claims.length) return "";
-      const items = claims.map((claim) => `<li>${escapeHtml(claim)}</li>`).join("");
-      const heading = claims.length > 1 ? "Claims" : "Claim";
-      return `<div class="claims"><h4>${heading}</h4><ul>${items}</ul></div>`;
+    function renderSummary(node) {
+      const claims = Array.isArray(node.summary) ? node.summary : [];
+      if (!claims.length) {
+        return `<div class="section"><h3>Post summary</h3><p style="font-size:13.5px;color:var(--muted)">No summary available.</p></div>`;
+      }
+      const items = claims.map((c) => `<li>${escapeHtml(c)}</li>`).join("");
+      return `<div class="section"><h3>What the post says</h3><ul class="claims-list">${items}</ul></div>`;
     }
 
-    function renderEdgePanel(edge) {
-      const source = state.nodeById.get(edge.source);
-      const target = state.nodeById.get(edge.target);
-      const type = edge.type || "empirical";
-      setPanelHtml(`
-        <span class="badge ${type}">${type}</span>
-        <h2>${formatLabel(source.label)} ↔ ${formatLabel(target.label)}</h2>
-        <p class="crux-question">${escapeHtml(edge.crux_question || "No crux question recorded.")}</p>
-        <div class="evidence">
-          <h3>${formatLabel(edge.post_a.author)} · ${edge.post_a.source}</h3>
-          ${renderClaims(edge.post_a)}
-          <blockquote>${escapeHtml(edge.evidence_a || "—")}</blockquote>
-          <a href="${escapeAttr(edge.post_a.url)}" target="_blank" rel="noopener">${escapeHtml(edge.post_a.title)}</a>
-        </div>
-        <div class="evidence">
-          <h3>${formatLabel(edge.post_b.author)} · ${edge.post_b.source}</h3>
-          ${renderClaims(edge.post_b)}
-          <blockquote>${escapeHtml(edge.evidence_b || "—")}</blockquote>
-          <a href="${escapeAttr(edge.post_b.url)}" target="_blank" rel="noopener">${escapeHtml(edge.post_b.title)}</a>
-        </div>
-      `);
+    function renderComment(node) {
+      const tc = node.top_comment;
+      if (!tc) {
+        return `<div class="section"><h3>Top comment</h3><p style="font-size:13.5px;color:var(--muted)">No comment found for this post.</p></div>`;
+      }
+      const stance = tc.disagrees
+        ? `<span class="stance disagree">disagrees</span>`
+        : `<span class="stance agree">no pushback</span>`;
+      let html = `
+        <div class="section">
+          <h3>Top comment ${stance}</h3>
+          <div class="comment-card">
+            <div class="comment-head"><strong>${escapeHtml(tc.author)}</strong> · ${tc.score} karma</div>
+            <p class="comment-claim">${escapeHtml(tc.claim || "—")}</p>
+          </div>
+        </div>`;
+
+      const crux = tc.crux;
+      if (tc.disagrees && crux && crux.has_crux) {
+        const type = crux.type || "empirical";
+        html += `
+          <div class="section">
+            <h3>Double crux</h3>
+            <div class="crux-box">
+              <span class="badge ${type}">${type}</span>
+              <p class="crux-question">${escapeHtml(crux.crux_question || "—")}</p>
+              <div class="crux-evidence">
+                <h4>Post position</h4>
+                <blockquote>${escapeHtml(crux.evidence_post || "—")}</blockquote>
+                <h4>Comment position</h4>
+                <blockquote>${escapeHtml(crux.evidence_comment || "—")}</blockquote>
+              </div>
+            </div>
+          </div>`;
+      }
+      return html;
     }
 
     function renderNodePanel(node) {
-      const connected = state.graph.edges.filter(
-        (edge) => edge.source === node.id || edge.target === node.id,
-      );
-      const edgeItems = connected.length
-        ? connected
-            .map((edge) => {
-              const otherId = edge.source === node.id ? edge.target : edge.source;
-              const other = state.nodeById.get(otherId);
-              return `<li data-edge-id="${edge.id}"><strong>${formatLabel(other.label)}</strong> — ${escapeHtml(edge.crux_question || edge.type)}</li>`;
-            })
-            .join("")
-        : `<li style="cursor:default;color:var(--muted)">No crux edges for this author in the current graph.</li>`;
-
+      const date = (node.date || "").slice(0, 10);
       setPanelHtml(`
-        <h2>${formatLabel(node.label)}</h2>
-        <p class="node-card stat">${node.post_count} posts · ${node.sources.join(", ")}</p>
-        <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Cruxes</h3>
-        <ul class="edge-list">${edgeItems}</ul>
+        <span class="badge" style="background:${hexCss(clusterColor(node.cluster))}22;color:${hexCss(clusterColor(node.cluster))}">${escapeHtml(clusterTerms(node.cluster))}</span>
+        <h2>${escapeHtml(node.label)}</h2>
+        <p class="meta-line">
+          ${escapeHtml(node.author)} · ${escapeHtml(node.source)} · ${escapeHtml(date)}
+          · ${node.karma} karma · ${node.comment_count} comments
+          ${node.url ? `<br/><a href="${escapeAttr(node.url)}" target="_blank" rel="noopener">Read the post →</a>` : ""}
+        </p>
+        ${renderSummary(node)}
+        ${renderComment(node)}
       `);
-
-      panelContent.querySelectorAll("[data-edge-id]").forEach((el) => {
-        el.addEventListener("click", () => {
-          selectEdge(state.edgeById.get(el.dataset.edgeId));
-        });
-      });
-    }
-
-    function escapeHtml(text) {
-      return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-    }
-
-    function escapeAttr(text) {
-      return escapeHtml(text).replaceAll("'", "&#39;");
     }
 
     function applyHighlight() {
-      const activeNodes = new Set();
-      const activeEdges = new Set();
-
-      if (state.selectedEdge) {
-        activeEdges.add(state.selectedEdge.id);
-        activeNodes.add(state.selectedEdge.source);
-        activeNodes.add(state.selectedEdge.target);
-      } else if (state.selectedNode) {
-        activeNodes.add(state.selectedNode.id);
-        state.graph.edges.forEach((edge) => {
-          if (edge.source === state.selectedNode.id || edge.target === state.selectedNode.id) {
-            activeEdges.add(edge.id);
-            activeNodes.add(edge.source);
-            activeNodes.add(edge.target);
-          }
-        });
-      }
-
-      const dim = Boolean(state.selectedNode || state.selectedEdge);
-
+      const sel = state.selectedNode?.id;
       state.nodeMeshes.forEach((mesh, id) => {
-        const active = !dim || activeNodes.has(id);
-        mesh.material.emissive.setHex(active ? (id === state.selectedNode?.id ? 0x5b4fc8 : 0x8aa4c0) : 0x000000);
-        mesh.material.opacity = active ? 1 : 0.28;
-        mesh.material.transparent = true;
-      });
-
-      state.edgeMeshes.forEach(({ line, hitbox }, id) => {
-        const active = !dim || activeEdges.has(id);
-        const selected = state.selectedEdge?.id === id;
-        line.material.opacity = active ? (selected ? 1 : 0.88) : 0.12;
-        line.material.transparent = true;
-        hitbox.visible = active;
-      });
-
-      state.labelEls.forEach((el, id) => {
-        el.classList.toggle("dim", dim && !activeNodes.has(id));
-        el.classList.toggle("active", id === state.selectedNode?.id);
+        const active = !sel || id === sel;
+        mesh.material.emissive.setHex(id === sel ? 0x5b4fc8 : 0x000000);
+        mesh.material.opacity = active ? 1 : 0.18;
       });
     }
 
     function selectNode(node) {
       state.selectedNode = node;
-      state.selectedEdge = null;
       renderNodePanel(node);
       applyHighlight();
     }
-
-    function selectEdge(edge) {
-      state.selectedEdge = edge;
-      state.selectedNode = null;
-      renderEdgePanel(edge);
-      applyHighlight();
-    }
-
     function clearSelection() {
       state.selectedNode = null;
-      state.selectedEdge = null;
       showEmptyPanel();
       applyHighlight();
     }
 
-    function makeEdgeLine(edge, nodeA, nodeB) {
-      const color = TYPE_COLORS[edge.type] ?? TYPE_COLORS.empirical;
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(6);
-      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    function hexCss(hex) { return `#${hex.toString(16).padStart(6, "0")}`; }
+    function hexToRgb(hex) { return [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255].map((v) => v / 255); }
 
-      const line = new THREE.Line(
-        geometry,
-        new THREE.LineBasicMaterial({ color, linewidth: 2, transparent: true, opacity: 0.85 }),
-      );
-      line.userData = { kind: "edge", edgeId: edge.id };
-
-      const hitGeometry = new THREE.CylinderGeometry(3, 3, 1, 8);
-      const hitMaterial = new THREE.MeshBasicMaterial({ visible: false });
-      const hitbox = new THREE.Mesh(hitGeometry, hitMaterial);
-      hitbox.userData = { kind: "edge", edgeId: edge.id };
-
-      edgesGroup.add(line, hitbox);
-      state.edgeMeshes.set(edge.id, { line, hitbox, nodeA: nodeA.id, nodeB: nodeB.id });
-    }
-
-    function updateEdgePositions() {
-      state.edgeMeshes.forEach(({ line, hitbox, nodeA, nodeB }) => {
-        const meshA = state.nodeMeshes.get(nodeA);
-        const meshB = state.nodeMeshes.get(nodeB);
-        if (!meshA || !meshB) return;
-
-        const start = meshA.position;
-        const end = meshB.position;
-        const positions = line.geometry.attributes.position.array;
-        positions[0] = start.x;
-        positions[1] = start.y;
-        positions[2] = start.z;
-        positions[3] = end.x;
-        positions[4] = end.y;
-        positions[5] = end.z;
-        line.geometry.attributes.position.needsUpdate = true;
-
-        const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-        const direction = new THREE.Vector3().subVectors(end, start);
-        const length = direction.length();
-        hitbox.position.copy(midpoint);
-        hitbox.scale.set(1, length, 1);
-        hitbox.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
-      });
-    }
-
-    function projectToOverlay(worldPos, projection) {
-      const vector = worldPos.clone().project(projection);
-      if (vector.z > 1) return null;
+    function projectToOverlay(worldPos) {
+      const v = worldPos.clone().project(camera);
+      if (v.z > 1) return null;
       return {
-        x: (vector.x * 0.5 + 0.5) * viewport.clientWidth,
-        y: (-vector.y * 0.5 + 0.5) * viewport.clientHeight,
+        x: (v.x * 0.5 + 0.5) * viewport.clientWidth,
+        y: (-v.y * 0.5 + 0.5) * viewport.clientHeight,
       };
     }
 
-    function updateLabels(projection) {
-      state.labelEls.forEach((el, id) => {
-        const mesh = state.nodeMeshes.get(id);
-        if (!mesh) return;
-        const screen = projectToOverlay(mesh.position, projection);
-        if (!screen) {
-          el.style.display = "none";
-          return;
-        }
-        el.style.display = "block";
-        el.style.left = `${screen.x}px`;
-        el.style.top = `${screen.y}px`;
-      });
-
-      state.axisLabelEls.forEach((el, index) => {
-        const worldPos = state.axisLabelPositions[index];
-        if (!worldPos) return;
-        const screen = projectToOverlay(worldPos, projection);
-        if (!screen) {
-          el.style.display = "none";
-          return;
-        }
-        el.style.display = "block";
-        el.style.left = `${screen.x}px`;
-        el.style.top = `${screen.y}px`;
-      });
+    function updateLabel() {
+      const node = state.hoverNode || state.selectedNode;
+      if (!node) { state.labelEl.style.display = "none"; return; }
+      const mesh = state.nodeMeshes.get(node.id);
+      if (!mesh) { state.labelEl.style.display = "none"; return; }
+      const screen = projectToOverlay(mesh.position);
+      if (!screen) { state.labelEl.style.display = "none"; return; }
+      state.labelEl.textContent = node.label;
+      state.labelEl.style.display = "block";
+      state.labelEl.style.left = `${screen.x}px`;
+      state.labelEl.style.top = `${screen.y}px`;
     }
 
-    function clearSpatialAnchors() {
-      spatialGroup.clear();
-      state.axisLabelEls.forEach((el) => el.remove());
-      state.axisLabelEls = [];
-      state.axisLabelPositions = [];
+    function updateAxisLabels() {
+      state.axisLabelEls.forEach((el, i) => {
+        const screen = projectToOverlay(state.axisLabelPositions[i]);
+        if (!screen) { el.style.display = "none"; return; }
+        el.style.display = "block";
+        el.style.left = `${screen.x}px`;
+        el.style.top = `${screen.y}px`;
+      });
     }
 
     function computeNodeBounds() {
@@ -716,77 +477,10 @@
     function addAxisLabel(axis, worldPos) {
       const label = document.createElement("div");
       label.className = `axis-label ${axis}`;
-      label.textContent = axis.toUpperCase();
+      label.textContent = `PC${axis === "x" ? 1 : axis === "y" ? 2 : 3}`;
       overlay.appendChild(label);
       state.axisLabelEls.push(label);
       state.axisLabelPositions.push(worldPos.clone());
-    }
-
-    function buildSpatialAnchors(bounds) {
-      clearSpatialAnchors();
-      const { min, max } = bounds;
-      const size = new THREE.Vector3().subVectors(max, min);
-      const axisLen = Math.max(size.x, size.y, size.z) * 0.14;
-      const origin = min.clone();
-
-      const axisPoints = new Float32Array([
-        origin.x, origin.y, origin.z, origin.x + axisLen, origin.y, origin.z,
-        origin.x, origin.y, origin.z, origin.x, origin.y + axisLen, origin.z,
-        origin.x, origin.y, origin.z, origin.x, origin.y, origin.z + axisLen,
-      ]);
-      const axisGeometry = new THREE.BufferGeometry();
-      axisGeometry.setAttribute("position", new THREE.BufferAttribute(axisPoints, 3));
-      const axisColors = new Float32Array([
-        ...hexToRgb(AXIS_COLORS.x), ...hexToRgb(AXIS_COLORS.x),
-        ...hexToRgb(AXIS_COLORS.y), ...hexToRgb(AXIS_COLORS.y),
-        ...hexToRgb(AXIS_COLORS.z), ...hexToRgb(AXIS_COLORS.z),
-      ]);
-      axisGeometry.setAttribute("color", new THREE.BufferAttribute(axisColors, 3));
-      const axes = new THREE.LineSegments(
-        axisGeometry,
-        new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.82 }),
-      );
-      spatialGroup.add(axes);
-
-      addAxisLabel("x", new THREE.Vector3(origin.x + axisLen, origin.y, origin.z));
-      addAxisLabel("y", new THREE.Vector3(origin.x, origin.y + axisLen, origin.z));
-      addAxisLabel("z", new THREE.Vector3(origin.x, origin.y, origin.z + axisLen));
-
-      const x0 = min.x;
-      const y0 = min.y;
-      const z0 = min.z;
-      const x1 = max.x;
-      const y1 = max.y;
-      const z1 = max.z;
-
-      const boxPoints = new Float32Array([
-        x0, y0, z0, x1, y0, z0,
-        x1, y0, z0, x1, y0, z1,
-        x1, y0, z1, x0, y0, z1,
-        x0, y0, z1, x0, y0, z0,
-        x0, y0, z0, x0, y1, z0,
-        x0, y0, z1, x0, y1, z1,
-        x0, y1, z0, x0, y1, z1,
-        x1, y0, z0, x1, y1, z0,
-        x1, y1, z0, x0, y1, z0,
-      ]);
-      const boxGeometry = new THREE.BufferGeometry();
-      boxGeometry.setAttribute("position", new THREE.BufferAttribute(boxPoints, 3));
-      const openBox = new THREE.LineSegments(
-        boxGeometry,
-        new THREE.LineBasicMaterial({ color: BOX_COLOR, transparent: true, opacity: 0.65 }),
-      );
-      spatialGroup.add(openBox);
-      buildWallGrids(min, max);
-    }
-
-    function hexToRgb(hex) {
-      return [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255].map((v) => v / 255);
-    }
-
-    function gridDivisions(span) {
-      const raw = Math.round(span / 28);
-      return Math.min(GRID_DIV_MAX, Math.max(GRID_DIV_MIN, raw));
     }
 
     function addPlaneGrid(points, plane, fixed, u0, u1, v0, v1, divisions) {
@@ -794,89 +488,106 @@
         const t = i / divisions;
         const u = u0 + (u1 - u0) * t;
         const v = v0 + (v1 - v0) * t;
-        if (plane === "xz") {
-          points.push(u0, fixed, v, u1, fixed, v);
-          points.push(u, fixed, v0, u, fixed, v1);
-        } else if (plane === "xy") {
-          points.push(u0, v, fixed, u1, v, fixed);
-          points.push(u, v0, fixed, u, v1, fixed);
-        } else if (plane === "yz") {
-          points.push(fixed, u0, v, fixed, u1, v);
-          points.push(fixed, u, v0, fixed, u, v1);
-        }
+        if (plane === "xz") { points.push(u0, fixed, v, u1, fixed, v); points.push(u, fixed, v0, u, fixed, v1); }
+        else if (plane === "xy") { points.push(u0, v, fixed, u1, v, fixed); points.push(u, v0, fixed, u, v1, fixed); }
+        else if (plane === "yz") { points.push(fixed, u0, v, fixed, u1, v); points.push(fixed, u, v0, fixed, u, v1); }
       }
     }
 
-    function buildWallGrids(min, max) {
-      const x0 = min.x;
-      const y0 = min.y;
-      const z0 = min.z;
-      const x1 = max.x;
-      const y1 = max.y;
-      const z1 = max.z;
-      const points = [];
+    function gridDivisions(span) {
+      const raw = Math.round(span / 30);
+      return Math.min(GRID_DIV_MAX, Math.max(GRID_DIV_MIN, raw));
+    }
 
+    function buildSpatialAnchors(bounds) {
+      spatialGroup.clear();
+      state.axisLabelEls.forEach((el) => el.remove());
+      state.axisLabelEls = [];
+      state.axisLabelPositions = [];
+
+      const { min, max } = bounds;
+      const size = new THREE.Vector3().subVectors(max, min);
+      const axisLen = Math.max(size.x, size.y, size.z) * 0.14;
+      const o = min.clone();
+
+      const axisPoints = new Float32Array([
+        o.x, o.y, o.z, o.x + axisLen, o.y, o.z,
+        o.x, o.y, o.z, o.x, o.y + axisLen, o.z,
+        o.x, o.y, o.z, o.x, o.y, o.z + axisLen,
+      ]);
+      const axisGeometry = new THREE.BufferGeometry();
+      axisGeometry.setAttribute("position", new THREE.BufferAttribute(axisPoints, 3));
+      axisGeometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array([
+        ...hexToRgb(AXIS_COLORS.x), ...hexToRgb(AXIS_COLORS.x),
+        ...hexToRgb(AXIS_COLORS.y), ...hexToRgb(AXIS_COLORS.y),
+        ...hexToRgb(AXIS_COLORS.z), ...hexToRgb(AXIS_COLORS.z),
+      ]), 3));
+      spatialGroup.add(new THREE.LineSegments(
+        axisGeometry,
+        new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.82 }),
+      ));
+
+      addAxisLabel("x", new THREE.Vector3(o.x + axisLen, o.y, o.z));
+      addAxisLabel("y", new THREE.Vector3(o.x, o.y + axisLen, o.z));
+      addAxisLabel("z", new THREE.Vector3(o.x, o.y, o.z + axisLen));
+
+      const { x: x0, y: y0, z: z0 } = min;
+      const { x: x1, y: y1, z: z1 } = max;
+      const boxPoints = new Float32Array([
+        x0, y0, z0, x1, y0, z0, x1, y0, z0, x1, y0, z1,
+        x1, y0, z1, x0, y0, z1, x0, y0, z1, x0, y0, z0,
+        x0, y0, z0, x0, y1, z0, x0, y0, z1, x0, y1, z1,
+        x0, y1, z0, x0, y1, z1, x1, y0, z0, x1, y1, z0,
+        x1, y1, z0, x0, y1, z0,
+      ]);
+      const boxGeometry = new THREE.BufferGeometry();
+      boxGeometry.setAttribute("position", new THREE.BufferAttribute(boxPoints, 3));
+      spatialGroup.add(new THREE.LineSegments(
+        boxGeometry,
+        new THREE.LineBasicMaterial({ color: BOX_COLOR, transparent: true, opacity: 0.65 }),
+      ));
+
+      const points = [];
       addPlaneGrid(points, "xz", y0, x0, x1, z0, z1, gridDivisions(x1 - x0));
       addPlaneGrid(points, "xy", z0, x0, x1, y0, y1, gridDivisions(x1 - x0));
       addPlaneGrid(points, "yz", x0, y0, y1, z0, z1, gridDivisions(z1 - z0));
-
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(points), 3));
-      const grid = new THREE.LineSegments(
-        geometry,
-        new THREE.LineBasicMaterial({ color: GRID_COLOR, transparent: true, opacity: 0.55 }),
-      );
-      spatialGroup.add(grid);
-    }
-
-    function hexCss(hex) {
-      return `#${hex.toString(16).padStart(6, "0")}`;
+      const gridGeometry = new THREE.BufferGeometry();
+      gridGeometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(points), 3));
+      spatialGroup.add(new THREE.LineSegments(
+        gridGeometry,
+        new THREE.LineBasicMaterial({ color: GRID_COLOR, transparent: true, opacity: 0.5 }),
+      ));
     }
 
     function buildClusterLegend(graph) {
       const container = document.getElementById("cluster-legend");
       if (!container) return;
-      const byCluster = new Map();
-      graph.nodes.forEach((node) => {
-        const c = node.cluster ?? 0;
-        if (!byCluster.has(c) || node.post_count > byCluster.get(c).post_count) {
-          byCluster.set(c, node);
-        }
-      });
-      const clusters = [...byCluster.keys()].sort((a, b) => a - b);
-      container.innerHTML = clusters
-        .map((c) => {
-          const rep = byCluster.get(c);
-          return `<div class="legend-item"><span class="swatch" style="background:${hexCss(clusterColor(c))}"></span> ${formatLabel(rep.label)}…</div>`;
-        })
-        .join("");
+      const clusters = (graph.clusters || []).slice().sort((a, b) => a.id - b.id);
+      container.innerHTML = clusters.map((c) => `
+        <div class="legend-item">
+          <span class="swatch" style="background:${hexCss(clusterColor(c.id))}"></span>
+          <span>${escapeHtml((c.terms || []).slice(0, 3).join(" · ") || `cluster ${c.id}`)} <span style="color:var(--muted)">(${c.size})</span></span>
+        </div>`).join("");
     }
 
     function buildScene(graph) {
       nodesGroup.clear();
-      edgesGroup.clear();
-      clearSpatialAnchors();
-      overlay.innerHTML = "";
+      spatialGroup.clear();
       state.nodeMeshes.clear();
-      state.edgeMeshes.clear();
-      state.labelEls.clear();
       state.nodeById.clear();
-      state.edgeById.clear();
-
       graph.nodes.forEach((node) => state.nodeById.set(node.id, node));
-      graph.edges.forEach((edge) => state.edgeById.set(edge.id, edge));
 
-      const counts = graph.nodes.map((node) => node.post_count);
-      const minCount = Math.min(...counts);
-      const maxCount = Math.max(...counts);
+      const sizes = graph.nodes.map((n) => Math.max(1, n.comment_count || 0));
+      const minV = Math.min(...sizes);
+      const maxV = Math.max(...sizes);
 
       graph.nodes.forEach((node) => {
-        const radius = nodeRadius(node.post_count, minCount, maxCount);
-        const geometry = new THREE.SphereGeometry(radius, 24, 24);
+        const radius = nodeRadius(Math.max(1, node.comment_count || 0), minV, maxV);
+        const geometry = new THREE.SphereGeometry(radius, 20, 20);
         const material = new THREE.MeshStandardMaterial({
           color: clusterColor(node.cluster),
-          roughness: 0.42,
-          metalness: 0.06,
+          roughness: 0.44,
+          metalness: 0.05,
           emissive: 0x000000,
           transparent: true,
         });
@@ -885,93 +596,69 @@
         mesh.userData = { kind: "node", nodeId: node.id };
         nodesGroup.add(mesh);
         state.nodeMeshes.set(node.id, mesh);
-
-        const label = document.createElement("div");
-        label.className = "label";
-        label.textContent = formatLabel(node.label);
-        overlay.appendChild(label);
-        state.labelEls.set(node.id, label);
       });
-
-      graph.edges.forEach((edge) => {
-        makeEdgeLine(edge, state.nodeById.get(edge.source), state.nodeById.get(edge.target));
-      });
-
-      if (graph.edges.length > 0) {
-        const simNodes = graph.nodes.map((node) => ({
-          id: node.id,
-          x: node.x * SCALE,
-          y: node.y * SCALE,
-          z: node.z * SCALE,
-          fx: null,
-          fy: null,
-          fz: null,
-        }));
-
-        const simLinks = graph.edges.map((edge) => ({
-          source: edge.source,
-          target: edge.target,
-        }));
-
-        const simulation = forceSimulation(simNodes, 3)
-          .force(
-            "link",
-            forceLink(simLinks)
-              .id((d) => d.id)
-              .distance(90)
-              .strength(0.35),
-          )
-          .force("charge", forceManyBody().strength(-50))
-          .force("center", forceCenter(0, 0, 0))
-          .stop();
-
-        for (let i = 0; i < 120; i += 1) simulation.tick();
-
-        simNodes.forEach((simNode) => {
-          const mesh = state.nodeMeshes.get(simNode.id);
-          mesh.position.set(simNode.x, simNode.y, simNode.z);
-        });
-      }
-
-      updateEdgePositions();
 
       const bounds = computeNodeBounds();
       if (bounds) buildSpatialAnchors(bounds);
-
+      frameCloud();
       buildClusterLegend(graph);
     }
 
-    function pickObject(event) {
+    function frameCloud() {
+      // LSA's first component is all-positive, so the cloud sits off-origin and
+      // is a thin shell. Fit the camera to its bounding sphere (centroid +
+      // max radius) so the whole cloud is framed regardless of offset.
+      const center = new THREE.Vector3();
+      let count = 0;
+      state.nodeMeshes.forEach((mesh) => { center.add(mesh.position); count += 1; });
+      if (!count) return;
+      center.multiplyScalar(1 / count);
+
+      let radius = 1;
+      state.nodeMeshes.forEach((mesh) => {
+        radius = Math.max(radius, mesh.position.distanceTo(center));
+      });
+
+      const fovV = (camera.fov * Math.PI) / 180;
+      const fovH = 2 * Math.atan(Math.tan(fovV / 2) * camera.aspect);
+      const fit = Math.min(fovV, fovH);
+      const distance = (radius / Math.sin(fit / 2)) * 1.25;
+
+      const dir = new THREE.Vector3(0.25, 0.2, 1).normalize();
+      controls.target.copy(center);
+      camera.position.copy(center).addScaledVector(dir, distance);
+      controls.minDistance = radius * 0.25;
+      controls.maxDistance = distance * 3;
+      controls.update();
+    }
+
+    function pickNode(event) {
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
-
-      const targets = [...state.nodeMeshes.values(), ...state.edgeMeshes.values()].flatMap((item) =>
-        item.line ? [item.line, item.hitbox] : [item],
-      );
-      const hits = raycaster.intersectObjects(targets, false);
+      const hits = raycaster.intersectObjects([...state.nodeMeshes.values()], false);
       return hits[0]?.object ?? null;
     }
 
     renderer.domElement.addEventListener("click", (event) => {
-      const object = pickObject(event);
-      if (!object) {
-        clearSelection();
-        return;
-      }
-      if (object.userData.kind === "node") {
-        selectNode(state.nodeById.get(object.userData.nodeId));
-      } else if (object.userData.kind === "edge") {
-        selectEdge(state.edgeById.get(object.userData.edgeId));
-      }
+      const object = pickNode(event);
+      if (!object) { clearSelection(); return; }
+      selectNode(state.nodeById.get(object.userData.nodeId));
+    });
+
+    renderer.domElement.addEventListener("pointermove", (event) => {
+      const object = pickNode(event);
+      const node = object ? state.nodeById.get(object.userData.nodeId) : null;
+      state.hoverNode = node;
+      renderer.domElement.style.cursor = node ? "pointer" : "default";
     });
 
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
-      updateEdgePositions();
-      updateLabels(camera);
+      updateLabel();
+      updateAxisLabels();
       renderer.render(scene, camera);
     }
 
@@ -984,8 +671,9 @@
         buildScene(graph);
 
         const { meta } = graph;
-        const clusterText = meta.cluster_count ? ` · ${meta.cluster_count} clusters` : "";
-        subtitle.textContent = `${meta.author_count} authors · ${meta.edge_count} cruxes · ${meta.post_count} posts${clusterText} · PCA 3D layout`;
+        subtitle.textContent =
+          `${meta.post_count} posts · ${meta.cluster_count} topic clusters (k=${meta.k_selected}) · `
+          + `${meta.double_crux_count} double cruxes · PCA 3D layout`;
         errorBox.remove();
         animate();
       } catch (error) {
