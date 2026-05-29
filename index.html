@@ -274,7 +274,7 @@
         <p id="subtitle">Loading alignment research posts…</p>
       </div>
       <div id="legend">
-        <span class="legend-title">Topic clusters · k-means on 3 components</span>
+        <span class="legend-title">Topic clusters · pick a color to explore a theme</span>
         <div id="cluster-legend"></div>
         <span class="legend-title" style="margin-top:8px" id="axis-legend-title">Layout axes</span>
         <div id="axis-legend"></div>
@@ -506,6 +506,13 @@
       return (state.graph.clusters || []).find((x) => x.id === cluster);
     }
 
+    function clusterLabel(cluster) {
+      const c = clusterEntry(cluster);
+      if (c && c.label) return c.label;
+      if (c && c.terms && c.terms.length) return c.terms.slice(0, 3).join(" · ");
+      return `cluster ${cluster}`;
+    }
+
     function clusterTerms(cluster) {
       const c = clusterEntry(cluster);
       return c && c.terms && c.terms.length ? c.terms.join(" · ") : `cluster ${cluster}`;
@@ -593,20 +600,27 @@
 
     function renderClusterTheme(cluster) {
       const exemplars = clusterExemplars(cluster).slice(0, 3);
-      if (!exemplars.length) return "";
+      const terms = clusterTerms(cluster);
+      if (!exemplars.length && !terms) return "";
       const items = exemplars.map((t) => `<li>${escapeHtml(t)}</li>`).join("");
+      const termsLine = terms
+        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Key terms: ${escapeHtml(terms)}</p>`
+        : "";
+      const exemplarBlock = exemplars.length
+        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Representative posts:</p><ul class="claims-list">${items}</ul>`
+        : "";
       return `
         <div class="section">
-          <h3>Topic cluster · ${escapeHtml(clusterTerms(cluster))}</h3>
-          <p style="font-size:12px;color:var(--muted);margin:0 0 6px">Representative posts in this cluster:</p>
-          <ul class="claims-list">${items}</ul>
+          <h3>Topic cluster · ${escapeHtml(clusterLabel(cluster))}</h3>
+          ${termsLine}
+          ${exemplarBlock}
         </div>`;
     }
 
     function renderNodePanel(node) {
       const date = (node.date || "").slice(0, 10);
       setPanelHtml(`
-        <span class="badge" style="background:${hexCss(clusterColor(node.cluster))}22;color:${hexCss(clusterColor(node.cluster))}">${escapeHtml(clusterTerms(node.cluster))}</span>
+        <span class="badge" style="background:${hexCss(clusterColor(node.cluster))}22;color:${hexCss(clusterColor(node.cluster))}">${escapeHtml(clusterLabel(node.cluster))}</span>
         <h2>${escapeHtml(node.label)}</h2>
         <p class="meta-line">
           ${escapeHtml(node.author)} · ${escapeHtml(node.source)} · ${escapeHtml(date)}
@@ -780,11 +794,15 @@
       const clusters = (graph.clusters || []).slice().sort((a, b) => a.id - b.id);
       container.innerHTML = clusters.map((c) => {
         const exemplars = Array.isArray(c.exemplars) ? c.exemplars : [];
-        const tip = exemplars.length ? `e.g. ${exemplars.join(" · ")}` : "";
+        const terms = Array.isArray(c.terms) ? c.terms.join(" · ") : "";
+        const tipParts = [];
+        if (terms) tipParts.push(terms);
+        if (exemplars.length) tipParts.push(`e.g. ${exemplars.join(" · ")}`);
+        const label = c.label || (c.terms || []).slice(0, 3).join(" · ") || `cluster ${c.id}`;
         return `
-        <div class="legend-item" title="${escapeAttr(tip)}">
+        <div class="legend-item" title="${escapeAttr(tipParts.join("  —  "))}">
           <span class="swatch" style="background:${hexCss(clusterColor(c.id))}"></span>
-          <span>${escapeHtml((c.terms || []).slice(0, 3).join(" · ") || `cluster ${c.id}`)} <span style="color:var(--muted)">(${c.size})</span></span>
+          <span>${escapeHtml(label)} <span style="color:var(--muted)">(${c.size})</span></span>
         </div>`;
       }).join("");
     }

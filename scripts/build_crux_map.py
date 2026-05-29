@@ -553,6 +553,145 @@ def cluster_exemplars(
     return exemplars
 
 
+# Human-readable themes for alignment-research clusters. Each cluster is matched
+# to whichever theme its distinctive terms + exemplar titles best fit, so the
+# legend reads like topics a person would pick ("Policy", "Mechanistic
+# Interpretability") rather than bag-of-words. Note: in this corpus "ai", "gpt",
+# "llm", "model(s)" are domain-wide synonyms, not topics, so they are
+# deliberately NOT used as theme keywords — only contentful, differentiating
+# terms are. Themes are matched, not hardcoded to cluster ids, so they survive
+# re-clustering.
+CLUSTER_THEMES: tuple[dict, ...] = (
+    {
+        "label": "AI Risk & Policy",
+        "keywords": (
+            "risk", "risks", "catastrophic", "existential", "extinction",
+            "governance", "policy", "regulation", "regulatory", "summit",
+            "pause", "moratorium", "misuse", "control", "deployment",
+            "national", "government", "ai systems",
+        ),
+    },
+    {
+        "label": "Mechanistic Interpretability",
+        "keywords": (
+            "interpretability", "mechanistic", "activation", "activations",
+            "circuit", "circuits", "neuron", "neurons", "feature", "features",
+            "sae", "saes", "dictionary", "probing", "probe", "tracr",
+            "residual", "superposition", "logit", "ablation",
+        ),
+    },
+    {
+        "label": "Agent Foundations",
+        "keywords": (
+            "utility", "optimisation", "optimization", "optimizer", "coherence",
+            "coherent", "consequentialism", "consequentialist", "decision",
+            "instrumental", "mesa", "expected utility", "selection",
+            "objective", "goals", "wrapper",
+        ),
+    },
+    {
+        "label": "Corrigibility & Alignment Theory",
+        "keywords": (
+            "corrigibility", "corrigible", "shard", "shards", "values", "value",
+            "reward", "deceptive", "deception", "scheming", "obedience",
+            "shutdown", "myopia", "inner alignment",
+        ),
+    },
+    {
+        "label": "LLMs, Language & Meaning",
+        "keywords": (
+            "meaning", "words", "word", "language", "syntax", "semantic",
+            "semantics", "ontology", "ontological", "concept", "concepts",
+            "understanding", "novelty", "structure", "linguistic", "grokking",
+        ),
+    },
+    {
+        "label": "Current AI Discourse",
+        "keywords": (
+            "bing", "sydney", "chatgpt", "openai", "microsoft", "deepmind",
+            "anthropic", "chatbot", "twitter", "news", "announcement",
+            "release", "podcast", "interview",
+        ),
+    },
+    {
+        "label": "Forecasting & Timelines",
+        "keywords": (
+            "forecasting", "forecast", "timelines", "timeline", "compute",
+            "scaling", "takeoff", "prediction", "predictions", "trends",
+            "extrapolation", "agi timelines",
+        ),
+    },
+    {
+        "label": "Evaluations & Auditing",
+        "keywords": (
+            "evaluation", "evaluations", "evals", "eval", "auditing", "audit",
+            "benchmark", "benchmarks", "red team", "red teaming",
+            "capability evaluations", "dangerous capabilities",
+        ),
+    },
+)
+
+
+def _keyword_matches_term(keyword: str, term: str) -> bool:
+    keyword = keyword.lower()
+    term = term.lower()
+    if keyword == term:
+        return True
+    if keyword in term.split() or term in keyword.split():
+        return True
+    return len(keyword) >= 5 and (keyword in term or term in keyword)
+
+
+def _keyword_in_titles(keyword: str, title_blob: str) -> bool:
+    return re.search(rf"\b{re.escape(keyword.lower())}\b", title_blob) is not None
+
+
+def assign_cluster_themes(
+    match_terms: dict[int, list[str]],
+    exemplars: dict[int, list[str]],
+) -> dict[int, str]:
+    """Map each cluster to the best-fitting human theme (unique per cluster).
+
+    Scores every (cluster, theme) pair from the cluster's distinctive terms
+    (weighted by rank) and a strong bonus for theme keywords appearing in the
+    cluster's exemplar titles, then greedily assigns the highest-scoring pairs
+    so each theme is used at most once. Clusters that match nothing are left
+    unassigned (callers fall back to distinctive terms).
+    """
+    scores: dict[tuple[int, int], float] = {}
+    for cluster, terms in match_terms.items():
+        title_blob = " ".join(exemplars.get(cluster, [])).lower()
+        for theme_idx, theme in enumerate(CLUSTER_THEMES):
+            total = 0.0
+            for keyword in theme["keywords"]:
+                for rank, term in enumerate(terms):
+                    if _keyword_matches_term(keyword, term):
+                        total += max(0.2, 1.0 - rank * 0.04)
+                        break
+                if title_blob and _keyword_in_titles(keyword, title_blob):
+                    total += 1.5
+            if total > 0:
+                scores[(cluster, theme_idx)] = total
+
+    assigned: dict[int, str] = {}
+    used_themes: set[int] = set()
+    for (cluster, theme_idx), _ in sorted(scores.items(), key=lambda kv: -kv[1]):
+        if cluster in assigned or theme_idx in used_themes:
+            continue
+        assigned[cluster] = CLUSTER_THEMES[theme_idx]["label"]
+        used_themes.add(theme_idx)
+    return assigned
+
+
+def cluster_label(theme: str | None, terms: list[str]) -> str:
+    """Theme name when matched, else a readable fallback from distinctive terms."""
+    if theme:
+        return theme
+    if terms:
+        return " · ".join(terms[:3])
+    return "Misc"
+
+
 SYSTEM_PROMPT = (
     "You are a precise philosophical analyst. Given an alignment-research post and a "
     "high-karma comment that pushes back on it, identify the single most important double "
@@ -755,7 +894,9 @@ def build_graph(
         k = choose_k(cluster_space)
     labels = compute_clusters(cluster_space, k)
     terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels)
+    match_terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels, top_n=25)
     exemplars = cluster_exemplars(cluster_space, labels, posts)
+    themes = assign_cluster_themes(match_terms, exemplars)
 
     comment_cache = comments_mod.load_comment_cache(comment_cache_path)
     reference_cache = comments_mod.load_reference_cache(reference_cache_path)
@@ -817,6 +958,7 @@ def build_graph(
     cluster_meta = [
         {
             "id": cluster,
+            "label": cluster_label(themes.get(cluster), terms.get(cluster, [])),
             "terms": terms.get(cluster, []),
             "exemplars": exemplars.get(cluster, []),
             "size": int((labels == cluster).sum()),

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-05-29T22:36:52.713736+00:00",
+    "generated_at": "2026-05-29T22:51:35.336570+00:00",
     "dataset": "StampyAI/alignment-research-dataset",
     "splits": [
       "lesswrong",
@@ -47,6 +47,7 @@
   "clusters": [
     {
       "id": 0,
+      "label": "Mechanistic Interpretability",
       "terms": [
         "gpt",
         "interpretability",
@@ -62,6 +63,7 @@
     },
     {
       "id": 1,
+      "label": "Agent Foundations",
       "terms": [
         "function",
         "utility",
@@ -77,6 +79,7 @@
     },
     {
       "id": 2,
+      "label": "AI Risk & Policy",
       "terms": [
         "risks",
         "safety",
@@ -92,6 +95,7 @@
     },
     {
       "id": 3,
+      "label": "Corrigibility & Alignment Theory",
       "terms": [
         "agent",
         "mind",
@@ -107,6 +111,7 @@
     },
     {
       "id": 4,
+      "label": "Current AI Discourse",
       "terms": [
         "bing",
         "people",
@@ -122,6 +127,7 @@
     },
     {
       "id": 5,
+      "label": "LLMs, Language & Meaning",
       "terms": [
         "mind",
         "structure",

@@ -48,7 +48,7 @@ cp .env.example .env && python scripts/build_crux_map.py --method anthropic
 
 1. Load LW + AF posts, keep those with an author, date, and a post URL (needed to fetch comments). Cross-posts (same post on both forums) are collapsed to one.
 2. **Dense semantic embedding (model2vec) → PCA → L2-normalize.** Dense vectors put semantically similar posts near each other, so 3 components capture ~24% of variance (vs ~5% for TF-IDF). The map shows the first 3 components, but **clustering runs on ~20 components** (`CLUSTER_COMPONENTS`) — enough to capture structure the 3D view drops, while avoiding the distance concentration that washes out separation at 50D. Falls back to **TF-IDF → TruncatedSVD (LSA)** when the embedding model can't load. Axis labels are still derived from TF-IDF term poles, so each axis reads as words (e.g. _risks · safety ↔ mind · chatgpt_).
-3. **k-means** into `--clusters` groups (default `0` = auto-select _k_ by the best silhouette score over a small range). Each cluster is named by its most distinctive terms (in-cluster mean TF-IDF minus the rest, with filler/contraction fragments filtered out) **and the titles of the posts nearest its centroid** (`exemplars`), which make the theme legible.
+3. **k-means** into `--clusters` groups (default `0` = auto-select _k_ by the best silhouette score over a small range). Each cluster is then **matched to a human-readable theme** (e.g. _Mechanistic Interpretability_, _AI Risk & Policy_, _Corrigibility & Alignment Theory_, _Current AI Discourse_) by scoring its distinctive terms + exemplar titles against a small theme library; matching (rather than hardcoding cluster ids) means labels survive re-clustering, and each theme is used at most once. Domain-wide words (`ai`, `gpt`, `llm`, `model`) are treated as synonyms, not themes. Clusters also carry their distinctive `terms` and the titles of the posts nearest the centroid (`exemplars`) as supporting detail; a cluster that matches no theme falls back to its distinctive terms.
 4. For each post: summarize its claim(s); fetch the highest-karma top-level comment from the LW GraphQL API (cached in `data/processed/comments_cache.jsonl`); detect whether the comment disagrees; and if so extract the **double crux** between the post and the comment.
 
 Options:
@@ -67,7 +67,7 @@ Options:
 Output `cruxes.json` schema:
 
 - **meta** — `post_count`, `cluster_count`, `k_selected`, `components` (3), `cluster_components` (dims used for k-means, ~20), `reduction` (`pca` for dense embeddings, else `truncated_svd`), `embedding_model`, `variance_explained` (fraction captured by the 3 components), `axis_labels` (per-axis `positive`/`negative` term poles + `variance_explained`), `comment_count`, `double_crux_count`, …
-- **clusters** — `{ id, terms, exemplars, size }` per cluster (`terms` = distinctive words, `exemplars` = titles of the posts nearest the centroid).
+- **clusters** — `{ id, label, terms, exemplars, size }` per cluster (`label` = matched human theme, `terms` = distinctive words, `exemplars` = titles of the posts nearest the centroid).
 - **nodes** — one per post: `title`, `author`, `source`, `url`, `date`, `karma`, `comment_count`, `referenced_by` (pingback count — how many other posts link to it), `cluster`, `x`/`y`/`z` (3-component coords), `summary` (claim list), and `top_comment`.
   - **top_comment** — `{ author, score, text, claim, disagrees, crux }`. `crux` (present only when `disagrees`) is `{ has_crux, crux_question, type, evidence_post, evidence_comment }`.
 - **edges** — always `[]` (posts are not linked).

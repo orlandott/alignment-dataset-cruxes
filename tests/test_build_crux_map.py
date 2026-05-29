@@ -3,9 +3,11 @@ import numpy as np
 import scripts.build_crux_map as bcm
 from scripts.build_crux_map import (
     Post,
+    assign_cluster_themes,
     build_comment_block,
     choose_k,
     cluster_exemplars,
+    cluster_label,
     cluster_top_terms,
     compute_clusters,
     compute_post_coords,
@@ -112,6 +114,38 @@ def test_cluster_top_terms_filters_filler_words():
         assert "don" not in picked
         assert "things" not in picked
         assert "know" not in picked
+
+
+def test_assign_cluster_themes_matches_and_is_unique():
+    match_terms = {
+        0: ["interpretability", "activation", "circuit", "neuron"],
+        1: ["risks", "catastrophic", "governance", "policy"],
+        2: ["utility", "optimisation", "coherence", "consequentialism"],
+    }
+    exemplars = {
+        0: ["Mechanistic circuits in a transformer"],
+        1: ["An overview of catastrophic AI risks"],
+        2: ["Strong coherence and expected utility"],
+    }
+    themes = assign_cluster_themes(match_terms, exemplars)
+    assert themes[0] == "Mechanistic Interpretability"
+    assert themes[1] == "AI Risk & Policy"
+    assert themes[2] == "Agent Foundations"
+    # Each theme is used at most once.
+    assert len(set(themes.values())) == len(themes)
+
+
+def test_assign_cluster_themes_leaves_unmatched_unassigned():
+    themes = assign_cluster_themes(
+        {0: ["banana", "umbrella", "weather"]}, {0: ["A post about nothing relevant"]}
+    )
+    assert 0 not in themes
+
+
+def test_cluster_label_falls_back_to_terms():
+    assert cluster_label("AI Risk & Policy", ["risks", "safety"]) == "AI Risk & Policy"
+    assert cluster_label(None, ["risks", "safety", "ais", "control"]) == "risks · safety · ais"
+    assert cluster_label(None, []) == "Misc"
 
 
 def test_cluster_exemplars_returns_titles_nearest_centroid():
