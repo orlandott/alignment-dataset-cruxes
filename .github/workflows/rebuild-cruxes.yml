@@ -23,20 +23,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build crux graph
-        id: build
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "ANTHROPIC_API_KEY not set, skipping rebuild"
-            echo "ran=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          python scripts/build_crux_map.py
-          echo "ran=true" >> "$GITHUB_OUTPUT"
+        run: python scripts/build_crux_map.py --method heuristic
 
       - name: Commit updated cruxes.json
-        if: steps.build.outputs.ran == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

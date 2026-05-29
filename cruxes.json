@@ -1,16 +1,17 @@
 {
   "meta": {
-    "generated_at": "2026-05-29T13:57:28.391109+00:00",
+    "generated_at": "2026-05-29T14:16:09.492698+00:00",
     "dataset": "StampyAI/alignment-research-dataset",
     "splits": [
       "lesswrong",
       "alignmentforum"
     ],
+    "method": "heuristic",
     "model": null,
     "post_count": 500,
     "author_count": 25,
-    "candidate_pair_count": 10,
-    "edge_count": 0,
+    "candidate_pair_count": 40,
+    "edge_count": 39,
     "pca_components": 3
   },
   "nodes": [
@@ -309,5 +310,1059 @@
       "z": -0.10918182840936405
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "id": "edge_0",
+      "source": "Scott_Garrabrant",
+      "target": "Diffractor",
+      "type": "empirical",
+      "topic_similarity": 0.9799,
+      "post_similarity": 0.9776,
+      "crux_question": "To what extent does display require boundaries versus unifying?",
+      "evidence_a": "This post is partially in response to [Critch's boundaries sequence](https://www.lesswrong.com/s/LWJsgNYE8wzv49yEc).",
+      "evidence_b": "Alright, time for the payoff, unifying everything discussed in the [previous post](https://www.lesswrong.com/posts/rYDas2DDGGDRc8gGB/unifying-bargaining-notions-1-2).",
+      "post_a": {
+        "id": "8328365eb1609691bef4ecc1e686be27",
+        "title": "Boundaries vs Frames",
+        "url": "https://www.alignmentforum.org/posts/SZjHimszxqjNJzQWK/boundaries-vs-frames",
+        "source": "alignmentforum",
+        "date": "2022-10-31T15:14:37Z",
+        "author": "Scott Garrabrant"
+      },
+      "post_b": {
+        "id": "1ca19f950793dac3616e0164b4abfe8b",
+        "title": "Unifying Bargaining Notions (2/2)",
+        "url": "https://www.alignmentforum.org/posts/RZNmNwc9SxdKayeQh/unifying-bargaining-notions-2-2",
+        "source": "alignmentforum",
+        "date": "2022-07-27T03:40:31Z",
+        "author": "Diffractor"
+      }
+    },
+    {
+      "id": "edge_2",
+      "source": "johnswentworth",
+      "target": "Diffractor",
+      "type": "empirical",
+      "topic_similarity": 0.639,
+      "post_similarity": 0.9809,
+      "crux_question": "To what extent does display require bits versus tex frak?",
+      "evidence_a": "So there’s this thing where a system can perform more bits of optimization on its environment by observing some bits of information from its environment.",
+      "evidence_b": "",
+      "post_a": {
+        "id": "34bdd6b813f38ea014a42783e0af5046",
+        "title": "How Many Bits Of Optimization Can One Bit Of Observation Unlock?",
+        "url": "https://www.alignmentforum.org/posts/6rZroG3mztowktJzp/how-many-bits-of-optimization-can-one-bit-of-observation",
+        "source": "alignmentforum",
+        "date": "2023-04-26T00:26:23Z",
+        "author": "johnswentworth"
+      },
+      "post_b": {
+        "id": "a293b770b2ede95915d9384675524ec7",
+        "title": "Infrafunctions and Robust Optimization",
+        "url": "https://www.alignmentforum.org/posts/d96dDEYMfnN2St3Bj/infrafunctions-and-robust-optimization",
+        "source": "alignmentforum",
+        "date": "2023-04-27T19:25:12Z",
+        "author": "Diffractor"
+      }
+    },
+    {
+      "id": "edge_3",
+      "source": "johnswentworth",
+      "target": "Scott_Garrabrant",
+      "type": "empirical",
+      "topic_similarity": 0.6261,
+      "post_similarity": 0.9925,
+      "crux_question": "To what extent does display require bits versus question?",
+      "evidence_a": "So there’s this thing where a system can perform more bits of optimization on its environment by observing some bits of information from its environment.",
+      "evidence_b": "I am interested in this question because I have recently come tor reject the independence axiom of VNM, and am thus playing with some weaker versions. This post will just be a concrete math question.",
+      "post_a": {
+        "id": "34bdd6b813f38ea014a42783e0af5046",
+        "title": "How Many Bits Of Optimization Can One Bit Of Observation Unlock?",
+        "url": "https://www.alignmentforum.org/posts/6rZroG3mztowktJzp/how-many-bits-of-optimization-can-one-bit-of-observation",
+        "source": "alignmentforum",
+        "date": "2023-04-26T00:26:23Z",
+        "author": "johnswentworth"
+      },
+      "post_b": {
+        "id": "258279c5e72a3d0458baff71602f2932",
+        "title": "Concave Utility Question",
+        "url": "https://www.alignmentforum.org/posts/uJnR4YmG5Kq9FfTey/concave-utility-question",
+        "source": "alignmentforum",
+        "date": "2023-04-15T00:14:59Z",
+        "author": "Scott Garrabrant"
+      }
+    },
+    {
+      "id": "edge_4",
+      "source": "Akash",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.5738,
+      "post_similarity": 0.3491,
+      "crux_question": "To what extent does mentors require scholars versus safety?",
+      "evidence_a": "Some mentors noted that they felt like their (limited) time in meetings with scholars could have been used more effectively if scholars were better at knowing how to communicate ideas succinctly, prioritize the most important points, and generally get better at “leading/steering” meetings. **Endurance, happiness, & perseverance:** Mentors noted that many scholars get discouraged if they’re not able to quickly come up with a promising research direction quickly, or if they explore 1-2 directions that don’t end up being promising.",
+      "evidence_b": "Whenever possible, we recommend doing cohort-based programs such as [AGI safety fundamentals](https://www.agisafetyfundamentals.com/), [SERI MATS](https://www.serimats.org/), [AI safety scholars](https://www.effectivealtruism.org/virtual-programs/ml-safety-scholars-program), the [AI safety camp](https://aisafety.camp/), and the like. * **The requirement for being a mentor** is to have a decent overview of what’s happening in AI safety and be able to point people toward relevant articles, organizations and individual researchers.",
+      "post_a": {
+        "id": "550930d33a1699e1fa136146df73976a",
+        "title": "Qualities that alignment mentors value in junior researchers",
+        "url": "https://www.lesswrong.com/posts/wYEwx6xcY2JxBJsfA/qualities-that-alignment-mentors-value-in-junior-researchers",
+        "source": "lesswrong",
+        "date": "2023-02-14T23:27:41Z",
+        "author": "Akash"
+      },
+      "post_b": {
+        "id": "7afc8cb064f79090f1b9a83298d5a0e9",
+        "title": "Announcing AI safety Mentors and Mentees",
+        "url": "https://www.alignmentforum.org/posts/EjX63wQoMSoCHMrmY/announcing-ai-safety-mentors-and-mentees",
+        "source": "alignmentforum",
+        "date": "2022-11-23T15:21:13Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_5",
+      "source": "johnswentworth",
+      "target": "TurnTrout",
+      "type": "prediction",
+      "topic_similarity": 0.5628,
+      "post_similarity": 0.8996,
+      "crux_question": "To what extent does display require font versus model?",
+      "evidence_a": "Background: The Language-Learning Argument ------------------------------------------ How many functions are there from a 1 megabyte image to a yes/no answer to the question “does this image contain an apple?”.",
+      "evidence_b": "--- Suppose I claim to understand how the model works. I say \"I know what goals my model is pursuing.",
+      "post_a": {
+        "id": "cd097e25be8056cb240762e5db8b0fb9",
+        "title": "The \"Minimal Latents\" Approach to Natural Abstractions",
+        "url": "https://www.alignmentforum.org/posts/N2JcFZ3LCCsnK2Fep/the-minimal-latents-approach-to-natural-abstractions",
+        "source": "alignmentforum",
+        "date": "2022-12-20T01:22:25Z",
+        "author": "johnswentworth"
+      },
+      "post_b": {
+        "id": "64877a97bf7d4fe600ad8b05411ccd4e",
+        "title": "Ban development of unpredictable powerful models?",
+        "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
+        "source": "alignmentforum",
+        "date": "2023-06-20T01:43:12Z",
+        "author": "TurnTrout"
+      }
+    },
+    {
+      "id": "edge_6",
+      "source": "So8res",
+      "target": "Akash",
+      "type": "prediction",
+      "topic_similarity": 0.5432,
+      "post_similarity": 0.37,
+      "crux_question": "To what extent does alignment require deceptive versus plan?",
+      "evidence_a": "As the AI learns more general and flexible cognitive moves, those cognitive moves (insofar as they are useful) will tend to recombine in ways that exploit this fact-about-reality, despite how none of the individual abstract moves look deceptive in isolation. Perhaps you lack the interpretability tools to correctly identify the precursors of 'deception', so that you can only train against visibly deceptive AI outputs instead of AI thoughts about how to plan deceptions.",
+      "evidence_b": "Once we are out of the acute risk period, OpenAI has a plan for how to use transformative AI in ways that allow humanity to “fulfill its potential” or “achieve human flourishing” (and they have a plan to figure out what we should even be aiming for) If any of these steps goes wrong, I expect the plan will fail to avoid an existential catastrophe. More recently, Jan Leike (one of the authors of the original post) released a [blog post](https://aligned.substack.com/p/alignment-optimism) about the plan, and Eliezer & Nate encouraged readers to [write up their thoughts](https://www.lesswrong.com/posts/tD9zEiHfkvakpnNam/a-challenge-for-agi-organizations-and-a-challenge-for-1).",
+      "post_a": {
+        "id": "0562083e21ff7ff3b78543d6387e6a64",
+        "title": "Deep Deceptiveness",
+        "url": "https://www.alignmentforum.org/posts/XWwvwytieLtEWaFJX/deep-deceptiveness",
+        "source": "alignmentforum",
+        "date": "2023-03-21T02:51:53Z",
+        "author": "So8res"
+      },
+      "post_b": {
+        "id": "15be2008e9901266c554a65defeddd5d",
+        "title": "My thoughts on OpenAI's alignment plan",
+        "url": "https://www.lesswrong.com/posts/FBG7AghvvP7fPYzkx/my-thoughts-on-openai-s-alignment-plan-1",
+        "source": "lesswrong",
+        "date": "2022-12-30T19:33:15Z",
+        "author": "Akash"
+      }
+    },
+    {
+      "id": "edge_7",
+      "source": "johnswentworth",
+      "target": "So8res",
+      "type": "empirical",
+      "topic_similarity": 0.5423,
+      "post_similarity": 0.9776,
+      "crux_question": "To what extent does display require tex versus openai?",
+      "evidence_a": "So there’s this thing where a system can perform more bits of optimization on its environment by observing some bits of information from its environment.",
+      "evidence_b": "Sam Altman shared me on a draft of his OpenAI blog post [Planning for AGI and beyond](https://openai.com/blog/planning-for-agi-and-beyond), and I left some comments, reproduced below without typos and with some added hyperlinks.",
+      "post_a": {
+        "id": "34bdd6b813f38ea014a42783e0af5046",
+        "title": "How Many Bits Of Optimization Can One Bit Of Observation Unlock?",
+        "url": "https://www.alignmentforum.org/posts/6rZroG3mztowktJzp/how-many-bits-of-optimization-can-one-bit-of-observation",
+        "source": "alignmentforum",
+        "date": "2023-04-26T00:26:23Z",
+        "author": "johnswentworth"
+      },
+      "post_b": {
+        "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
+        "title": "Comments on OpenAI's \"Planning for AGI and beyond\"",
+        "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
+        "source": "lesswrong",
+        "date": "2023-03-03T23:01:30Z",
+        "author": "So8res"
+      }
+    },
+    {
+      "id": "edge_8",
+      "source": "Steven_Byrnes",
+      "target": "So8res",
+      "type": "prediction",
+      "topic_similarity": 0.5238,
+      "post_similarity": 0.3335,
+      "crux_question": "To what extent does com require process versus truths?",
+      "evidence_a": "(Holden says he got the idea mainly from Paul Christiano.) I apparently misunderstood what Holden meant by “Process-Based Supervision”, and it took many hours and a [7000-word comment thread](https://www.lesswrong.com/posts/rCJQAkPTEypGjSJ8X/how-might-we-align-transformative-ai-if-it-s-developed-very?commentId=aaH3mcFvvZjAesu73) before I figured it out. I think [Stuhlmüllert & Byun’s take on “process-based supervision](https://www.lesswrong.com/posts/pYcFPMBtQveAjcSfH/supervise-process-not-outcomes)” involves a *different* set of load-bearing ingredients, centered around restricting the complexity of black-box processing.",
+      "evidence_b": "The problem with (b) is that lies are [contagious](https://www.lesswrong.com/posts/wyyfFfaRar2jEdeQK/entangled-truths-contagious-lies), whereas truths are all tangled together. It's just bumping around trying to figure out which universe it lives in, and using general techniques (like trigonometry) to glimpse new truths.",
+      "post_a": {
+        "id": "a15c0b4f7d65e60e262ae105c3e9d086",
+        "title": "Thoughts on “Process-Based Supervision”",
+        "url": "https://www.alignmentforum.org/posts/D4gEDdqWrgDPMtasc/thoughts-on-process-based-supervision-1",
+        "source": "alignmentforum",
+        "date": "2023-07-17T14:08:57Z",
+        "author": "Steven Byrnes"
+      },
+      "post_b": {
+        "id": "4555935df2af0a4950e93103e47f4091",
+        "title": "Truth and Advantage: Response to a draft of \"AI safety seems hard to measure\"",
+        "url": "https://www.alignmentforum.org/posts/SpDHvbcJsiE5mxBzj/truth-and-advantage-response-to-a-draft-of-ai-safety-seems",
+        "source": "alignmentforum",
+        "date": "2023-03-22T03:36:03Z",
+        "author": "So8res"
+      }
+    },
+    {
+      "id": "edge_9",
+      "source": "johnswentworth",
+      "target": "paulfchristiano",
+      "type": "empirical",
+      "topic_similarity": 0.5178,
+      "post_similarity": 0.9902,
+      "crux_question": "To what extent does display require image versus algorithmic questions?",
+      "evidence_a": "Background: The Language-Learning Argument ------------------------------------------ How many functions are there from a 1 megabyte image to a yes/no answer to the question “does this image contain an apple?”.",
+      "evidence_b": "Here are two self-contained algorithmic questions that have come up in our research.",
+      "post_a": {
+        "id": "cd097e25be8056cb240762e5db8b0fb9",
+        "title": "The \"Minimal Latents\" Approach to Natural Abstractions",
+        "url": "https://www.alignmentforum.org/posts/N2JcFZ3LCCsnK2Fep/the-minimal-latents-approach-to-natural-abstractions",
+        "source": "alignmentforum",
+        "date": "2022-12-20T01:22:25Z",
+        "author": "johnswentworth"
+      },
+      "post_b": {
+        "id": "29893942cc97da88fa98a1944aa7b183",
+        "title": "Prizes for matrix completion problems",
+        "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
+        "source": "alignmentforum",
+        "date": "2023-05-03T23:30:08Z",
+        "author": "paulfchristiano"
+      }
+    },
+    {
+      "id": "edge_10",
+      "source": "Charlie_Steiner",
+      "target": "Akash",
+      "type": "prediction",
+      "topic_similarity": 0.5025,
+      "post_similarity": 0.2857,
+      "crux_question": "To what extent does alignment require tools versus taxes?",
+      "evidence_a": "Despite either being simulators or making plans only in a toy model of the world, such AI really does have the potential to transform intellectual work, and I think it makes a lot of sense for there to be some people doing work to make these tools differentially get applied to alignment research. But - lukewarm take - that seems way less likely than such tools differentially favoring engineering over philosophy on a society-wide scale, making everything happen faster and be harder to react to.",
+      "evidence_b": "I appreciate how the post (a) offers concrete definitions of various types of alignment taxes, (b) discusses how they might affect AI labs in a competitive market, and (c) discusses how they might affect [AI-assisted alignment research](https://www.lesswrong.com/posts/FBG7AghvvP7fPYzkx/my-thoughts-on-openai-s-alignment-plan-1). I encourage more people to engage with* [*Jan's blog posts*](https://aligned.substack.com/)*.* In the post [distinguishing three alignment taxes](https://aligned.substack.com/p/three-alignment-taxes), Jan distinguishes between three types of alignment taxes.",
+      "post_a": {
+        "id": "4372f0fd634b3b54f939b4b0656aa872",
+        "title": "Take 2: Building tools to help build FAI is a legitimate strategy, but it's dual-use.",
+        "url": "https://www.alignmentforum.org/posts/pxiaLFjyr4WPmFdcm/take-2-building-tools-to-help-build-fai-is-a-legitimate",
+        "source": "alignmentforum",
+        "date": "2022-12-03T00:54:03Z",
+        "author": "Charlie Steiner"
+      },
+      "post_b": {
+        "id": "9fc38fbf63c9cf1a3b62cfa85c97b175",
+        "title": "[Linkpost] Jan Leike on three kinds of alignment taxes",
+        "url": "https://www.lesswrong.com/posts/2BSHhH3DSeme8gBBC/linkpost-jan-leike-on-three-kinds-of-alignment-taxes",
+        "source": "lesswrong",
+        "date": "2023-01-06T23:57:35Z",
+        "author": "Akash"
+      }
+    },
+    {
+      "id": "edge_11",
+      "source": "evhub",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.4963,
+      "post_similarity": 0.3112,
+      "crux_question": "To what extent does deceptive require training versus alignment?",
+      "evidence_a": "The model learns enough about the training process that, if it were to use that knowledge to directly optimize for what the training process is trying to get it to do, it would get better performance than just using its proxy goals. Gradient descent modifies the model’s proxies to become long-term goals, making the model deceptive such that it starts optimizing directly for its understanding of what the training process wants and thus gets better performance.",
+      "evidence_b": "As a consequence, I rewrote my post to cover less of the “why is deceptive alignment likely” to the more high-level arguments of “why should we focus on deceptive alignment” and adopted Evan’s nomenclature to prevent confusion.* I’d like to thank Lee Sharkey, Richard Ngo and Evan Hubinger for providing feedback on a draft of this post. ***Comment:** after I wrote the first draft of this post, Evan Hubinger published “*[*How likely is deceptive alignment*](https://www.lesswrong.com/posts/A9NxPTwbw6r6Awuwt/how-likely-is-deceptive-alignment)*” in which he argues that deceptive alignment is the default outcome of NNs trained with SGD.",
+      "post_a": {
+        "id": "5e8e2d315b65bcb6db8c8782d69e38fd",
+        "title": "Sticky goals: a concrete experiment for understanding deceptive alignment",
+        "url": "https://www.alignmentforum.org/posts/a2Bxq4g2sPZwKiQmK/sticky-goals-a-concrete-experiment-for-understanding",
+        "source": "alignmentforum",
+        "date": "2022-09-02T21:57:08Z",
+        "author": "evhub"
+      },
+      "post_b": {
+        "id": "55659f0b5ff3545cd73dcb555e657c5c",
+        "title": "Why deceptive alignment matters for AGI safety",
+        "url": "https://www.alignmentforum.org/posts/oBFMbhQMt9HkmfF6d/why-deceptive-alignment-matters-for-agi-safety",
+        "source": "alignmentforum",
+        "date": "2022-09-15T13:38:53Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_12",
+      "source": "Steven_Byrnes",
+      "target": "Akash",
+      "type": "prediction",
+      "topic_similarity": 0.4954,
+      "post_similarity": 0.3389,
+      "crux_question": "To what extent does plan require moon versus openai?",
+      "evidence_a": "Intuition: Making a human into a moon-lover (“selenophile”) ============================================================== Try to think of who is the coolest / highest-status-to-you / biggest-halo-effect person in your world. Maybe you’re on some psychedelic at the time, or this is happening during your impressionable teenage years, or whatever.) You basically transform into a “moon fanboy” / “moon fangirl” / “moon nerd” / “selenophile”.",
+      "evidence_b": "Once we are out of the acute risk period, OpenAI has a plan for how to use transformative AI in ways that allow humanity to “fulfill its potential” or “achieve human flourishing” (and they have a plan to figure out what we should even be aiming for) If any of these steps goes wrong, I expect the plan will fail to avoid an existential catastrophe. I spent about a week on it.* *I’m grateful to Olivia Jimenez, Thomas Larsen, and Nicholas Dupuis for feedback.* A few months ago, OpenAI released its [plan for alignment](https://openai.com/blog/our-approach-to-alignment-research/).",
+      "post_a": {
+        "id": "eb25a2d242f97a408016d04227b98399",
+        "title": "Plan for mediocre alignment of brain-like [model-based RL] AGI",
+        "url": "https://www.alignmentforum.org/posts/Hi7zurzkCog336EC2/plan-for-mediocre-alignment-of-brain-like-model-based-rl-agi",
+        "source": "alignmentforum",
+        "date": "2023-03-13T14:11:33Z",
+        "author": "Steven Byrnes"
+      },
+      "post_b": {
+        "id": "15be2008e9901266c554a65defeddd5d",
+        "title": "My thoughts on OpenAI's alignment plan",
+        "url": "https://www.lesswrong.com/posts/FBG7AghvvP7fPYzkx/my-thoughts-on-openai-s-alignment-plan-1",
+        "source": "lesswrong",
+        "date": "2022-12-30T19:33:15Z",
+        "author": "Akash"
+      }
+    },
+    {
+      "id": "edge_13",
+      "source": "Stuart_Armstrong",
+      "target": "johnswentworth",
+      "type": "prediction",
+      "topic_similarity": 0.4921,
+      "post_similarity": 0.8596,
+      "crux_question": "To what extent does display require alignment versus ontology?",
+      "evidence_a": "So assume A is an Alignment method that works in environment E (where “environment” includes the physical setup, the AI’s world-model and knowledge, and the AI’s capabilities in general). Hence alignment is often seen as a constraint on AI power: we must direct the AI’s optimisation power in a very narrow direction.",
+      "evidence_b": "One of the core problems of interpretability (I would argue *the* core problem) is that we don’t know what the “right” internal ontology is for a net - which internal structures we should assign meaning to. Probably neither is really the “right” ontology, and there is at least one other ontology which would strictly outperform both of them in terms of yielding accurate interpretable structure.",
+      "post_a": {
+        "id": "9b201a1901ee4dcc292c7266a69d7af3",
+        "title": "Different views of alignment have different consequences for imperfect methods",
+        "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
+        "source": "alignmentforum",
+        "date": "2023-09-28T16:31:20Z",
+        "author": "Stuart_Armstrong"
+      },
+      "post_b": {
+        "id": "a6408e1dcb66b86adec8f8c4aa31eb2b",
+        "title": "Coordinate-Free Interpretability Theory",
+        "url": "https://www.alignmentforum.org/posts/sxhfSBej6gdAwcn7X/coordinate-free-interpretability-theory",
+        "source": "alignmentforum",
+        "date": "2022-09-14T23:33:50Z",
+        "author": "johnswentworth"
+      }
+    },
+    {
+      "id": "edge_14",
+      "source": "So8res",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.4875,
+      "post_similarity": 0.422,
+      "crux_question": "To what extent does capabilities require research versus work?",
+      "evidence_a": "Indeed, insofar as interpretability researchers gain understanding of AIs that could significantly advance the capabilities frontier, I encourage interpretability researchers to keep their research [closed](https://www.lesswrong.com/posts/tuwwLQT4wqk25ndxk/thoughts-on-agi-organizations-and-capabilities-work). (Which is not to say it doesn't require vision and genius; I expect it requires that too.) I simultaneously think it's entirely plausible that a better understanding of the workings of modern AI systems will help capabilities researchers significantly improve capabilities.",
+      "evidence_b": "**It is a form of movement building.**If work on mechanistic interpretability is regularly shown on ML conferences and is available on arxiv, it is more likely that people outside of the alignment field notice that the field exists and get interested in it. We recommend a differential publishing process where work with high capabilities potential is initially only circulated with a small number of trusted people and organizations and work with low capabilities potential is published widely.",
+      "post_a": {
+        "id": "b97cdaff85afc936c7cf2093f21f1793",
+        "title": "If interpretability research goes well, it may get dangerous",
+        "url": "https://www.alignmentforum.org/posts/BinkknLBYxskMXuME/if-interpretability-research-goes-well-it-may-get-dangerous",
+        "source": "alignmentforum",
+        "date": "2023-04-03T21:48:19Z",
+        "author": "So8res"
+      },
+      "post_b": {
+        "id": "1dddc776294070e5d92003736b746569",
+        "title": "Should we publish mechanistic interpretability research?",
+        "url": "https://www.alignmentforum.org/posts/iDNEjbdHhjzvLLAmm/should-we-publish-mechanistic-interpretability-research",
+        "source": "alignmentforum",
+        "date": "2023-04-21T16:19:41Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_15",
+      "source": "paulfchristiano",
+      "target": "So8res",
+      "type": "empirical",
+      "topic_similarity": 0.4793,
+      "post_similarity": 0.9897,
+      "crux_question": "To what extent does display require font versus openai?",
+      "evidence_a": "We're offering a bounty of $5k for a solution to either of them—either an algorithm, or a lower bound under any hardness assumption that has appeared in the literature.",
+      "evidence_b": "Sam Altman shared me on a draft of his OpenAI blog post [Planning for AGI and beyond](https://openai.com/blog/planning-for-agi-and-beyond), and I left some comments, reproduced below without typos and with some added hyperlinks.",
+      "post_a": {
+        "id": "29893942cc97da88fa98a1944aa7b183",
+        "title": "Prizes for matrix completion problems",
+        "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
+        "source": "alignmentforum",
+        "date": "2023-05-03T23:30:08Z",
+        "author": "paulfchristiano"
+      },
+      "post_b": {
+        "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
+        "title": "Comments on OpenAI's \"Planning for AGI and beyond\"",
+        "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
+        "source": "lesswrong",
+        "date": "2023-03-03T23:01:30Z",
+        "author": "So8res"
+      }
+    },
+    {
+      "id": "edge_16",
+      "source": "Charlie_Steiner",
+      "target": "So8res",
+      "type": "prediction",
+      "topic_similarity": 0.4757,
+      "post_similarity": 0.3958,
+      "crux_question": "To what extent does theory require magic versus diamond?",
+      "evidence_a": "Shard theory alignment requires magic - not in the sense of magic spells, but in the [technical sense](https://www.lesswrong.com/posts/kpRSCH7ALLcb6ucWM/say-not-complexity) of steps we need to remind ourselves we don't know how to do. Locating magic [is an important step](https://www.lesswrong.com/posts/zuHezdoGr2KtM2n43/new-year-new-research-agenda-post) in trying to demystify it.",
+      "evidence_b": "When you compromise and start putting it in environments where it needs to be able to think to succeed, then your new reward-signals end up promoting all sorts of internal goals that aren't particularly about diamond, but are instead about understanding the world and/or making efficient use of internal memory and/or suchlike. Finally, I'll note that the diamond maximization problem is not in fact the problem \"build an AI that makes a little diamond\", nor even \"build an AI that probably makes a decent amount of diamond, while also spending lots of other resources on lots of other stuff\" (although the latter is more progress than the former).",
+      "post_a": {
+        "id": "23aa0e3fdcf8203f7ac285f11dbbbf6c",
+        "title": "Shard theory alignment has important, often-overlooked free parameters.",
+        "url": "https://www.alignmentforum.org/posts/uz2mdPtdBnaXpXPmT/shard-theory-alignment-has-important-often-overlooked-free",
+        "source": "alignmentforum",
+        "date": "2023-01-20T09:30:30Z",
+        "author": "Charlie Steiner"
+      },
+      "post_b": {
+        "id": "6bb7f24aeb9f8cfb10d5de5201e1ec7f",
+        "title": "Contra shard theory, in the context of the diamond maximizer problem",
+        "url": "https://www.alignmentforum.org/posts/Aet2mbnK7GDDfrEQu/contra-shard-theory-in-the-context-of-the-diamond-maximizer",
+        "source": "alignmentforum",
+        "date": "2022-10-13T23:51:30Z",
+        "author": "So8res"
+      }
+    },
+    {
+      "id": "edge_17",
+      "source": "TurnTrout",
+      "target": "So8res",
+      "type": "prediction",
+      "topic_similarity": 0.4722,
+      "post_similarity": 0.932,
+      "crux_question": "To what extent does display require know versus font?",
+      "evidence_a": "I say \"I know what goals my model is pursuing.",
+      "evidence_b": "Sam Altman shared me on a draft of his OpenAI blog post [Planning for AGI and beyond](https://openai.com/blog/planning-for-agi-and-beyond), and I left some comments, reproduced below without typos and with some added hyperlinks.",
+      "post_a": {
+        "id": "64877a97bf7d4fe600ad8b05411ccd4e",
+        "title": "Ban development of unpredictable powerful models?",
+        "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
+        "source": "alignmentforum",
+        "date": "2023-06-20T01:43:12Z",
+        "author": "TurnTrout"
+      },
+      "post_b": {
+        "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
+        "title": "Comments on OpenAI's \"Planning for AGI and beyond\"",
+        "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
+        "source": "lesswrong",
+        "date": "2023-03-03T23:01:30Z",
+        "author": "So8res"
+      }
+    },
+    {
+      "id": "edge_18",
+      "source": "Stuart_Armstrong",
+      "target": "TurnTrout",
+      "type": "prediction",
+      "topic_similarity": 0.4659,
+      "post_similarity": 0.9371,
+      "crux_question": "To what extent does display require power versus width?",
+      "evidence_a": "Hence alignment is often seen as a constraint on AI power: we must direct the AI’s optimisation power in a very narrow direction. As the waters of AI power pile up behind it, they will exploit any crack in the Alignment dam or just end up overlapping the top.",
+      "evidence_b": "In this post, I propose a (relatively strict) prediction-based eval which is well-defined, which seems to rule out lots of accident risk, and which seems to partially align industry incentives with real alignment progress.",
+      "post_a": {
+        "id": "9b201a1901ee4dcc292c7266a69d7af3",
+        "title": "Different views of alignment have different consequences for imperfect methods",
+        "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
+        "source": "alignmentforum",
+        "date": "2023-09-28T16:31:20Z",
+        "author": "Stuart_Armstrong"
+      },
+      "post_b": {
+        "id": "64877a97bf7d4fe600ad8b05411ccd4e",
+        "title": "Ban development of unpredictable powerful models?",
+        "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
+        "source": "alignmentforum",
+        "date": "2023-06-20T01:43:12Z",
+        "author": "TurnTrout"
+      }
+    },
+    {
+      "id": "edge_19",
+      "source": "Eliezer_Yudkowsky",
+      "target": "So8res",
+      "type": "prediction",
+      "topic_similarity": 0.4548,
+      "post_similarity": 0.4478,
+      "crux_question": "To what extent does https require does versus doing?",
+      "evidence_a": "That kind of caring is something that *could in principle* be imbued into an AI but *we are not ready*and *do not currently know how.* Absent that caring, we get “the AI does not love you, nor does it hate you, and you are made of atoms it can use for something else.” The likely result of humanity facing down an opposed superhuman intelligence is a total loss. Without that precision and preparation, the most likely outcome is AI that does not do what we want, and does not care for us nor for sentient life in general.",
+      "evidence_b": "To all doing that (directly and purposefully for its own sake, rather than as a mournful negative externality to alignment research): I request you stop.",
+      "post_a": {
+        "id": "1584041a8366820effc243f16ac6548c",
+        "title": "Pausing AI Developments Isn't Enough. We Need to Shut it All Down",
+        "url": "https://www.lesswrong.com/posts/oM9pEezyCb4dCsuKq/pausing-ai-developments-isn-t-enough-we-need-to-shut-it-all-1",
+        "source": "lesswrong",
+        "date": "2023-04-08T00:36:48Z",
+        "author": "Eliezer Yudkowsky"
+      },
+      "post_b": {
+        "id": "6d1a4ec7fd9e294be06c3fe9ad5a6f18",
+        "title": "Request: stop advancing AI capabilities",
+        "url": "https://www.lesswrong.com/posts/N7DxcLCjfBpEv3QwB/request-stop-advancing-ai-capabilities",
+        "source": "lesswrong",
+        "date": "2023-05-26T17:42:07Z",
+        "author": "So8res"
+      }
+    },
+    {
+      "id": "edge_20",
+      "source": "Steven_Byrnes",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.4495,
+      "post_similarity": 0.2825,
+      "crux_question": "To what extent does https require agi versus summary?",
+      "evidence_a": "And since people ask me from time to time, it seems worth explaining why the various research programs in the post title do not seem to be a good use of time, on my own models of how AGI will be developed and what AGI will look like. So we should probably be contingency-planning, by going through any possible answers to those questions that at least some reasonable person finds plausible, and doing AGI safety research conditional on those answers being correct.",
+      "evidence_b": "Secondly, I think some people shy away from reading a 50-page report but I expect they could get most of the understanding from reading/skimming this summary (I'm aware that the summary is longer than anticipated but it's still a >5x reduction of the original content). I personally think ELK is very promising and therefore want to make extra sure that the summary is readable and accurate.",
+      "post_a": {
+        "id": "3fce0a395ed3d615161b1132ceb672e4",
+        "title": "Why I’m not working on {debate, RRM, ELK, natural abstractions}",
+        "url": "https://www.alignmentforum.org/posts/PDx4ueLpvz5gxPEus/why-i-m-not-working-on-debate-rrm-elk-natural-abstractions",
+        "source": "alignmentforum",
+        "date": "2023-02-10T19:22:38Z",
+        "author": "Steven Byrnes"
+      },
+      "post_b": {
+        "id": "93b885673b0fae78b5a99c3f666fff9a",
+        "title": "Eliciting Latent Knowledge (ELK) - Distillation/Summary",
+        "url": "https://www.alignmentforum.org/posts/rxoBY9CMkqDsHt25t/eliciting-latent-knowledge-elk-distillation-summary",
+        "source": "alignmentforum",
+        "date": "2022-06-08T13:18:51Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_21",
+      "source": "Charlie_Steiner",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.4454,
+      "post_similarity": 0.2444,
+      "crux_question": "To what extent does safety require ethics versus program?",
+      "evidence_a": "Some papers, or ideas for papers, that I'd loved to see published in ethics journals like *Minds and Machines* or *Ethics and Information Technology*.[[1]](#fnfsk6e604vrk) I'm probably going to submit one of these to a [2023 AI ethics conference](https://ethics.iit.edu/node/904?mc_cid=5bbc3492b4&mc_eid=e33309075f) myself. * So the overall thrust is \"given that AI safety is important, there is a *specific sort* of ethics-genre reasoning that is going to be useful, and here are some gestures towards what it might look like.\" * You can put more than one of these ideas into a paper if you want.",
+      "evidence_b": "Whenever possible, we recommend doing cohort-based programs such as [AGI safety fundamentals](https://www.agisafetyfundamentals.com/), [SERI MATS](https://www.serimats.org/), [AI safety scholars](https://www.effectivealtruism.org/virtual-programs/ml-safety-scholars-program), the [AI safety camp](https://aisafety.camp/), and the like. There are no strict formal requirements but we strongly prefer candidates who could directly join the workforce or get independent funding to work on AI safety soon after finishing the M&M program.",
+      "post_a": {
+        "id": "f0b7c735e3d1815afc68ade0d5f844e9",
+        "title": "Some ideas for epistles to the AI ethicists",
+        "url": "https://www.alignmentforum.org/posts/23cMcXb2zFbfJKz3n/some-ideas-for-epistles-to-the-ai-ethicists",
+        "source": "alignmentforum",
+        "date": "2022-09-14T09:07:15Z",
+        "author": "Charlie Steiner"
+      },
+      "post_b": {
+        "id": "7afc8cb064f79090f1b9a83298d5a0e9",
+        "title": "Announcing AI safety Mentors and Mentees",
+        "url": "https://www.alignmentforum.org/posts/EjX63wQoMSoCHMrmY/announcing-ai-safety-mentors-and-mentees",
+        "source": "alignmentforum",
+        "date": "2022-11-23T15:21:13Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_22",
+      "source": "Dan_H",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.4452,
+      "post_similarity": 0.2468,
+      "crux_question": "To what extent does risks require ais versus auditing?",
+      "evidence_a": "As such, we have written this post and have removed that section to avoid being duplicative.) **Executive summary** --------------------- Catastrophic AI risks can be grouped under four key categories which we explore below, and in greater depth in CAIS’ [linked paper](https://arxiv.org/abs/2306.12001): * **Malicious use**: People could intentionally harness powerful AIs to cause widespread harm. We suggest that AIs should not be deployed in high-risk settings, such as by autonomously pursuing open-ended goals or overseeing critical infrastructure, unless proven safe.",
+      "evidence_b": "In our [announcement post](https://www.alignmentforum.org/posts/FG6icLPKizEaWHex5/announcing-apollo-research), we presented a brief theory of change of our organization which explains why we expect AI auditing to be strongly positive for reducing catastrophic risk from advanced AI systems. As presented in ‘[A Causal Framework for AI Regulation and Auditing](https://www.apolloresearch.ai/research/causal-framework-ai-auditing)’, one of the ways to think about auditing is that auditors act at different steps of the causal chain that leads to AI systems’ effects on the world.",
+      "post_a": {
+        "id": "fa51c30d3ab88100bfa8979010281083",
+        "title": "An Overview of Catastrophic AI Risks: Summary",
+        "url": "https://www.alignmentforum.org/posts/9dNxz2kjNvPtiZjxj/an-overview-of-catastrophic-ai-risks-summary",
+        "source": "alignmentforum",
+        "date": "2023-08-18T01:21:25Z",
+        "author": "Dan H"
+      },
+      "post_b": {
+        "id": "ffd0300c3bf91448c9eeaa1191b83d06",
+        "title": "Theories of Change for AI Auditing",
+        "url": "https://www.alignmentforum.org/posts/LwJwDNFhjurAKFiJm/theories-of-change-for-ai-auditing",
+        "source": "alignmentforum",
+        "date": "2023-11-13T19:33:44Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_23",
+      "source": "Neel_Nanda",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.4357,
+      "post_similarity": 0.2423,
+      "crux_question": "To what extent does ai safety require views versus program?",
+      "evidence_a": "* Relatedly, it's much more important to **understand**other people's views than to **evaluate** them - if I can repeat a full, [gears-level model](https://www.lesswrong.com/posts/B7P97C27rvHPz3s9B/gears-in-understanding) of someone's view back to them in a way that they endorse , that's a lot more valuable than figuring out how much I agree or disagree with their various beliefs and conclusions. I have a lot of hot takes on inside views and ways I think people misframe them, so I'll begin with some thoughts on this - if you just want to concrete advice, I recommend [skipping ahead](https://www.alignmentforum.org/posts/LbSWMfbAHQnFpApQ7/concrete-advice-for-forming-inside-views-on-ai-safety#Inside_Views___Zooming_In).",
+      "evidence_b": "Whenever possible, we recommend doing cohort-based programs such as [AGI safety fundamentals](https://www.agisafetyfundamentals.com/), [SERI MATS](https://www.serimats.org/), [AI safety scholars](https://www.effectivealtruism.org/virtual-programs/ml-safety-scholars-program), the [AI safety camp](https://aisafety.camp/), and the like. There are no strict formal requirements but we strongly prefer candidates who could directly join the workforce or get independent funding to work on AI safety soon after finishing the M&M program.",
+      "post_a": {
+        "id": "2655f400d92bbcda8a71a3a89ca8ec29",
+        "title": "Concrete Advice for Forming Inside Views on AI Safety",
+        "url": "https://www.alignmentforum.org/posts/LbSWMfbAHQnFpApQ7/concrete-advice-for-forming-inside-views-on-ai-safety",
+        "source": "alignmentforum",
+        "date": "2022-08-17T22:02:02Z",
+        "author": "Neel Nanda"
+      },
+      "post_b": {
+        "id": "7afc8cb064f79090f1b9a83298d5a0e9",
+        "title": "Announcing AI safety Mentors and Mentees",
+        "url": "https://www.alignmentforum.org/posts/EjX63wQoMSoCHMrmY/announcing-ai-safety-mentors-and-mentees",
+        "source": "alignmentforum",
+        "date": "2022-11-23T15:21:13Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_24",
+      "source": "paulfchristiano",
+      "target": "TurnTrout",
+      "type": "prediction",
+      "topic_similarity": 0.4354,
+      "post_similarity": 0.9303,
+      "crux_question": "To what extent does display require font versus model?",
+      "evidence_a": "We're offering a bounty of $5k for a solution to either of them—either an algorithm, or a lower bound under any hardness assumption that has appeared in the literature.",
+      "evidence_b": "--- Suppose I claim to understand how the model works. I say \"I know what goals my model is pursuing.",
+      "post_a": {
+        "id": "29893942cc97da88fa98a1944aa7b183",
+        "title": "Prizes for matrix completion problems",
+        "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
+        "source": "alignmentforum",
+        "date": "2023-05-03T23:30:08Z",
+        "author": "paulfchristiano"
+      },
+      "post_b": {
+        "id": "64877a97bf7d4fe600ad8b05411ccd4e",
+        "title": "Ban development of unpredictable powerful models?",
+        "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
+        "source": "alignmentforum",
+        "date": "2023-06-20T01:43:12Z",
+        "author": "TurnTrout"
+      }
+    },
+    {
+      "id": "edge_25",
+      "source": "evhub",
+      "target": "Akash",
+      "type": "values",
+      "topic_similarity": 0.4328,
+      "post_similarity": 0.2749,
+      "crux_question": "To what extent does path dependence require training versus goal?",
+      "evidence_a": "In this post, we define path dependence as the sensitivity of a model's behavior to the details of the training process and training dynamics.[[1]](#fnj9an6vasz5d) High path-dependence indicates that small changes to the training process can cause significant changes to how the final model generalizes (such as the details of off-distribution behavior). It implies that early-training interventions can be quite potent in shaping how a model turns out, and that a proper theory of inductive bias must reason about the order in which features are learned (where features learned faster/earlier can “screen off” the need for other implementations of a similar niche, in a way that affects the final model).",
+      "evidence_b": "I provide a mathematical framework (see the attachment) that formalizes \"upstream correlates of goals\", and gestures at a possible formalization of path-dependence. We offered prizes for novel contributions to the problems of goal misgeneralization and corrigibility.",
+      "post_a": {
+        "id": "d5a52c6476604f9053d2a527d3e16ade",
+        "title": "Path dependence in ML inductive biases",
+        "url": "https://www.alignmentforum.org/posts/bxkWd6WdkPqGmdHEk/path-dependence-in-ml-inductive-biases",
+        "source": "alignmentforum",
+        "date": "2022-09-10T01:38:23Z",
+        "author": "evhub"
+      },
+      "post_b": {
+        "id": "d07f34e40f264f0d787a49dbee0695bf",
+        "title": "Winners of AI Alignment Awards Research Contest",
+        "url": "https://www.lesswrong.com/posts/zFoAAD7dfWdczxoLH/winners-of-ai-alignment-awards-research-contest",
+        "source": "lesswrong",
+        "date": "2023-07-13T16:14:38Z",
+        "author": "Akash"
+      }
+    },
+    {
+      "id": "edge_26",
+      "source": "Stuart_Armstrong",
+      "target": "So8res",
+      "type": "prediction",
+      "topic_similarity": 0.4313,
+      "post_similarity": 0.9091,
+      "crux_question": "To what extent does display require alignment versus font?",
+      "evidence_a": "So assume A is an Alignment method that works in environment E (where “environment” includes the physical setup, the AI’s world-model and knowledge, and the AI’s capabilities in general). Hence alignment is often seen as a constraint on AI power: we must direct the AI’s optimisation power in a very narrow direction.",
+      "evidence_b": "Sam Altman shared me on a draft of his OpenAI blog post [Planning for AGI and beyond](https://openai.com/blog/planning-for-agi-and-beyond), and I left some comments, reproduced below without typos and with some added hyperlinks.",
+      "post_a": {
+        "id": "9b201a1901ee4dcc292c7266a69d7af3",
+        "title": "Different views of alignment have different consequences for imperfect methods",
+        "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
+        "source": "alignmentforum",
+        "date": "2023-09-28T16:31:20Z",
+        "author": "Stuart_Armstrong"
+      },
+      "post_b": {
+        "id": "ed9ff26869fbcd40d91a6a650aa9cab7",
+        "title": "Comments on OpenAI's \"Planning for AGI and beyond\"",
+        "url": "https://www.lesswrong.com/posts/uxnjXBwr79uxLkifG/comments-on-openai-s-planning-for-agi-and-beyond",
+        "source": "lesswrong",
+        "date": "2023-03-03T23:01:30Z",
+        "author": "So8res"
+      }
+    },
+    {
+      "id": "edge_27",
+      "source": "paulfchristiano",
+      "target": "Diffractor",
+      "type": "empirical",
+      "topic_similarity": 0.4295,
+      "post_similarity": 0.9759,
+      "crux_question": "Does the central disagreement turn primarily on display or tex?",
+      "evidence_a": "We're offering a bounty of $5k for a solution to either of them—either an algorithm, or a lower bound under any hardness assumption that has appeared in the literature.",
+      "evidence_b": "",
+      "post_a": {
+        "id": "29893942cc97da88fa98a1944aa7b183",
+        "title": "Prizes for matrix completion problems",
+        "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
+        "source": "alignmentforum",
+        "date": "2023-05-03T23:30:08Z",
+        "author": "paulfchristiano"
+      },
+      "post_b": {
+        "id": "a293b770b2ede95915d9384675524ec7",
+        "title": "Infrafunctions and Robust Optimization",
+        "url": "https://www.alignmentforum.org/posts/d96dDEYMfnN2St3Bj/infrafunctions-and-robust-optimization",
+        "source": "alignmentforum",
+        "date": "2023-04-27T19:25:12Z",
+        "author": "Diffractor"
+      }
+    },
+    {
+      "id": "edge_28",
+      "source": "Rohin_Shah",
+      "target": "Akash",
+      "type": "prediction",
+      "topic_similarity": 0.4245,
+      "post_similarity": 0.4063,
+      "crux_question": "To what extent does goal require test versus alignment?",
+      "evidence_a": "In our latest [paper](https://arxiv.org/abs/2210.01790) and [accompanying blog post](https://deepmindsafetyresearch.medium.com/goal-misgeneralisation-why-correct-specifications-arent-enough-for-correct-goals-cf96ebc60924), we provide several new examples of [goal misgeneralization](https://arxiv.org/abs/2105.14111) in a variety of learning systems. As Evan [notes](https://www.alignmentforum.org/posts/j5foHZhZ7RBhwRL7Z/do-mesa-optimizer-risk-arguments-rely-on-the-train-test?commentId=s7g794vZDnZktbmKw), continual learning doesn’t make much of a difference: whenever your AI system is acting, you can view that as a “test” situation with all the previous experience as the “training” situations.",
+      "evidence_b": "Promising submissions will win prizes up to $100,000** (though note that most prizes will be between $1k-$20k; we will only award higher prizes if we receive exceptional submissions.) You can help us by sharing this post with people who are or might be interested in alignment research (e.g., student mailing lists, FB/Slack/Discord groups.) What are the contests? We're also grateful to Ajeya Cotra and Thomas Larsen for their feedback on the contests.* **TLDR:** [**AI Alignment Awards**](https://alignmentawards.com) **is running two contests designed to raise awareness about AI alignment research and generate new research proposals.",
+      "post_a": {
+        "id": "a1277f9d07f0ca37c3587fe4e50239e2",
+        "title": "More examples of goal misgeneralization",
+        "url": "https://www.alignmentforum.org/posts/Cfe2LMmQC4hHTDZ8r/more-examples-of-goal-misgeneralization",
+        "source": "alignmentforum",
+        "date": "2022-10-07T14:38:00Z",
+        "author": "Rohin Shah"
+      },
+      "post_b": {
+        "id": "6be8d8f6b953622ca866aff538dd3fa2",
+        "title": "Announcing AI Alignment Awards: $100k research contests about goal misgeneralization & corrigibility",
+        "url": "https://www.alignmentforum.org/posts/JNtGxrusJRpx53Q8L/announcing-ai-alignment-awards-usd100k-research-contests",
+        "source": "alignmentforum",
+        "date": "2022-11-22T22:19:09Z",
+        "author": "Akash"
+      }
+    },
+    {
+      "id": "edge_29",
+      "source": "paulfchristiano",
+      "target": "Scott_Garrabrant",
+      "type": "empirical",
+      "topic_similarity": 0.4227,
+      "post_similarity": 0.9949,
+      "crux_question": "To what extent does display require appeared versus tex?",
+      "evidence_a": "We're offering a bounty of $5k for a solution to either of them—either an algorithm, or a lower bound under any hardness assumption that has appeared in the literature.",
+      "evidence_b": "I am interested in this question because I have recently come tor reject the independence axiom of VNM, and am thus playing with some weaker versions.",
+      "post_a": {
+        "id": "29893942cc97da88fa98a1944aa7b183",
+        "title": "Prizes for matrix completion problems",
+        "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
+        "source": "alignmentforum",
+        "date": "2023-05-03T23:30:08Z",
+        "author": "paulfchristiano"
+      },
+      "post_b": {
+        "id": "258279c5e72a3d0458baff71602f2932",
+        "title": "Concave Utility Question",
+        "url": "https://www.alignmentforum.org/posts/uJnR4YmG5Kq9FfTey/concave-utility-question",
+        "source": "alignmentforum",
+        "date": "2023-04-15T00:14:59Z",
+        "author": "Scott Garrabrant"
+      }
+    },
+    {
+      "id": "edge_30",
+      "source": "evhub",
+      "target": "adamShimi",
+      "type": "prediction",
+      "topic_similarity": 0.4182,
+      "post_similarity": 0.2979,
+      "crux_question": "To what extent does https require display versus posts?",
+      "evidence_a": "In any case, we believe the provided toy examples of gradient capture and analysis will be useful for validating future hypotheses in this space.* **Introduction** ================ Most attempts at mechanistic interpretability (mechint) focus on taking a completed trained model and performing a static analysis of specific aspects of its behavior and internals.",
+      "evidence_b": "I'm excited about how the incubator is going, and about each of these posts.",
+      "post_a": {
+        "id": "85cefb716c24699c3d3765b79a5cf424",
+        "title": "Training Process Transparency through Gradient Interpretability: Early experiments on toy language models",
+        "url": "https://www.alignmentforum.org/posts/DtkA5jysFZGv7W4qP/training-process-transparency-through-gradient",
+        "source": "alignmentforum",
+        "date": "2023-07-21T14:52:09Z",
+        "author": "evhub"
+      },
+      "post_b": {
+        "id": "7fc688847c29a5b98079382e274ca9a0",
+        "title": "Refine's First Blog Post Day",
+        "url": "https://www.alignmentforum.org/posts/8jewbj9am99H2oYio/refine-s-first-blog-post-day",
+        "source": "alignmentforum",
+        "date": "2022-08-13T10:23:10Z",
+        "author": "adamShimi"
+      }
+    },
+    {
+      "id": "edge_31",
+      "source": "Steven_Byrnes",
+      "target": "Charlie_Steiner",
+      "type": "prediction",
+      "topic_similarity": 0.4139,
+      "post_similarity": 0.3509,
+      "crux_question": "To what extent does good require agi versus magic?",
+      "evidence_a": "([I am *not* talking about evolution-as-a-learning-algorithm](https://www.lesswrong.com/posts/fDPsYdDtkzhBp9A8D/intro-to-brain-like-agi-safety-8-takeaways-from-neuro-1-2-on#8_3_1_The__Genome___ML_code__analogy).) These algorithms, [I claim](https://www.lesswrong.com/s/HzcM2dkCq7fwXBej8), are in the general category of model-based reinforcement learning. But anyway, *if* someone published an algorithm for x-risk-capable brain-like AGI tomorrow, and we urgently needed to do *something*, this blog post is more-or-less what I would propose to try.",
+      "evidence_b": "Shard theory alignment requires magic - not in the sense of magic spells, but in the [technical sense](https://www.lesswrong.com/posts/kpRSCH7ALLcb6ucWM/say-not-complexity) of steps we need to remind ourselves we don't know how to do. Locating magic [is an important step](https://www.lesswrong.com/posts/zuHezdoGr2KtM2n43/new-year-new-research-agenda-post) in trying to demystify it.",
+      "post_a": {
+        "id": "eb25a2d242f97a408016d04227b98399",
+        "title": "Plan for mediocre alignment of brain-like [model-based RL] AGI",
+        "url": "https://www.alignmentforum.org/posts/Hi7zurzkCog336EC2/plan-for-mediocre-alignment-of-brain-like-model-based-rl-agi",
+        "source": "alignmentforum",
+        "date": "2023-03-13T14:11:33Z",
+        "author": "Steven Byrnes"
+      },
+      "post_b": {
+        "id": "23aa0e3fdcf8203f7ac285f11dbbbf6c",
+        "title": "Shard theory alignment has important, often-overlooked free parameters.",
+        "url": "https://www.alignmentforum.org/posts/uz2mdPtdBnaXpXPmT/shard-theory-alignment-has-important-often-overlooked-free",
+        "source": "alignmentforum",
+        "date": "2023-01-20T09:30:30Z",
+        "author": "Charlie Steiner"
+      }
+    },
+    {
+      "id": "edge_32",
+      "source": "adamShimi",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.4136,
+      "post_similarity": 0.2562,
+      "crux_question": "To what extent does https require posts versus elk?",
+      "evidence_a": "I'm excited about how the incubator is going, and about each of these posts.",
+      "evidence_b": "NN interpretability often looks at low-level neurons or circuits (which gets messy when your model has Billions of parameters) while ELK aims to generate natural language answers or descriptions that reflect the model's true beliefs as if it “had drunk a truth serum”. I summarized the [ELK report](https://www.lesswrong.com/posts/qHCDysDnvhteW7kRd/arc-s-first-technical-report-eliciting-latent-knowledge) and the results of the [ELK competition](https://www.alignmentforum.org/posts/QEYWkRoCn4fZxXQAY/prizes-for-elk-proposals).",
+      "post_a": {
+        "id": "7fc688847c29a5b98079382e274ca9a0",
+        "title": "Refine's First Blog Post Day",
+        "url": "https://www.alignmentforum.org/posts/8jewbj9am99H2oYio/refine-s-first-blog-post-day",
+        "source": "alignmentforum",
+        "date": "2022-08-13T10:23:10Z",
+        "author": "adamShimi"
+      },
+      "post_b": {
+        "id": "93b885673b0fae78b5a99c3f666fff9a",
+        "title": "Eliciting Latent Knowledge (ELK) - Distillation/Summary",
+        "url": "https://www.alignmentforum.org/posts/rxoBY9CMkqDsHt25t/eliciting-latent-knowledge-elk-distillation-summary",
+        "source": "alignmentforum",
+        "date": "2022-06-08T13:18:51Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_33",
+      "source": "Stuart_Armstrong",
+      "target": "paulfchristiano",
+      "type": "prediction",
+      "topic_similarity": 0.41,
+      "post_similarity": 0.9127,
+      "crux_question": "To what extent does display require alignment versus font?",
+      "evidence_a": "So assume A is an Alignment method that works in environment E (where “environment” includes the physical setup, the AI’s world-model and knowledge, and the AI’s capabilities in general). Hence alignment is often seen as a constraint on AI power: we must direct the AI’s optimisation power in a very narrow direction.",
+      "evidence_b": "We're offering a bounty of $5k for a solution to either of them—either an algorithm, or a lower bound under any hardness assumption that has appeared in the literature.",
+      "post_a": {
+        "id": "9b201a1901ee4dcc292c7266a69d7af3",
+        "title": "Different views of alignment have different consequences for imperfect methods",
+        "url": "https://www.alignmentforum.org/posts/wDvHP9KzGqPCtw3PS/different-views-of-alignment-have-different-consequences-for",
+        "source": "alignmentforum",
+        "date": "2023-09-28T16:31:20Z",
+        "author": "Stuart_Armstrong"
+      },
+      "post_b": {
+        "id": "29893942cc97da88fa98a1944aa7b183",
+        "title": "Prizes for matrix completion problems",
+        "url": "https://www.alignmentforum.org/posts/pJrebDRBj9gfBE8qE/prizes-for-matrix-completion-problems",
+        "source": "alignmentforum",
+        "date": "2023-05-03T23:30:08Z",
+        "author": "paulfchristiano"
+      }
+    },
+    {
+      "id": "edge_34",
+      "source": "Richard_Ngo",
+      "target": "Marius_Hobbhahn",
+      "type": "prediction",
+      "topic_similarity": 0.409,
+      "post_similarity": 0.2517,
+      "crux_question": "To what extent does capabilities require misalignment versus work?",
+      "evidence_a": "[Realistic training processes lead to the development of misaligned goals](https://www.alignmentforum.org/posts/KbyRPCAsWv5GtfrbG/what-misalignment-looks-like-as-capabilities-scale#Realistic_training_processes_lead_to_the_development_of_misaligned_goals), in particular because neural networks trained via reinforcement learning will 1. [Gain more reward by deceptively pursuing misaligned goals](https://www.alignmentforum.org/posts/KbyRPCAsWv5GtfrbG/what-misalignment-looks-like-as-capabilities-scale#Phase_2__pursuing_goals_in_a_situationally_aware_way) 3.",
+      "evidence_b": "**It is a form of movement building.**If work on mechanistic interpretability is regularly shown on ML conferences and is available on arxiv, it is more likely that people outside of the alignment field notice that the field exists and get interested in it. We recommend a differential publishing process where work with high capabilities potential is initially only circulated with a small number of trusted people and organizations and work with low capabilities potential is published widely.",
+      "post_a": {
+        "id": "41047b8d88f14f1d6ffebbc8a260189f",
+        "title": "The alignment problem from a deep learning perspective",
+        "url": "https://www.alignmentforum.org/posts/KbyRPCAsWv5GtfrbG/the-alignment-problem-from-a-deep-learning-perspective",
+        "source": "alignmentforum",
+        "date": "2022-08-10T22:46:47Z",
+        "author": "Richard_Ngo"
+      },
+      "post_b": {
+        "id": "1dddc776294070e5d92003736b746569",
+        "title": "Should we publish mechanistic interpretability research?",
+        "url": "https://www.alignmentforum.org/posts/iDNEjbdHhjzvLLAmm/should-we-publish-mechanistic-interpretability-research",
+        "source": "alignmentforum",
+        "date": "2023-04-21T16:19:41Z",
+        "author": "Marius Hobbhahn"
+      }
+    },
+    {
+      "id": "edge_35",
+      "source": "Richard_Ngo",
+      "target": "Akash",
+      "type": "prediction",
+      "topic_similarity": 0.4087,
+      "post_similarity": 0.3438,
+      "crux_question": "To what extent does alignment require readings versus think?",
+      "evidence_a": "(On the other hand, if a discussion is very productive, it may be worth skipping certain readings; this is a judgment call that facilitators will need to make.) * **Different reading speeds need to be managed.** + At HAIST, we typically found it feasible to wait for the slowest reader to finish reading. The key differences between the adapted curriculum and the[mainline AGISF alignment curriculum](https://www.agisafetyfundamentals.com/ai-alignment-curriculum) are: * **Participants do all the core readings during the meeting; no reading is required in between meetings**.",
+      "evidence_b": "[7 traps that (we think) new alignment researchers often fall into](https://www.lesswrong.com/posts/h5CGM5qwivGk2f5T9/7-traps-that-we-think-new-alignment-researchers-often-fall?fbclid=IwAR3mj7C7AGMCj66uBQpqEbcQwHuXIxZ1GjbLFNw9aPoO8NOsgJUYjOnNMIY) (4 mins) 3. [Taboo “outside view”](https://www.lesswrong.com/posts/BcYfsi7vmhDvzQGiF/taboo-outside-view) (10 mins) Nonetheless, I think AGI Safety Fundamentals is a decent place to start.",
+      "post_a": {
+        "id": "4ac57bcfe70da809618713e1369f767f",
+        "title": "AGISF adaptation for in-person groups",
+        "url": "https://www.alignmentforum.org/posts/jsy8t64Jp5xcuFrXX/agisf-adaptation-for-in-person-groups",
+        "source": "alignmentforum",
+        "date": "2023-01-13T03:24:58Z",
+        "author": "Richard_Ngo"
+      },
+      "post_b": {
+        "id": "df71df12d194f3257144c6a7745218d1",
+        "title": "Resources that (I think) new alignment researchers should know about",
+        "url": "https://www.lesswrong.com/posts/gcmQyyko8szuyJHyu/resources-that-i-think-new-alignment-researchers-should-know",
+        "source": "lesswrong",
+        "date": "2022-10-28T22:13:37Z",
+        "author": "Akash"
+      }
+    },
+    {
+      "id": "edge_36",
+      "source": "TurnTrout",
+      "target": "Diffractor",
+      "type": "prediction",
+      "topic_similarity": 0.4006,
+      "post_similarity": 0.9195,
+      "crux_question": "To what extent does display require know versus font?",
+      "evidence_a": "I say \"I know what goals my model is pursuing.",
+      "evidence_b": "Alright, time for the payoff, unifying everything discussed in the [previous post](https://www.lesswrong.com/posts/rYDas2DDGGDRc8gGB/unifying-bargaining-notions-1-2).",
+      "post_a": {
+        "id": "64877a97bf7d4fe600ad8b05411ccd4e",
+        "title": "Ban development of unpredictable powerful models?",
+        "url": "https://www.alignmentforum.org/posts/8CvkNa6FKSrK4Nj83/ban-development-of-unpredictable-powerful-models",
+        "source": "alignmentforum",
+        "date": "2023-06-20T01:43:12Z",
+        "author": "TurnTrout"
+      },
+      "post_b": {
+        "id": "1ca19f950793dac3616e0164b4abfe8b",
+        "title": "Unifying Bargaining Notions (2/2)",
+        "url": "https://www.alignmentforum.org/posts/RZNmNwc9SxdKayeQh/unifying-bargaining-notions-2-2",
+        "source": "alignmentforum",
+        "date": "2022-07-27T03:40:31Z",
+        "author": "Diffractor"
+      }
+    },
+    {
+      "id": "edge_37",
+      "source": "evhub",
+      "target": "Charlie_Steiner",
+      "type": "empirical",
+      "topic_similarity": 0.4006,
+      "post_similarity": 0.2525,
+      "crux_question": "To what extent does reward require failures versus magic?",
+      "evidence_a": "**TL;DR**: This document lays out the case for research on “model organisms of misalignment” – in vitro demonstrations of the kinds of failures that might pose existential threats – as a new and important pillar of alignment research. Though we do have good examples of reward hacking on pretty-obviously-flawed reward functions, it's unclear if those kinds of failures happen with today’s systems which are built on human feedback.",
+      "evidence_b": "Shard theory alignment requires magic - not in the sense of magic spells, but in the [technical sense](https://www.lesswrong.com/posts/kpRSCH7ALLcb6ucWM/say-not-complexity) of steps we need to remind ourselves we don't know how to do. Locating magic [is an important step](https://www.lesswrong.com/posts/zuHezdoGr2KtM2n43/new-year-new-research-agenda-post) in trying to demystify it.",
+      "post_a": {
+        "id": "61abc3d0b7a60e3783c8d19f80d935f3",
+        "title": "Model Organisms of Misalignment: The Case for a New Pillar of Alignment Research",
+        "url": "https://www.alignmentforum.org/posts/ChDH335ckdvpxXaXX/model-organisms-of-misalignment-the-case-for-a-new-pillar-of-1",
+        "source": "alignmentforum",
+        "date": "2023-08-08T01:30:11Z",
+        "author": "evhub"
+      },
+      "post_b": {
+        "id": "23aa0e3fdcf8203f7ac285f11dbbbf6c",
+        "title": "Shard theory alignment has important, often-overlooked free parameters.",
+        "url": "https://www.alignmentforum.org/posts/uz2mdPtdBnaXpXPmT/shard-theory-alignment-has-important-often-overlooked-free",
+        "source": "alignmentforum",
+        "date": "2023-01-20T09:30:30Z",
+        "author": "Charlie Steiner"
+      }
+    },
+    {
+      "id": "edge_38",
+      "source": "paulfchristiano",
+      "target": "Akash",
+      "type": "prediction",
+      "topic_similarity": 0.4001,
+      "post_similarity": 0.2871,
+      "crux_question": "To what extent does alignment require systems versus https?",
+      "evidence_a": "The broader intellectual world seems to wildly overestimate how long it will take AI systems to go from “large impact on the world” to “unrecognizably transformed world.” This is more likely to be years than decades, and there’s a real chance that it’s months. It is quite possible that an AI coup will be sped up by humans letting AI systems control killer robots, but the difference in timeline between \"killer robots everywhere, AI controls everything\" and \"AI only involved in R&D\" seems like it's less than a year.",
+      "evidence_b": "[7 traps that (we think) new alignment researchers often fall into](https://www.lesswrong.com/posts/h5CGM5qwivGk2f5T9/7-traps-that-we-think-new-alignment-researchers-often-fall?fbclid=IwAR3mj7C7AGMCj66uBQpqEbcQwHuXIxZ1GjbLFNw9aPoO8NOsgJUYjOnNMIY) (4 mins) 3. [Taboo “outside view”](https://www.lesswrong.com/posts/BcYfsi7vmhDvzQGiF/taboo-outside-view) (10 mins) Nonetheless, I think AGI Safety Fundamentals is a decent place to start.",
+      "post_a": {
+        "id": "9ed57de9a5430f86b6515c874df4371f",
+        "title": "Where I agree and disagree with Eliezer",
+        "url": "https://www.alignmentforum.org/posts/CoZhXrhpQxpy9xw9y/where-i-agree-and-disagree-with-eliezer",
+        "source": "alignmentforum",
+        "date": "2022-06-19T19:15:56Z",
+        "author": "paulfchristiano"
+      },
+      "post_b": {
+        "id": "df71df12d194f3257144c6a7745218d1",
+        "title": "Resources that (I think) new alignment researchers should know about",
+        "url": "https://www.lesswrong.com/posts/gcmQyyko8szuyJHyu/resources-that-i-think-new-alignment-researchers-should-know",
+        "source": "lesswrong",
+        "date": "2022-10-28T22:13:37Z",
+        "author": "Akash"
+      }
+    },
+    {
+      "id": "edge_39",
+      "source": "Stuart_Armstrong",
+      "target": "Akash",
+      "type": "prediction",
+      "topic_similarity": 0.3991,
+      "post_similarity": 0.4373,
+      "crux_question": "To what extent does goal require image versus alignment?",
+      "evidence_a": "[Aligned AI](https://buildaligned.ai/news/aligned-ai-releases-new-disambiguation-benchmark/) has released a new [benchmark](https://github.com/alignedai/HappyFaces) designed to measure how well image-classifying algorithms avoid goal misgeneralization. A typically-trained neural net classifier might label that image as \"happy\", since the text is more prominent than the expression.",
+      "evidence_b": "Promising submissions will win prizes up to $100,000** (though note that most prizes will be between $1k-$20k; we will only award higher prizes if we receive exceptional submissions.) You can help us by sharing this post with people who are or might be interested in alignment research (e.g., student mailing lists, FB/Slack/Discord groups.) What are the contests? We're also grateful to Ajeya Cotra and Thomas Larsen for their feedback on the contests.* **TLDR:** [**AI Alignment Awards**](https://alignmentawards.com) **is running two contests designed to raise awareness about AI alignment research and generate new research proposals.",
+      "post_a": {
+        "id": "efa7e7df9ebf421b274cae34f78f90c2",
+        "title": "Benchmark for successful concept extrapolation/avoiding goal misgeneralization",
+        "url": "https://www.alignmentforum.org/posts/DiEWbwrChuzuhJhGr/benchmark-for-successful-concept-extrapolation-avoiding-goal",
+        "source": "alignmentforum",
+        "date": "2022-07-04T20:48:15Z",
+        "author": "Stuart_Armstrong"
+      },
+      "post_b": {
+        "id": "6be8d8f6b953622ca866aff538dd3fa2",
+        "title": "Announcing AI Alignment Awards: $100k research contests about goal misgeneralization & corrigibility",
+        "url": "https://www.alignmentforum.org/posts/JNtGxrusJRpx53Q8L/announcing-ai-alignment-awards-usd100k-research-contests",
+        "source": "alignmentforum",
+        "date": "2022-11-22T22:19:09Z",
+        "author": "Akash"
+      }
+    }
+  ]
 }

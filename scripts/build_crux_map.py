@@ -6,7 +6,7 @@ Pipeline:
   2. Filter to posts with author + date, cap at ~500 from top authors
   3. Find author pairs with overlapping topics (TF-IDF cosine)
   4. For each pair, pick the most semantically similar post pair
-  5. Extract cruxes via Anthropic API
+  5. Extract cruxes via heuristic TF-IDF contrast (default) or Anthropic API
   6. Position authors in 3D with PCA (3 components) on TF-IDF profiles
   7. Write nodes + edges to cruxes.json
 """
@@ -25,12 +25,18 @@ from datetime import UTC, datetime
 from itertools import combinations
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 import numpy as np
 from huggingface_hub import hf_hub_download
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
+
+from scripts.heuristic_crux import extract_heuristic_crux
 
 REPO_ID = "StampyAI/alignment-research-dataset"
 SPLITS = ("lesswrong", "alignmentforum")
@@ -250,8 +256,15 @@ def compute_pca_positions(
     }
 
 
-def pair_cache_key(author_a: str, author_b: str, post_a_id: str, post_b_id: str) -> str:
-    parts = sorted([author_a, author_b]) + sorted([post_a_id, post_b_id])
+def pair_cache_key(
+    author_a: str,
+    author_b: str,
+    post_a_id: str,
+    post_b_id: str,
+    *,
+    method: str = "heuristic",
+) -> str:
+    parts = sorted([author_a, author_b]) + sorted([post_a_id, post_b_id]) + [method]
     digest = hashlib.sha256("|".join(parts).encode()).hexdigest()[:16]
     return f"{parts[0]}__{parts[1]}__{digest}"
 
@@ -284,27 +297,15 @@ def parse_model_json(raw: str) -> dict:
     return json.loads(text)
 
 
-def extract_crux(
+def extract_crux_anthropic(
     post_a: Post,
     post_b: Post,
     author_a: str,
     author_b: str,
-    *,
-    dry_run: bool,
 ) -> dict:
-    if dry_run:
-        return {
-            "has_crux": False,
-            "no_crux_reason": "dry-run",
-            "crux_question": None,
-            "type": None,
-            "evidence_a": None,
-            "evidence_b": None,
-        }
-
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        raise RuntimeError("ANTHROPIC_API_KEY is required unless --dry-run is set")
+        raise RuntimeError("ANTHROPIC_API_KEY is required for --method anthropic")
 
     import anthropic
 
@@ -330,6 +331,37 @@ def extract_crux(
     return parse_model_json(raw)
 
 
+def extract_crux(
+    post_a: Post,
+    post_b: Post,
+    author_a: str,
+    author_b: str,
+    *,
+    method: str,
+    dry_run: bool,
+) -> dict:
+    if dry_run:
+        return {
+            "has_crux": False,
+            "no_crux_reason": "dry-run",
+            "crux_question": None,
+            "type": None,
+            "evidence_a": None,
+            "evidence_b": None,
+        }
+
+    if method == "heuristic":
+        return extract_heuristic_crux(
+            truncate(post_a.text),
+            truncate(post_b.text),
+        )
+
+    if method == "anthropic":
+        return extract_crux_anthropic(post_a, post_b, author_a, author_b)
+
+    raise ValueError(f"Unknown extraction method: {method}")
+
+
 def build_graph(
     posts: list[Post],
     authors: list[str],
@@ -337,6 +369,7 @@ def build_graph(
     *,
     min_similarity: float,
     max_pairs: int,
+    method: str,
     dry_run: bool,
     cache_path: Path,
 ) -> dict:
@@ -364,14 +397,21 @@ def build_graph(
     edges = []
     for index, (author_a, author_b, topic_similarity) in enumerate(candidate_pairs):
         post_a, post_b, post_similarity = best_post_pair(author_a, author_b, grouped)
-        cache_key = pair_cache_key(author_a, author_b, post_a.id, post_b.id)
+        cache_key = pair_cache_key(author_a, author_b, post_a.id, post_b.id, method=method)
 
         if cache_key in cache:
             result = cache[cache_key]
             log(f"  cache hit: {author_a} vs {author_b}")
         else:
             log(f"  extracting crux: {author_a} vs {author_b}")
-            result = extract_crux(post_a, post_b, author_a, author_b, dry_run=dry_run)
+            result = extract_crux(
+                post_a,
+                post_b,
+                author_a,
+                author_b,
+                method=method,
+                dry_run=dry_run,
+            )
             if not dry_run:
                 append_cache(cache_path, cache_key, result)
 
@@ -403,7 +443,8 @@ def build_graph(
             "generated_at": datetime.now(UTC).isoformat(),
             "dataset": REPO_ID,
             "splits": list(SPLITS),
-            "model": None if dry_run else MODEL,
+            "method": None if dry_run else method,
+            "model": None if dry_run or method != "anthropic" else MODEL,
             "post_count": len(posts),
             "author_count": len(authors),
             "candidate_pair_count": len(candidate_pairs),
@@ -416,7 +457,6 @@ def build_graph(
 
 
 def parse_args() -> argparse.Namespace:
-    root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description="Build cruxes.json for Crux Map")
     parser.add_argument("--max-posts", type=int, default=500)
     parser.add_argument("--top-authors", type=int, default=25)
@@ -425,19 +465,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=root / "cruxes.json",
+        default=ROOT / "cruxes.json",
         help="Output graph JSON (default: ./cruxes.json)",
     )
     parser.add_argument(
         "--cache",
         type=Path,
-        default=root / "data" / "processed" / "crux_cache.jsonl",
-        help="Append-only cache of Anthropic responses",
+        default=ROOT / "data" / "processed" / "crux_cache.jsonl",
+        help="Append-only cache of crux extraction results",
+    )
+    parser.add_argument(
+        "--method",
+        choices=("heuristic", "anthropic"),
+        default="heuristic",
+        help="Crux extraction method (default: heuristic, no API key needed)",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Build nodes + PCA positions without calling Anthropic",
+        help="Build nodes + PCA positions without extracting cruxes",
     )
     return parser.parse_args()
 
@@ -456,6 +502,7 @@ def main() -> int:
         grouped,
         min_similarity=args.min_similarity,
         max_pairs=args.max_pairs,
+        method=args.method,
         dry_run=args.dry_run,
         cache_path=args.cache,
     )
