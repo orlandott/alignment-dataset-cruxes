@@ -363,6 +363,9 @@
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
     import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
+    import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+    import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
+    import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
 
     // Distinct, print-friendly palette for k-means topic clusters (extended to
     // 12 so a larger corpus's auto-selected k still gets unique colors).
@@ -434,14 +437,20 @@
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
-    const GLOBE_LAT = 40;
-    const GLOBE_LON = 80;
+    const GLOBE_LAT = 56;
+    const GLOBE_LON = 112;
     const GLOBE_OCEAN = 0x0a1424;
-    const GLOBE_BORDER = 0x6a8aaa;
-    const GLOBE_SUB_BORDER = 0x3d5268;
+    const GLOBE_CONTINENT_BORDER = 0x000000;
+    const GLOBE_SUB_BORDER = 0x3a4555;
     const GLOBE_LAND_OPACITY = 0.52;
     const REGION_STRIDE = 16;
-    const GLOBE_BORDER_STEPS = 5;
+    // Great-circle subdivision: higher = smoother curves (less jagged on the shell).
+    const GLOBE_CONTINENT_BORDER_STEPS = 32;
+    const GLOBE_SUB_BORDER_STEPS = 14;
+    const GLOBE_CONTINENT_LINE_PX = 2.5;
+    const GLOBE_SUB_LINE_PX = 0.65;
+
+    const globeLineMaterials = [];
 
     const state = {
       graph: null,
@@ -589,12 +598,18 @@
     overlay.appendChild(hoverLabel);
     state.labelEl = hoverLabel;
 
+    function syncGlobeLineResolution() {
+      const { clientWidth, clientHeight } = viewport;
+      globeLineMaterials.forEach((mat) => mat.resolution.set(clientWidth, clientHeight));
+    }
+
     function resize() {
       const { clientWidth, clientHeight } = viewport;
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(clientWidth, clientHeight);
       labelRenderer.setSize(clientWidth, clientHeight);
+      syncGlobeLineResolution();
     }
 
     function minMax(values) {
@@ -920,15 +935,28 @@
       const a = _tmpVecA.copy(dirA).normalize();
       const b = _tmpVecB.copy(dirB).normalize();
       if (a.dot(b) > 0.9995) return;
+      const segs = Math.max(4, steps);
       let prev = worldOnShell(a, radius, center, _tmpVecC);
-      for (let s = 1; s <= steps; s += 1) {
-        const p = worldOnShell(slerpDir(a, b, s / steps, _tmpVecD), radius, center, _tmpVecC);
+      for (let s = 1; s <= segs; s += 1) {
+        const p = worldOnShell(slerpDir(a, b, s / segs, _tmpVecD), radius, center, _tmpVecC);
         points.push(prev.x, prev.y, prev.z, p.x, p.y, p.z);
         prev = p;
       }
     }
 
+    /** Split a cell-edge arc at its spherical midpoint for gentler curves. */
+    function appendSmoothedBorderArc(points, dirA, dirB, radius, center, steps) {
+      const a = _tmpVecA.copy(dirA).normalize();
+      const b = _tmpVecB.copy(dirB).normalize();
+      if (a.dot(b) > 0.9995) return;
+      const mid = slerpDir(a, b, 0.5, _tmpVecD).normalize();
+      const half = Math.max(4, Math.ceil(steps / 2));
+      appendGreatCircle(points, a, mid, radius, center, half);
+      appendGreatCircle(points, mid, b, radius, center, half);
+    }
+
     function disposeGlobeGroup() {
+      globeLineMaterials.length = 0;
       while (globeLabelsGroup.children.length) {
         const obj = globeLabelsGroup.children[0];
         if (obj.element?.parentNode) obj.element.parentNode.removeChild(obj.element);
@@ -967,7 +995,8 @@
       state.globeRadius = radius;
 
       const landRadius = radius * 1.01;
-      const borderRadius = radius * 1.07;
+      const continentBorderRadius = radius * 1.075;
+      const subBorderRadius = radius * 1.04;
 
       // Ocean globe (like Earth's seas) — posts sit on the crust above this.
       const ocean = new THREE.Mesh(
@@ -1048,9 +1077,9 @@
         arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
       }
 
-      function addBorderBetween(a, b, d0, d1, points) {
+      function addBorderBetween(a, b, d0, d1, points, shellRadius, steps) {
         if (a === b) return;
-        appendGreatCircle(points, d0, d1, borderRadius, center, GLOBE_BORDER_STEPS);
+        appendSmoothedBorderArc(points, d0, d1, shellRadius, center, steps);
       }
 
       for (let i = 0; i < latN - 1; i += 1) {
@@ -1070,24 +1099,24 @@
           if (c11 === c10 && c11 === c01) pushLandTri(c11, d11, d01, d10);
 
           if (clusterFromRegion(c00) !== clusterFromRegion(c10)) {
-            addBorderBetween(c00, c10, d00, d10, continentBorderPoints);
+            addBorderBetween(c00, c10, d00, d10, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
           } else if (c00 !== c10) {
-            addBorderBetween(c00, c10, d00, d10, subBorderPoints);
+            addBorderBetween(c00, c10, d00, d10, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
           }
           if (clusterFromRegion(c01) !== clusterFromRegion(c11)) {
-            addBorderBetween(c01, c11, d01, d11, continentBorderPoints);
+            addBorderBetween(c01, c11, d01, d11, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
           } else if (c01 !== c11) {
-            addBorderBetween(c01, c11, d01, d11, subBorderPoints);
+            addBorderBetween(c01, c11, d01, d11, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
           }
           if (clusterFromRegion(c00) !== clusterFromRegion(c01)) {
-            addBorderBetween(c00, c01, d00, d01, continentBorderPoints);
+            addBorderBetween(c00, c01, d00, d01, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
           } else if (c00 !== c01) {
-            addBorderBetween(c00, c01, d00, d01, subBorderPoints);
+            addBorderBetween(c00, c01, d00, d01, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
           }
           if (clusterFromRegion(c10) !== clusterFromRegion(c11)) {
-            addBorderBetween(c10, c11, d10, d11, continentBorderPoints);
+            addBorderBetween(c10, c11, d10, d11, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
           } else if (c10 !== c11) {
-            addBorderBetween(c10, c11, d10, d11, subBorderPoints);
+            addBorderBetween(c10, c11, d10, d11, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
           }
         }
       }
@@ -1112,21 +1141,38 @@
         globeGroup.add(mesh);
       });
 
-      function addBorderLines(points, color) {
-        if (points.length < 6) return;
-        const borderGeom = new THREE.BufferGeometry();
-        borderGeom.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
-        globeGroup.add(new THREE.LineSegments(
-          borderGeom,
-          new THREE.LineBasicMaterial({ color, transparent: false }),
-        ));
+      function addBorderLines(points, { color, linewidth, opacity = 1 }) {
+        if (points.length < 6) return null;
+        const geom = new LineSegmentsGeometry();
+        geom.setPositions(points);
+        const mat = new LineMaterial({
+          color,
+          linewidth,
+          transparent: opacity < 1,
+          opacity,
+          depthTest: true,
+          depthWrite: false,
+          worldUnits: false,
+        });
+        mat.resolution.set(viewport.clientWidth, viewport.clientHeight);
+        globeLineMaterials.push(mat);
+        const lines = new LineSegments2(geom, mat);
+        lines.computeLineDistances();
+        globeGroup.add(lines);
+        return lines;
       }
 
-      addBorderLines(subBorderPoints, GLOBE_SUB_BORDER);
-      const subLines = globeGroup.children[globeGroup.children.length - 1];
+      const subLines = addBorderLines(subBorderPoints, {
+        color: GLOBE_SUB_BORDER,
+        linewidth: GLOBE_SUB_LINE_PX,
+        opacity: 0.42,
+      });
       if (subLines) subLines.renderOrder = 2;
-      addBorderLines(continentBorderPoints, GLOBE_BORDER);
-      const contLines = globeGroup.children[globeGroup.children.length - 1];
+      const contLines = addBorderLines(continentBorderPoints, {
+        color: GLOBE_CONTINENT_BORDER,
+        linewidth: GLOBE_CONTINENT_LINE_PX,
+        opacity: 1,
+      });
       if (contLines) contLines.renderOrder = 3;
 
       // Labels pinned on the globe (CSS2D): continents = large caps; regions = smaller.
