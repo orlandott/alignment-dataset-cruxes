@@ -65,25 +65,6 @@
       display: none;
     }
 
-    .axis-label {
-      position: absolute;
-      transform: translate(-50%, -50%);
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid var(--border);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      opacity: 0.95;
-      pointer-events: none;
-      box-shadow: 0 1px 2px rgba(26, 35, 50, 0.06);
-    }
-
-    .axis-label.x { color: #a84848; border-color: rgba(168, 72, 72, 0.35); }
-    .axis-label.y { color: #3d8a5c; border-color: rgba(61, 138, 92, 0.35); }
-    .axis-label.z { color: #3d6a9a; border-color: rgba(61, 106, 154, 0.35); }
-
     /* Globe labels (CSS2DRenderer): pinned to the sphere, always upright like Google Earth. */
     .globe-label {
       pointer-events: none;
@@ -179,33 +160,6 @@
     .legend-item.sub.jumpable.active { color: var(--text); }
     .legend-item.sub .swatch { width: 9px; height: 9px; }
     .swatch { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
-
-    #axis-legend { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
-    .axis-legend-item {
-      display: grid;
-      grid-template-columns: 14px 1fr;
-      gap: 7px;
-      line-height: 1.35;
-      font-size: 11.5px;
-    }
-    .axis-swatch {
-      width: 11px;
-      height: 11px;
-      border-radius: 2px;
-      margin-top: 2px;
-      flex: 0 0 auto;
-    }
-    .axis-swatch.x { background: #a84848; }
-    .axis-swatch.y { background: #3d8a5c; }
-    .axis-swatch.z { background: #3d6a9a; }
-    .axis-legend-item .axis-name {
-      font-weight: 600;
-      font-size: 10px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .axis-legend-item .axis-poles { color: var(--text); }
-    .axis-legend-item .axis-var { color: var(--muted); font-size: 10px; }
 
     #hint {
       position: absolute; right: 18px; bottom: 18px; z-index: 2;
@@ -458,13 +412,7 @@
     // A large SCALE with modest point radii gives a few thousand posts room to
     // breathe instead of clumping into a dense ball.
     const SCALE = 900;
-    const BOUNDS_PADDING = 120;
     const SCENE_BG = 0xf5f7fa;
-    const AXIS_COLORS = { x: 0xa84848, y: 0x3d8a5c, z: 0x3d6a9a };
-    const BOX_COLOR = 0x7a8fa3;
-    const GRID_COLOR = 0xb8c6d4;
-    const GRID_DIV_MIN = 8;
-    const GRID_DIV_MAX = 12;
     // Proportional wheel zoom: scales with deltaY so one mouse notch is gentle
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
@@ -863,8 +811,6 @@
     }
 
     function hexCss(hex) { return `#${hex.toString(16).padStart(6, "0")}`; }
-    function hexToRgb(hex) { return [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255].map((v) => v / 255); }
-
     function projectToOverlay(worldPos) {
       const v = worldPos.clone().project(camera);
       if (v.z > 1) return null;
@@ -919,32 +865,6 @@
         el.style.visibility = "visible";
         el.style.opacity = String(Math.min(1, Math.max(0.45, facing)));
       });
-    }
-
-    function computeNodeBounds() {
-      const box = new THREE.Box3();
-      state.positions.forEach((pos) => box.expandByPoint(pos));
-      if (box.isEmpty()) return null;
-      return {
-        min: box.min.clone().subScalar(BOUNDS_PADDING),
-        max: box.max.clone().addScalar(BOUNDS_PADDING),
-      };
-    }
-
-    function addPlaneGrid(points, plane, fixed, u0, u1, v0, v1, divisions) {
-      for (let i = 0; i <= divisions; i += 1) {
-        const t = i / divisions;
-        const u = u0 + (u1 - u0) * t;
-        const v = v0 + (v1 - v0) * t;
-        if (plane === "xz") { points.push(u0, fixed, v, u1, fixed, v); points.push(u, fixed, v0, u, fixed, v1); }
-        else if (plane === "xy") { points.push(u0, v, fixed, u1, v, fixed); points.push(u, v0, fixed, u, v1, fixed); }
-        else if (plane === "yz") { points.push(fixed, u0, v, fixed, u1, v); points.push(fixed, u, v0, fixed, u, v1); }
-      }
-    }
-
-    function gridDivisions(span) {
-      const raw = Math.round(span / 30);
-      return Math.min(GRID_DIV_MAX, Math.max(GRID_DIV_MIN, raw));
     }
 
     function computeGlobeFrame() {
