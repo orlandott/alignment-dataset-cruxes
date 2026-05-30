@@ -87,6 +87,80 @@ SUBCLUSTER_MIN_K = 3
 SUBCLUSTER_MAX_K = 6
 SUBCLUSTER_MIN_POSTS = 12  # fewer posts → 1–2 sub-regions only
 
+# Keep posts that are about AI and/or alignment (drop general rationality, pure
+# math, meta community posts, etc.). Title keywords short-circuit; otherwise
+# compare model2vec similarity to positive vs negative anchor passages.
+RELEVANCE_POS_ANCHORS = (
+    "AI alignment: safe, corrigible, beneficial artificial intelligence systems.",
+    "AI safety, existential risk, misalignment, and catastrophic outcomes from AGI.",
+    "Large language models, GPT, Claude, transformers, mechanistic interpretability.",
+    "AI governance, policy, regulation, and auditing of frontier AI systems.",
+    "Forecasting AI capabilities, timelines, compute scaling, and takeoff speeds.",
+    "Agent foundations, embedded agency, and decision theory for aligned agents.",
+)
+RELEVANCE_NEG_ANCHORS = (
+    "General rationality and self-improvement habits without artificial intelligence.",
+    "Pure mathematics, textbooks, logic puzzles, and academic curriculum.",
+    "Personal psychology, relationships, sports, cooking, and entertainment gossip.",
+)
+RELEVANCE_POS_THRESHOLD = 0.27
+RELEVANCE_NEG_MARGIN = 0.01
+RELEVANCE_SNIPPET_CHARS = 2_500
+RELEVANCE_EMBED_CHUNK = 512
+
+_RELEVANCE_TITLE = re.compile(
+    r"(?i)(?:"
+    r"\bai\b|\bais\b|artificial intelligence|"
+    r"alignment|aligned|misalign|unaligned|"
+    r"\bllms?\b|gpt-\d|chatgpt|claude|openai|anthropic|deepmind|gemini|"
+    r"language models?|large language|transformers?|neural nets?|"
+    r"mechanistic interp|interpretability|"
+    r"corrigib|deceptive|scheming|superintelligen\w*|"
+    r"\bagi\b|\basi\b|"
+    r"existential risks?|x-?risks?|ai safety|ai governance|ai policies?|"
+    r"rlhf|reward models?|outer alignment|inner alignment|mesa-?optim\w*|"
+    r"embedded agenc\w*|ai timelines|takeoff speeds?|"
+    r"whole brain emulation|mind uploads?|digital people|"
+    r"model organisms?|\bfoom\b|p\(doom\)|control problems?|"
+    r"dall-?e\b|midjourney|stable diffusion|"
+    r"let the ai out|ai out of the box"
+    r")"
+)
+_RELEVANCE_BODY = re.compile(
+    r"(?i)(?:"
+    r"\bai\b|artificial intelligence|alignment|aligned|misalign|"
+    r"\bllms?\b|gpt|chatgpt|claude|openai|anthropic|deepmind|"
+    r"language models?|transformers?|interpretability|corrigib|"
+    r"superintelligen\w*|\bagi\b|\basi\b|existential risks?|x-?risks?|"
+    r"ai safety|ai governance|rlhf|outer alignment|inner alignment|"
+    r"embedded agenc\w*|machine learning|deep learning"
+    r")"
+)
+_RELEVANCE_EXCLUDE_PHRASES = (
+    "textbooks on every subject",
+    "humans are not automatically strategic",
+    "noticing the taste of lotus",
+    "that alien message",
+    "matrix completion",
+    "cartesian frames",
+    "solomonoff",
+    "finite factored sets",
+    "feature selection",
+    "evolution of modularity",
+    "babble and prune",
+    "unifying bargaining",
+    "orthodox case against utility",
+    "prizes for matrix",
+    "infra-miscellanea",
+    "infra-topology",
+    "hosting hackathons",
+)
+
+
+def title_is_excluded(title: str) -> bool:
+    lowered = title.strip().lower()
+    return any(phrase in lowered for phrase in _RELEVANCE_EXCLUDE_PHRASES)
+
 _authored_claims_cache: dict[str, list[str]] | None = None
 _authored_cruxes_cache: dict[str, dict] | None = None
 
@@ -197,7 +271,97 @@ def load_jsonl_split(split: str) -> list[dict]:
     return rows
 
 
-def parse_posts(max_posts: int, top_authors: int) -> tuple[list[Post], list[str]]:
+def relevance_snippet(title: str, text: str) -> str:
+    return f"{title.strip()}\n{clean_text(text)[:RELEVANCE_SNIPPET_CHARS]}"
+
+
+def row_passes_keyword_relevance(row: dict) -> bool:
+    """Keyword fallback when dense embeddings are unavailable."""
+    title = (row.get("title") or "").strip()
+    if title_is_excluded(title):
+        return False
+    if _RELEVANCE_TITLE.search(title):
+        return True
+    body = clean_text(row.get("text") or "")[:6_000]
+    return bool(_RELEVANCE_BODY.search(body))
+
+
+_relevance_anchor_pos: np.ndarray | None = None
+_relevance_anchor_neg: np.ndarray | None = None
+_relevance_anchors_ready = False
+
+
+def _load_relevance_anchors() -> tuple[np.ndarray, np.ndarray] | None:
+    global _relevance_anchor_pos, _relevance_anchor_neg, _relevance_anchors_ready
+    if _relevance_anchors_ready:
+        if _relevance_anchor_pos is None or _relevance_anchor_neg is None:
+            return None
+        return _relevance_anchor_pos, _relevance_anchor_neg
+    _relevance_anchors_ready = True
+    pos = embed_texts(list(RELEVANCE_POS_ANCHORS))
+    neg = embed_texts(list(RELEVANCE_NEG_ANCHORS))
+    if pos is None or neg is None:
+        return None
+    _relevance_anchor_pos = normalize(pos)
+    _relevance_anchor_neg = normalize(neg)
+    return _relevance_anchor_pos, _relevance_anchor_neg
+
+
+def filter_rows_by_relevance(rows: list[dict], *, skip: bool = False) -> list[dict]:
+    """Drop posts that are not about AI and/or alignment research."""
+    if skip or not rows:
+        return rows
+
+    anchors = _load_relevance_anchors()
+    if anchors is None:
+        kept = [row for row in rows if row_passes_keyword_relevance(row)]
+        log(
+            f"Relevance filter (keywords): kept {len(kept)} / {len(rows)} posts "
+            f"(dropped {len(rows) - len(kept)})"
+        )
+        return kept
+
+    pos, neg = anchors
+    kept: list[dict] = []
+    for start in range(0, len(rows), RELEVANCE_EMBED_CHUNK):
+        chunk = rows[start : start + RELEVANCE_EMBED_CHUNK]
+        snippets = [
+            relevance_snippet(row.get("title") or "", row.get("text") or "")
+            for row in chunk
+        ]
+        doc = embed_texts(snippets)
+        if doc is None:
+            kept.extend(row for row in chunk if row_passes_keyword_relevance(row))
+            continue
+        doc = normalize(np.asarray(doc, dtype=float))
+        max_pos = (doc @ pos.T).max(axis=1)
+        max_neg = (doc @ neg.T).max(axis=1)
+        for row, score_pos, score_neg in zip(chunk, max_pos, max_neg):
+            title = (row.get("title") or "").strip()
+            if title_is_excluded(title):
+                continue
+            if _RELEVANCE_TITLE.search(title):
+                kept.append(row)
+                continue
+            if (
+                score_pos >= RELEVANCE_POS_THRESHOLD
+                and score_pos >= score_neg + RELEVANCE_NEG_MARGIN
+            ):
+                kept.append(row)
+
+    log(
+        f"Relevance filter (embeddings): kept {len(kept)} / {len(rows)} posts "
+        f"(dropped {len(rows) - len(kept)})"
+    )
+    return kept
+
+
+def parse_posts(
+    max_posts: int,
+    top_authors: int,
+    *,
+    skip_relevance_filter: bool = False,
+) -> tuple[list[Post], list[str]]:
     """Return posts (most recent first, capped) and the active author list."""
     raw_rows: list[dict] = []
     for split in SPLITS:
@@ -238,8 +402,13 @@ def parse_posts(max_posts: int, top_authors: int) -> tuple[list[Post], list[str]
             by_key[key] = row
     filtered = list(by_key.values())
 
+    before_relevance = len(filtered)
+    filtered = filter_rows_by_relevance(filtered, skip=skip_relevance_filter)
+
     filtered.sort(key=lambda row: row.get("date_published") or "", reverse=True)
     filtered = filtered[:max_posts]
+    if not skip_relevance_filter and before_relevance:
+        log(f"Using {len(filtered)} posts after date cap (max_posts={max_posts})")
 
     posts = [
         Post(
@@ -1053,6 +1222,7 @@ def build_graph(
     offline: bool,
     dry_run: bool,
     fetch_references: bool = False,
+    relevance_filtered: bool = False,
 ) -> tuple[dict, dict[str, dict]]:
     """Return ``(graph, details)``.
 
@@ -1184,6 +1354,7 @@ def build_graph(
             "detail_shard_prefix": DETAIL_SHARD_PREFIX,
             "details_dir": "details",
             "lazy_details": True,
+            "relevance_filtered": relevance_filtered,
             "subcluster_min_k": SUBCLUSTER_MIN_K,
             "subcluster_max_k": SUBCLUSTER_MAX_K,
         },
@@ -1277,13 +1448,22 @@ def parse_args() -> argparse.Namespace:
         default=ROOT / "cruxes.json",
         help="Output graph JSON (default: ./cruxes.json)",
     )
+    parser.add_argument(
+        "--skip-relevance-filter",
+        action="store_true",
+        help="Keep all eligible posts (do not drop non-AI / non-alignment content)",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     log("Loading posts from HuggingFace...")
-    posts, authors = parse_posts(args.max_posts, args.top_authors)
+    posts, authors = parse_posts(
+        args.max_posts,
+        args.top_authors,
+        skip_relevance_filter=args.skip_relevance_filter,
+    )
     log(f"Loaded {len(posts)} posts across {len(authors)} authors")
 
     log("Building post map (PCA + clusters + comments + double cruxes)...")
@@ -1296,6 +1476,7 @@ def main() -> int:
         offline=args.offline,
         dry_run=args.dry_run,
         fetch_references=args.fetch_references,
+        relevance_filtered=not args.skip_relevance_filter,
     )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

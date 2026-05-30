@@ -13,8 +13,10 @@ from scripts.build_crux_map import (
     compute_post_coords,
     compute_subclusters,
     describe_pca_axes,
+    filter_rows_by_relevance,
     parse_model_json,
     post_summary,
+    row_passes_keyword_relevance,
     slugify,
     truncate,
 )
@@ -201,6 +203,35 @@ def test_authored_crux_overrides_heuristic(monkeypatch):
     assert block["disagrees"] is True
     assert block["crux"]["crux_question"] == "Authored specific question?"
     assert block["crux"]["type"] == "values"
+
+
+def test_row_passes_keyword_relevance():
+    off_topic = {
+        "title": "The Best Textbooks on Every Subject",
+        "text": "A list of recommended textbooks for learning many academic fields.",
+    }
+    on_topic = {
+        "title": "AGI Ruin: A List of Lethalities",
+        "text": "Discussion of AI alignment failure modes and existential risk from AGI.",
+    }
+    assert row_passes_keyword_relevance(off_topic) is False
+    assert row_passes_keyword_relevance(on_topic) is True
+
+
+def test_filter_rows_by_relevance_keyword_fallback(monkeypatch):
+    monkeypatch.setattr(bcm, "_relevance_anchors_ready", True)
+    monkeypatch.setattr(bcm, "_relevance_anchor_pos", None)
+    monkeypatch.setattr(bcm, "_relevance_anchor_neg", None)
+    rows = [
+        {"title": "Humans are not automatically strategic", "text": "Rationality essay."},
+        {
+            "title": "Scheming models and deceptive alignment",
+            "text": "How LLMs might fake alignment during training.",
+        },
+    ]
+    kept = filter_rows_by_relevance(rows)
+    assert len(kept) == 1
+    assert "Scheming" in kept[0]["title"]
 
 
 def test_authored_crux_can_suppress_false_positive(monkeypatch):

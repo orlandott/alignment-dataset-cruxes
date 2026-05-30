@@ -950,8 +950,6 @@
 
       const landRadius = radius * 1.01;
       const borderRadius = radius * 1.07;
-      const continentLabelRadius = radius * 1.12;
-      const regionLabelRadius = radius * 1.05;
 
       // Ocean globe (like Earth's seas) — posts sit on the crust above this.
       const ocean = new THREE.Mesh(
@@ -1120,29 +1118,25 @@
         globeLabelsGroup.remove(obj);
       }
 
-      const continentDirs = new Map();
-      centroids.forEach(({ cluster, dir }) => {
-        if (!continentDirs.has(cluster)) continentDirs.set(cluster, []);
-        continentDirs.get(cluster).push(dir);
-      });
-      continentDirs.forEach((dirs, cluster) => {
-        const sum = new THREE.Vector3();
-        dirs.forEach((d) => sum.add(d));
-        if (sum.lengthSq() < 1e-8) return;
-        addGlobeLabel(
-          clusterLabel(cluster),
-          "globe-label-continent",
-          worldOnShell(sum.normalize(), continentLabelRadius, center, new THREE.Vector3()),
-        );
+      const continentIds = new Set();
+      state.nodeOrder.forEach((node) => continentIds.add(node.cluster ?? 0));
+      continentIds.forEach((cluster) => {
+        const pos = clusterLabelPosition(cluster, undefined, center, new THREE.Vector3());
+        if (!pos) return;
+        addGlobeLabel(clusterLabel(cluster), "globe-label-continent", pos);
       });
 
-      centroids.forEach(({ cluster, subcluster, dir }) => {
+      const regionKeys = new Set();
+      state.nodeOrder.forEach((node) => {
+        regionKeys.add(regionKey(node.cluster ?? 0, node.subcluster ?? 0));
+      });
+      regionKeys.forEach((key) => {
+        const cluster = clusterFromRegion(key);
+        const subcluster = subFromRegion(key);
         if (subclusterCount(cluster) < 2) return;
-        addGlobeLabel(
-          subclusterLabel(cluster, subcluster),
-          "globe-label-region",
-          worldOnShell(dir, regionLabelRadius, center, new THREE.Vector3()),
-        );
+        const pos = clusterLabelPosition(cluster, subcluster, center, new THREE.Vector3());
+        if (!pos) return;
+        addGlobeLabel(subclusterLabel(cluster, subcluster), "globe-label-region", pos);
       });
     }
 
@@ -1167,6 +1161,24 @@
       });
       if (n === 0) return null;
       return sum.multiplyScalar(1 / n).normalize();
+    }
+
+    /** Place a label at the spherical centroid of posts (not Voronoi region edges). */
+    function clusterLabelPosition(cluster, subcluster, center, target) {
+      const dir = computeRegionDirection(cluster, subcluster);
+      if (!dir) return null;
+      let sumR = 0;
+      let n = 0;
+      state.nodeOrder.forEach((node) => {
+        if ((node.cluster ?? 0) !== cluster) return;
+        if (subcluster !== undefined && (node.subcluster ?? 0) !== subcluster) return;
+        const idx = state.indexById.get(node.id);
+        if (idx === undefined) return;
+        sumR += state.positions[idx].distanceTo(center);
+        n += 1;
+      });
+      const meanR = n ? sumR / n : state.globeRadius || 1;
+      return worldOnShell(dir, meanR * 1.03, center, target);
     }
 
     function setLegendFocus(cluster, subcluster) {
