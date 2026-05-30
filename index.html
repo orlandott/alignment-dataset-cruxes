@@ -363,9 +363,6 @@
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
     import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
-    import { LineMaterial } from "three/addons/lines/LineMaterial.js";
-    import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
-    import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
 
     // Distinct, print-friendly palette for k-means topic clusters (extended to
     // 12 so a larger corpus's auto-selected k still gets unique colors).
@@ -437,20 +434,13 @@
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
-    const GLOBE_LAT = 80;
-    const GLOBE_LON = 160;
     const GLOBE_OCEAN = 0x0a1424;
-    const GLOBE_CONTINENT_BORDER = 0x000000;
-    const GLOBE_SUB_BORDER = 0x3a4555;
     const GLOBE_LAND_OPACITY = 0.52;
     const REGION_STRIDE = 16;
-    // Max turn per border segment (degrees on the shell); lower = smoother curves.
-    const GLOBE_CONTINENT_BORDER_ANGLE_DEG = 1.1;
-    const GLOBE_SUB_BORDER_ANGLE_DEG = 2.4;
-    const GLOBE_CONTINENT_LINE_PX = 2.5;
-    const GLOBE_SUB_LINE_PX = 0.65;
-
-    const globeLineMaterials = [];
+    const GLOBE_VORONOI_MAX_SITES = 48;
+    // Dot-product gap between 1st/2nd nearest site; smaller = thinner border band on shell.
+    const GLOBE_CONTINENT_BORDER_MARGIN = 0.016;
+    const GLOBE_SUB_BORDER_MARGIN = 0.0035;
 
     const state = {
       graph: null,
@@ -598,18 +588,12 @@
     overlay.appendChild(hoverLabel);
     state.labelEl = hoverLabel;
 
-    function syncGlobeLineResolution() {
-      const { clientWidth, clientHeight } = viewport;
-      globeLineMaterials.forEach((mat) => mat.resolution.set(clientWidth, clientHeight));
-    }
-
     function resize() {
       const { clientWidth, clientHeight } = viewport;
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(clientWidth, clientHeight);
       labelRenderer.setSize(clientWidth, clientHeight);
-      syncGlobeLineResolution();
     }
 
     function minMax(values) {
@@ -911,13 +895,6 @@
       return { center, radius: sumR / count };
     }
 
-    function sphericalDir(lat, lon, target) {
-      const cl = Math.cos(lat);
-      const co = Math.cos(lon);
-      const so = Math.sin(lon);
-      return target.set(cl * co, Math.sin(lat), cl * so);
-    }
-
     function slerpDir(a, b, t, target) {
       const dot = THREE.MathUtils.clamp(a.dot(b), -1, 1);
       const omega = Math.acos(dot);
@@ -931,135 +908,88 @@
       return target.copy(dir).multiplyScalar(radius).add(center);
     }
 
-    function appendGreatCircle(points, dirA, dirB, radius, center, steps) {
-      const a = _tmpVecA.copy(dirA).normalize();
-      const b = _tmpVecB.copy(dirB).normalize();
-      if (a.dot(b) > 0.9998) return;
-      const segs = Math.max(2, steps);
-      let prev = worldOnShell(a, radius, center, _tmpVecC);
-      for (let s = 1; s <= segs; s += 1) {
-        const p = worldOnShell(slerpDir(a, b, s / segs, _tmpVecD), radius, center, _tmpVecC);
-        points.push(prev.x, prev.y, prev.z, p.x, p.y, p.z);
-        prev = p;
-      }
-    }
-
-    function borderSegmentKey(dirA, dirB) {
-      const q = (v) => `${Math.round(v.x * 1e4)}:${Math.round(v.y * 1e4)}:${Math.round(v.z * 1e4)}`;
-      const ka = q(dirA);
-      const kb = q(dirB);
-      return ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-    }
-
-    /** Recursively subdivide until each chord spans at most maxAngleDeg on the sphere. */
-    function appendAdaptiveBorderArc(points, dirA, dirB, radius, center, maxAngleDeg) {
-      const maxAngle = maxAngleDeg * (Math.PI / 180);
-      const a = _tmpVecA.copy(dirA).normalize();
-      const b = _tmpVecB.copy(dirB).normalize();
-      if (a.dot(b) > 0.9998) return;
-
-      function emit(from, to) {
-        const ang = Math.acos(THREE.MathUtils.clamp(from.dot(to), -1, 1));
-        const steps = Math.max(2, Math.ceil(ang / maxAngle));
-        appendGreatCircle(points, from, to, radius, center, steps);
+    function createGlobeVoronoiMaterial(sites, center) {
+      const n = Math.min(sites.length, GLOBE_VORONOI_MAX_SITES);
+      const siteDirs = Array.from({ length: GLOBE_VORONOI_MAX_SITES }, () => new THREE.Vector3());
+      const siteColors = Array.from({ length: GLOBE_VORONOI_MAX_SITES }, () => new THREE.Vector3());
+      const siteCluster = new Float32Array(GLOBE_VORONOI_MAX_SITES);
+      for (let i = 0; i < n; i += 1) {
+        siteDirs[i].copy(sites[i].dir);
+        siteColors[i].setHex(subclusterColor(sites[i].cluster, sites[i].subcluster));
+        siteCluster[i] = sites[i].cluster;
       }
 
-      function subdivide(from, to, depth) {
-        const ang = Math.acos(THREE.MathUtils.clamp(from.dot(to), -1, 1));
-        if (ang <= maxAngle || depth > 12) {
-          emit(from, to);
-          return;
-        }
-        const mid = slerpDir(from, to, 0.5, _tmpVecD).normalize();
-        subdivide(from, mid, depth + 1);
-        subdivide(mid, to, depth + 1);
-      }
-
-      subdivide(a, b, 0);
-    }
-
-    function bisectorBasis(ai, aj, u, v) {
-      const n = _bisN.copy(ai).sub(aj);
-      if (n.lengthSq() < 1e-10) return false;
-      u.crossVectors(n, ai);
-      if (u.lengthSq() < 1e-8) u.crossVectors(n, _basisFallback);
-      if (u.lengthSq() < 1e-8) u.crossVectors(n, _basisFallback2);
-      u.normalize();
-      v.crossVectors(n, u).normalize();
-      return true;
-    }
-
-    function dirOnBisector(u, v, t, target) {
-      return target.copy(u).multiplyScalar(Math.cos(t)).addScaledVector(v, Math.sin(t)).normalize();
-    }
-
-    /** True when x lies on the spherical Voronoi arc between sites[i] and sites[j]. */
-    function onVoronoiArc(x, sites, i, j) {
-      const di = x.dot(sites[i].dir);
-      const dj = x.dot(sites[j].dir);
-      if (Math.abs(di - dj) > 2e-3) return false;
-      const tie = di;
-      for (let k = 0; k < sites.length; k += 1) {
-        if (k === i || k === j) continue;
-        if (x.dot(sites[k].dir) > tie + 1e-4) return false;
-      }
-      return true;
-    }
-
-    function mergeWrappedIntervals(intervals) {
-      if (intervals.length < 2) return intervals;
-      intervals.sort((a, b) => a[0] - b[0]);
-      const twoPi = 2 * Math.PI;
-      const first = intervals[0];
-      const last = intervals[intervals.length - 1];
-      if (first[0] < 0.02 && last[1] > twoPi - 0.02) {
-        intervals[0] = [last[0], first[1]];
-        intervals.pop();
-      }
-      return intervals;
-    }
-
-    function appendVoronoiBisectorArcs(sites, points, shellRadius, center, maxAngleDeg, seen) {
-      const u = _bisU;
-      const v = _bisV;
-      const x = _bisX;
-      const samples = 720;
-      const twoPi = 2 * Math.PI;
-      for (let i = 0; i < sites.length; i += 1) {
-        for (let j = i + 1; j < sites.length; j += 1) {
-          if (!bisectorBasis(sites[i].dir, sites[j].dir, u, v)) continue;
-
-          const intervals = [];
-          let runStart = null;
-          let prevT = 0;
-          for (let s = 0; s <= samples; s += 1) {
-            const t = (s / samples) * twoPi;
-            dirOnBisector(u, v, t, x);
-            const on = onVoronoiArc(x, sites, i, j);
-            if (on && runStart === null) runStart = t;
-            if (!on && runStart !== null) {
-              intervals.push([runStart, prevT]);
-              runStart = null;
-            }
-            prevT = t;
+      return new THREE.ShaderMaterial({
+        glslVersion: THREE.GLSL3,
+        uniforms: {
+          uCenter: { value: center.clone() },
+          uNumSites: { value: n },
+          uSiteDirs: { value: siteDirs },
+          uSiteColors: { value: siteColors },
+          uSiteCluster: { value: siteCluster },
+          uOpacity: { value: GLOBE_LAND_OPACITY },
+          uContinentBorder: { value: GLOBE_CONTINENT_BORDER_MARGIN },
+          uSubBorder: { value: GLOBE_SUB_BORDER_MARGIN },
+        },
+        vertexShader: `
+          out vec3 vWorldPos;
+          void main() {
+            vec4 wp = modelMatrix * vec4(position, 1.0);
+            vWorldPos = wp.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
-          if (runStart !== null) intervals.push([runStart, twoPi]);
+        `,
+        fragmentShader: `
+          uniform vec3 uCenter;
+          uniform int uNumSites;
+          uniform vec3 uSiteDirs[${GLOBE_VORONOI_MAX_SITES}];
+          uniform vec3 uSiteColors[${GLOBE_VORONOI_MAX_SITES}];
+          uniform float uSiteCluster[${GLOBE_VORONOI_MAX_SITES}];
+          uniform float uOpacity;
+          uniform float uContinentBorder;
+          uniform float uSubBorder;
+          in vec3 vWorldPos;
+          out vec4 fragColor;
 
-          mergeWrappedIntervals(intervals).forEach(([t0, t1]) => {
-            if (t1 - t0 < 0.02) return;
-            const a = dirOnBisector(u, v, t0, _tmpVecA);
-            const b = dirOnBisector(u, v, t1, _tmpVecB);
-            const key = borderSegmentKey(a, b);
-            if (seen.has(key)) return;
-            seen.add(key);
-            appendAdaptiveBorderArc(points, a, b, shellRadius, center, maxAngleDeg);
-          });
-        }
-      }
+          void main() {
+            vec3 dir = normalize(vWorldPos - uCenter);
+            float best = -1.0;
+            float second = -1.0;
+            int bestI = 0;
+            int secondI = 0;
+            for (int i = 0; i < ${GLOBE_VORONOI_MAX_SITES}; i++) {
+              if (i < uNumSites) {
+                float d = dot(dir, uSiteDirs[i]);
+                if (d > best) {
+                  second = best;
+                  secondI = bestI;
+                  best = d;
+                  bestI = i;
+                } else if (d > second) {
+                  second = d;
+                  secondI = i;
+                }
+              }
+            }
+            float margin = best - second;
+            vec3 color = uSiteColors[bestI];
+            float alpha = uOpacity;
+            if (margin < uContinentBorder && uSiteCluster[bestI] != uSiteCluster[secondI]) {
+              color = vec3(0.0);
+              alpha = 1.0;
+            } else if (margin < uSubBorder && bestI != secondI) {
+              color = mix(color, vec3(0.22, 0.28, 0.34), 0.55);
+            }
+            fragColor = vec4(color, alpha);
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
     }
 
     function disposeGlobeGroup() {
-      globeLineMaterials.length = 0;
       while (globeLabelsGroup.children.length) {
         const obj = globeLabelsGroup.children[0];
         if (obj.element?.parentNode) obj.element.parentNode.removeChild(obj.element);
@@ -1085,16 +1015,6 @@
     const _tmpVecB = new THREE.Vector3();
     const _tmpVecC = new THREE.Vector3();
     const _tmpVecD = new THREE.Vector3();
-    const _bisN = new THREE.Vector3();
-    const _bisU = new THREE.Vector3();
-    const _bisV = new THREE.Vector3();
-    const _bisX = new THREE.Vector3();
-    const _basisFallback = new THREE.Vector3(1, 0, 0);
-    const _basisFallback2 = new THREE.Vector3(0, 0, 1);
-    const _cornerDirs = [
-      new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(),
-    ];
-
     function buildContinentGlobe(graph) {
       disposeGlobeGroup();
       const frame = computeGlobeFrame();
@@ -1104,8 +1024,6 @@
       state.globeRadius = radius;
 
       const landRadius = radius * 1.01;
-      const continentBorderRadius = radius * 1.075;
-      const subBorderRadius = radius * 1.04;
 
       // Ocean globe (like Earth's seas) — posts sit on the crust above this.
       const ocean = new THREE.Mesh(
@@ -1143,163 +1061,13 @@
       });
       if (centroids.length < 2) return;
 
-      function nearestRegion(dir) {
-        let best = centroids[0].key;
-        let bestDot = -Infinity;
-        centroids.forEach(({ key, dir: cDir }) => {
-          const d = dir.dot(cDir);
-          if (d > bestDot) { bestDot = d; best = key; }
-        });
-        return best;
-      }
-
-      const latN = GLOBE_LAT;
-      const lonN = GLOBE_LON;
-      const labels = new Int32Array(latN * lonN);
-      const dirScratch = new THREE.Vector3();
-      for (let i = 0; i < latN; i += 1) {
-        const lat = -Math.PI / 2 + (i + 0.5) * (Math.PI / latN);
-        for (let j = 0; j < lonN; j += 1) {
-          const lon = -Math.PI + (j + 0.5) * (2 * Math.PI / lonN);
-          labels[i * lonN + j] = nearestRegion(sphericalDir(lat, lon, dirScratch));
-        }
-      }
-
-      const landVerts = new Map();
-      const continentBorderPoints = [];
-      const subBorderPoints = [];
-      const continentBorderSeen = new Set();
-      const subBorderSeen = new Set();
-
-      const clusterSites = [];
-      const clusterSum = new Map();
-      centroids.forEach(({ cluster, dir }) => {
-        const acc = clusterSum.get(cluster) || new THREE.Vector3();
-        acc.add(dir);
-        clusterSum.set(cluster, acc);
-      });
-      clusterSum.forEach((sum, cluster) => {
-        if (sum.lengthSq() < 1e-8) return;
-        clusterSites.push({ cluster, dir: sum.normalize() });
-      });
-
-      function cornerDir(i, j, corner) {
-        const ii = i + (corner >> 1);
-        const jj = (j + (corner & 1)) % lonN;
-        const lat = -Math.PI / 2 + ii * (Math.PI / latN);
-        const lon = -Math.PI + jj * (2 * Math.PI / lonN);
-        return sphericalDir(lat, lon, _cornerDirs[corner]);
-      }
-
-      function pushLandTri(region, d0, d1, d2) {
-        if (!landVerts.has(region)) landVerts.set(region, []);
-        const arr = landVerts.get(region);
-        const w0 = worldOnShell(d0, landRadius, center, _tmpVecA);
-        const w1 = worldOnShell(d1, landRadius, center, _tmpVecB);
-        const w2 = worldOnShell(d2, landRadius, center, _tmpVecC);
-        arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
-      }
-
-      for (let i = 0; i < latN - 1; i += 1) {
-        for (let j = 0; j < lonN; j += 1) {
-          const j1 = (j + 1) % lonN;
-          const c00 = labels[i * lonN + j];
-          const c10 = labels[(i + 1) * lonN + j];
-          const c01 = labels[i * lonN + j1];
-          const c11 = labels[(i + 1) * lonN + j1];
-
-          cornerDir(i, j, 0); const d00 = _cornerDirs[0].clone();
-          cornerDir(i, j, 1); const d01 = _cornerDirs[1].clone();
-          cornerDir(i, j, 2); const d10 = _cornerDirs[2].clone();
-          cornerDir(i, j, 3); const d11 = _cornerDirs[3].clone();
-
-          if (c00 === c10 && c00 === c01) pushLandTri(c00, d00, d10, d01);
-          if (c11 === c10 && c11 === c01) pushLandTri(c11, d11, d01, d10);
-        }
-      }
-
-      // Borders = true spherical Voronoi bisectors (great circles), not lat/lon grid edges.
-      if (clusterSites.length >= 2) {
-        appendVoronoiBisectorArcs(
-          clusterSites,
-          continentBorderPoints,
-          continentBorderRadius,
-          center,
-          GLOBE_CONTINENT_BORDER_ANGLE_DEG,
-          continentBorderSeen,
-        );
-      }
-      const regionsByCluster = new Map();
-      centroids.forEach((site) => {
-        const list = regionsByCluster.get(site.cluster) || [];
-        list.push(site);
-        regionsByCluster.set(site.cluster, list);
-      });
-      regionsByCluster.forEach((regionSites) => {
-        if (regionSites.length < 2) return;
-        appendVoronoiBisectorArcs(
-          regionSites,
-          subBorderPoints,
-          subBorderRadius,
-          center,
-          GLOBE_SUB_BORDER_ANGLE_DEG,
-          subBorderSeen,
-        );
-      });
-
-      landVerts.forEach((verts, region) => {
-        if (verts.length < 9) return;
-        const cluster = clusterFromRegion(region);
-        const sub = subFromRegion(region);
-        const geom = new THREE.BufferGeometry();
-        geom.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-        const mesh = new THREE.Mesh(
-          geom,
-          new THREE.MeshBasicMaterial({
-            color: subclusterColor(cluster, sub),
-            transparent: true,
-            opacity: GLOBE_LAND_OPACITY,
-            depthWrite: false,
-            side: THREE.DoubleSide,
-          }),
-        );
-        mesh.renderOrder = 1;
-        globeGroup.add(mesh);
-      });
-
-      function addBorderLines(points, { color, linewidth, opacity = 1 }) {
-        if (points.length < 6) return null;
-        const geom = new LineSegmentsGeometry();
-        geom.setPositions(points);
-        const mat = new LineMaterial({
-          color,
-          linewidth,
-          transparent: opacity < 1,
-          opacity,
-          depthTest: true,
-          depthWrite: false,
-          worldUnits: false,
-        });
-        mat.resolution.set(viewport.clientWidth, viewport.clientHeight);
-        globeLineMaterials.push(mat);
-        const lines = new LineSegments2(geom, mat);
-        lines.computeLineDistances();
-        globeGroup.add(lines);
-        return lines;
-      }
-
-      const subLines = addBorderLines(subBorderPoints, {
-        color: GLOBE_SUB_BORDER,
-        linewidth: GLOBE_SUB_LINE_PX,
-        opacity: 0.42,
-      });
-      if (subLines) subLines.renderOrder = 2;
-      const contLines = addBorderLines(continentBorderPoints, {
-        color: GLOBE_CONTINENT_BORDER,
-        linewidth: GLOBE_CONTINENT_LINE_PX,
-        opacity: 1,
-      });
-      if (contLines) contLines.renderOrder = 3;
+      const landShell = new THREE.Mesh(
+        new THREE.SphereGeometry(landRadius, 128, 96),
+        createGlobeVoronoiMaterial(centroids, center),
+      );
+      landShell.position.copy(center);
+      landShell.renderOrder = 1;
+      globeGroup.add(landShell);
 
       // Labels pinned on the globe (CSS2D): continents = large caps; regions = smaller.
       while (globeLabelsGroup.children.length) {
