@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crux Map</title>
+  <title>Alignment world</title>
   <style>
     :root {
       --bg: #f5f7fa;
@@ -317,8 +317,8 @@
   <div id="layout">
     <div id="viewport">
       <div id="header">
-        <h1>Crux Map</h1>
-        <p id="subtitle">Loading alignment research posts…</p>
+        <h1>Alignment world</h1>
+        <p id="subtitle">Loading alignment research…</p>
       </div>
       <div id="legend">
         <span class="legend-title">Continents & regions · shades = subclusters within each theme</span>
@@ -368,8 +368,6 @@
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-    import { CSS2DObject } from "three/addons/renderers/CSS2DObject.js";
-    import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 
     // Distinct, print-friendly palette for k-means topic clusters (extended to
     // 12 so a larger corpus's auto-selected k still gets unique colors).
@@ -447,8 +445,8 @@
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
-    const GLOBE_LAT = 56;
-    const GLOBE_LON = 112;
+    const GLOBE_LAT = 40;
+    const GLOBE_LON = 80;
     const GLOBE_OCEAN = 0xb8d4e8;
     const GLOBE_BORDER = 0x3a4a5c;
     const GLOBE_SUB_BORDER = 0x8aa0b4;
@@ -496,11 +494,8 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     viewport.insertBefore(renderer.domElement, overlay);
 
-    const labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize(viewport.clientWidth, viewport.clientHeight);
-    labelRenderer.domElement.className = "globe-label-layer";
-    labelRenderer.domElement.style.pointerEvents = "none";
-    viewport.appendChild(labelRenderer.domElement);
+    let labelRenderer = null;
+    let CSS2DObjectClass = null;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -606,7 +601,17 @@
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(clientWidth, clientHeight);
-      labelRenderer.setSize(clientWidth, clientHeight);
+      if (labelRenderer) labelRenderer.setSize(clientWidth, clientHeight);
+    }
+
+    function minMax(values) {
+      let min = Infinity;
+      let max = -Infinity;
+      for (const v of values) {
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+      return { min, max };
     }
     window.addEventListener("resize", resize);
     resize();
@@ -888,10 +893,11 @@
     const _labelToCam = new THREE.Vector3();
 
     function addGlobeLabel(text, className, worldPos) {
+      if (!CSS2DObjectClass) return null;
       const el = document.createElement("div");
       el.className = `globe-label ${className}`;
       el.textContent = text;
-      const obj = new CSS2DObject(el);
+      const obj = new CSS2DObjectClass(el);
       obj.position.copy(worldPos);
       globeLabelsGroup.add(obj);
       return obj;
@@ -1161,7 +1167,6 @@
         const sub = subFromRegion(region);
         const geom = new THREE.BufferGeometry();
         geom.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-        geom.computeVertexNormals();
         const mesh = new THREE.Mesh(
           geom,
           new THREE.MeshBasicMaterial({
@@ -1333,7 +1338,6 @@
     function buildScene(graph) {
       nodesGroup.clear();
       spatialGroup.clear();
-      disposeGlobeGroup();
       if (state.instanced) {
         state.instanced.geometry.dispose();
         state.instanced.material.dispose();
@@ -1350,8 +1354,7 @@
       // count, fall back to comment_count (always present, no network).
       const sizeOf = (n) => Math.max(1, (n.referenced_by ?? n.comment_count ?? 0) + 1);
       const sizes = graph.nodes.map(sizeOf);
-      const minV = Math.min(...sizes);
-      const maxV = Math.max(...sizes);
+      const { min: minV, max: maxV } = minMax(sizes);
 
       const count = graph.nodes.length;
       // One unit sphere, low-poly (cheap), reused for every post via instancing.
@@ -1390,8 +1393,6 @@
       nodesGroup.add(instanced);
       state.instanced = instanced;
       instanced.renderOrder = 3;
-
-      buildContinentGlobe(graph);
 
       const bounds = computeNodeBounds();
       if (bounds) buildSpatialAnchors(bounds);
@@ -1460,24 +1461,57 @@
       updateAxisLabels();
       updateGlobeLabelVisibility();
       renderer.render(scene, camera);
-      labelRenderer.render(scene, camera);
+      if (labelRenderer) labelRenderer.render(scene, camera);
+    }
+
+    async function setupLabelRenderer() {
+      try {
+        const [{ CSS2DRenderer }, { CSS2DObject }] = await Promise.all([
+          import("three/addons/renderers/CSS2DRenderer.js"),
+          import("three/addons/renderers/CSS2DObject.js"),
+        ]);
+        CSS2DObjectClass = CSS2DObject;
+        labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(viewport.clientWidth, viewport.clientHeight);
+        labelRenderer.domElement.className = "globe-label-layer";
+        labelRenderer.domElement.style.pointerEvents = "none";
+        viewport.appendChild(labelRenderer.domElement);
+      } catch (err) {
+        console.warn("Globe labels unavailable:", err);
+      }
+    }
+
+    function scheduleGlobeBuild(graph) {
+      requestAnimationFrame(() => {
+        try {
+          buildContinentGlobe(graph);
+        } catch (err) {
+          console.error("Globe build failed:", err);
+        }
+      });
     }
 
     async function init() {
       try {
-        const response = await fetch("./cruxes.json");
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const graph = await response.json();
+        const graph = await Promise.all([
+          setupLabelRenderer(),
+          fetch("./cruxes.json").then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          }),
+        ]).then(([, data]) => data);
         state.graph = graph;
         buildScene(graph);
 
         const { meta } = graph;
         subtitle.textContent =
-          `${meta.post_count} posts · ${meta.cluster_count} topic clusters (k=${meta.k_selected}) · `
-          + `${meta.double_crux_count} double cruxes · PCA 3D layout`;
+          `${meta.post_count} posts · ${meta.cluster_count} continents (k=${meta.k_selected}) · `
+          + `${meta.double_crux_count} double cruxes · PCA layout`;
         errorBox.remove();
         animate();
+        scheduleGlobeBuild(graph);
       } catch (error) {
+        console.error(error);
         errorDetail.textContent = error.message;
         errorBox.classList.add("visible");
         subtitle.textContent = "Failed to load graph data.";
