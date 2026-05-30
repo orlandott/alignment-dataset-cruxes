@@ -42,9 +42,9 @@
     .globe-label-layer {
       position: absolute;
       inset: 0;
-      overflow: hidden;
+      overflow: visible;
       pointer-events: none;
-      z-index: 1;
+      z-index: 3;
     }
 
     .label {
@@ -94,7 +94,7 @@
 
     .globe-label-continent {
       font-family: Georgia, "Palatino Linotype", "Times New Roman", serif;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.16em;
@@ -107,7 +107,7 @@
 
     .globe-label-region {
       font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.04em;
       color: #4a5f73;
@@ -136,6 +136,8 @@
       max-width: 380px;
     }
 
+    #cluster-legend { pointer-events: auto; }
+
     .legend-title {
       display: block;
       font-size: 10px;
@@ -145,14 +147,36 @@
       margin-bottom: 6px;
     }
 
-    #cluster-legend { display: flex; flex-direction: column; gap: 8px; }
+    #cluster-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: auto;
+    }
     .legend-continent { display: flex; flex-direction: column; gap: 4px; }
     .legend-item { display: flex; align-items: center; gap: 7px; line-height: 1.3; }
+    .legend-item.jumpable {
+      cursor: pointer;
+      border-radius: 6px;
+      margin: 0 -6px;
+      padding: 3px 6px;
+      transition: background 0.15s ease;
+    }
+    .legend-item.jumpable:hover { background: rgba(109, 40, 217, 0.08); }
+    .legend-item.jumpable:focus-visible {
+      outline: 2px solid rgba(109, 40, 217, 0.45);
+      outline-offset: 1px;
+    }
+    .legend-item.jumpable.active {
+      background: rgba(109, 40, 217, 0.12);
+      font-weight: 600;
+    }
     .legend-item.sub {
       padding-left: 18px;
       font-size: 11px;
       color: var(--muted);
     }
+    .legend-item.sub.jumpable.active { color: var(--text); }
     .legend-item.sub .swatch { width: 9px; height: 9px; }
     .swatch { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
 
@@ -321,10 +345,8 @@
         <p id="subtitle">Loading alignment research…</p>
       </div>
       <div id="legend">
-        <span class="legend-title">Continents & regions · shades = subclusters within each theme</span>
+        <span class="legend-title">Continents & regions · click to fly · shades = subclusters</span>
         <div id="cluster-legend"></div>
-        <span class="legend-title" style="margin-top:8px" id="axis-legend-title">Layout axes</span>
-        <div id="axis-legend"></div>
         <span class="legend-title" style="margin-top:8px">Point size · how much the post is discussed (comments / references)</span>
       </div>
       <div id="zoom-control">
@@ -368,6 +390,8 @@
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { CSS2DObject } from "three/addons/renderers/CSS2DObject.js";
+    import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 
     // Distinct, print-friendly palette for k-means topic clusters (extended to
     // 12 so a larger corpus's auto-selected k still gets unique colors).
@@ -467,13 +491,14 @@
       positions: [],          // instanceId -> THREE.Vector3 (world)
       baseColors: [],         // instanceId -> THREE.Color (cluster color)
       labelEl: null,
-      axisLabelEls: [],
-      axisLabelPositions: [],
       detailCache: new Map(), // shard prefix -> { id: detail }
       detailRequestId: 0,
       globeCenter: null,
       globeRadius: 0,
+      legendFocus: null, // { cluster, subcluster? }
     };
+
+    let flyAnim = null;
 
     const viewport = document.getElementById("viewport");
     const overlay = document.getElementById("overlay");
@@ -494,8 +519,11 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     viewport.insertBefore(renderer.domElement, overlay);
 
-    let labelRenderer = null;
-    let CSS2DObjectClass = null;
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(viewport.clientWidth, viewport.clientHeight);
+    labelRenderer.domElement.className = "globe-label-layer";
+    labelRenderer.domElement.style.pointerEvents = "none";
+    viewport.appendChild(labelRenderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -584,8 +612,7 @@
     const globeGroup = new THREE.Group();
     const globeLabelsGroup = new THREE.Group();
     globeGroup.add(globeLabelsGroup);
-    const spatialGroup = new THREE.Group();
-    scene.add(spatialGroup, globeGroup, nodesGroup);
+    scene.add(globeGroup, nodesGroup);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -601,7 +628,7 @@
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(clientWidth, clientHeight);
-      if (labelRenderer) labelRenderer.setSize(clientWidth, clientHeight);
+      labelRenderer.setSize(clientWidth, clientHeight);
     }
 
     function minMax(values) {
@@ -651,23 +678,6 @@
     function clusterExemplars(cluster) {
       const c = clusterEntry(cluster);
       return c && Array.isArray(c.exemplars) ? c.exemplars : [];
-    }
-
-    function axisLabelEntry(axisKey) {
-      return (state.graph?.meta?.axis_labels || []).find((entry) => entry.axis === axisKey);
-    }
-
-    function shortAxisTerm(label) {
-      return String(label || "").split(" · ")[0] || "—";
-    }
-
-    function axisSceneLabel(axisKey) {
-      const entry = axisLabelEntry(axisKey);
-      if (!entry) {
-        const n = axisKey === "x" ? 1 : axisKey === "y" ? 2 : 3;
-        return `PC${n}`;
-      }
-      return `PC${entry.component} ${shortAxisTerm(entry.positive)}`;
     }
 
     function setPanelHtml(html) {
@@ -878,26 +888,15 @@
       state.labelEl.style.top = `${screen.y}px`;
     }
 
-    function updateAxisLabels() {
-      state.axisLabelEls.forEach((el, i) => {
-        const screen = projectToOverlay(state.axisLabelPositions[i]);
-        if (!screen) { el.style.display = "none"; return; }
-        el.style.display = "block";
-        el.style.left = `${screen.x}px`;
-        el.style.top = `${screen.y}px`;
-      });
-    }
-
     const _labelWorldPos = new THREE.Vector3();
     const _labelNormal = new THREE.Vector3();
     const _labelToCam = new THREE.Vector3();
 
     function addGlobeLabel(text, className, worldPos) {
-      if (!CSS2DObjectClass) return null;
       const el = document.createElement("div");
       el.className = `globe-label ${className}`;
       el.textContent = text;
-      const obj = new CSS2DObjectClass(el);
+      const obj = new CSS2DObject(el);
       obj.position.copy(worldPos);
       globeLabelsGroup.add(obj);
       return obj;
@@ -913,12 +912,12 @@
         _labelNormal.copy(_labelWorldPos).sub(center).normalize();
         _labelToCam.copy(camera.position).sub(_labelWorldPos).normalize();
         const facing = _labelNormal.dot(_labelToCam);
-        if (facing < 0.08) {
+        if (facing < 0) {
           el.style.visibility = "hidden";
           return;
         }
         el.style.visibility = "visible";
-        el.style.opacity = String(Math.min(1, Math.max(0.35, (facing - 0.08) / 0.35)));
+        el.style.opacity = String(Math.min(1, Math.max(0.45, facing)));
       });
     }
 
@@ -930,19 +929,6 @@
         min: box.min.clone().subScalar(BOUNDS_PADDING),
         max: box.max.clone().addScalar(BOUNDS_PADDING),
       };
-    }
-
-    function addAxisLabel(axis, worldPos) {
-      const label = document.createElement("div");
-      label.className = `axis-label ${axis}`;
-      label.textContent = axisSceneLabel(axis);
-      const entry = axisLabelEntry(axis);
-      if (entry) {
-        label.title = `+ ${entry.positive}  ·  − ${entry.negative}`;
-      }
-      overlay.appendChild(label);
-      state.axisLabelEls.push(label);
-      state.axisLabelPositions.push(worldPos.clone());
     }
 
     function addPlaneGrid(points, plane, fixed, u0, u1, v0, v1, divisions) {
@@ -1005,16 +991,25 @@
     }
 
     function disposeGlobeGroup() {
-      globeGroup.traverse((obj) => {
+      while (globeLabelsGroup.children.length) {
+        const obj = globeLabelsGroup.children[0];
         if (obj.element?.parentNode) obj.element.parentNode.removeChild(obj.element);
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
-          else obj.material.dispose();
-        }
-      });
-      globeGroup.clear();
-      globeGroup.add(globeLabelsGroup);
+        globeLabelsGroup.remove(obj);
+      }
+      const keep = globeLabelsGroup;
+      for (let i = globeGroup.children.length - 1; i >= 0; i -= 1) {
+        const child = globeGroup.children[i];
+        if (child === keep) continue;
+        globeGroup.remove(child);
+        child.traverse((obj) => {
+          if (obj.element?.parentNode) obj.element.parentNode.removeChild(obj.element);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+            else obj.material.dispose();
+          }
+        });
+      }
     }
 
     const _tmpVecA = new THREE.Vector3();
@@ -1231,103 +1226,143 @@
       });
     }
 
-    function buildSpatialAnchors(bounds) {
-      spatialGroup.clear();
-      state.axisLabelEls.forEach((el) => el.remove());
-      state.axisLabelEls = [];
-      state.axisLabelPositions = [];
+    function globeCenterVector() {
+      if (state.globeCenter) return state.globeCenter;
+      const frame = computeGlobeFrame();
+      return frame?.center ?? null;
+    }
 
-      const { min, max } = bounds;
-      const size = new THREE.Vector3().subVectors(max, min);
-      const axisLen = Math.max(size.x, size.y, size.z) * 0.14;
-      const o = min.clone();
+    function computeRegionDirection(cluster, subcluster) {
+      const center = globeCenterVector();
+      if (!center) return null;
+      const sum = new THREE.Vector3();
+      let n = 0;
+      state.nodeOrder.forEach((node) => {
+        if ((node.cluster ?? 0) !== cluster) return;
+        if (subcluster !== undefined && (node.subcluster ?? 0) !== subcluster) return;
+        const idx = state.indexById.get(node.id);
+        if (idx === undefined) return;
+        sum.add(_tmpVecA.copy(state.positions[idx]).sub(center).normalize());
+        n += 1;
+      });
+      if (n === 0) return null;
+      return sum.multiplyScalar(1 / n).normalize();
+    }
 
-      const axisPoints = new Float32Array([
-        o.x, o.y, o.z, o.x + axisLen, o.y, o.z,
-        o.x, o.y, o.z, o.x, o.y + axisLen, o.z,
-        o.x, o.y, o.z, o.x, o.y, o.z + axisLen,
-      ]);
-      const axisGeometry = new THREE.BufferGeometry();
-      axisGeometry.setAttribute("position", new THREE.BufferAttribute(axisPoints, 3));
-      axisGeometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array([
-        ...hexToRgb(AXIS_COLORS.x), ...hexToRgb(AXIS_COLORS.x),
-        ...hexToRgb(AXIS_COLORS.y), ...hexToRgb(AXIS_COLORS.y),
-        ...hexToRgb(AXIS_COLORS.z), ...hexToRgb(AXIS_COLORS.z),
-      ]), 3));
-      spatialGroup.add(new THREE.LineSegments(
-        axisGeometry,
-        new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.82 }),
-      ));
+    function setLegendFocus(cluster, subcluster) {
+      state.legendFocus = { cluster, subcluster };
+      const container = document.getElementById("cluster-legend");
+      if (!container) return;
+      container.querySelectorAll(".legend-item.jumpable").forEach((el) => {
+        const c = Number(el.dataset.cluster);
+        const subRaw = el.dataset.subcluster;
+        const sub = subRaw === "" ? undefined : Number(subRaw);
+        const active = c === cluster && sub === subcluster;
+        el.classList.toggle("active", active);
+        el.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+    }
 
-      addAxisLabel("x", new THREE.Vector3(o.x + axisLen, o.y, o.z));
-      addAxisLabel("y", new THREE.Vector3(o.x, o.y + axisLen, o.z));
-      addAxisLabel("z", new THREE.Vector3(o.x, o.y, o.z + axisLen));
+    function flyToRegion(cluster, subcluster) {
+      const center = globeCenterVector();
+      const dir = computeRegionDirection(cluster, subcluster);
+      if (!center || !dir) return;
 
-      // Bounding box / floor grid omitted — the globe layer reads as a planet.
+      if (flyAnim) cancelAnimationFrame(flyAnim);
+      setLegendFocus(cluster, subcluster);
+
+      const startTarget = controls.target.clone();
+      const startPos = camera.position.clone();
+      const endTarget = center.clone();
+      const fullDist = cameraDistance();
+      const zoomFactor = subcluster === undefined ? 0.72 : 0.55;
+      const endDist = Math.max(
+        controls.minDistance,
+        Math.min(controls.maxDistance, fullDist * zoomFactor),
+      );
+      const endPos = endTarget.clone().addScaledVector(dir, endDist);
+
+      const duration = 700;
+      const t0 = performance.now();
+
+      function step(now) {
+        const t = Math.min(1, (now - t0) / duration);
+        const ease = t * t * (3 - 2 * t);
+        controls.target.lerpVectors(startTarget, endTarget, ease);
+        camera.position.lerpVectors(startPos, endPos, ease);
+        controls.update();
+        syncZoomSliderFromCamera();
+        if (t < 1) flyAnim = requestAnimationFrame(step);
+        else flyAnim = null;
+      }
+      flyAnim = requestAnimationFrame(step);
+    }
+
+    function activateLegendTarget(item) {
+      const cluster = Number(item.dataset.cluster);
+      if (Number.isNaN(cluster)) return;
+      const subRaw = item.dataset.subcluster;
+      const subcluster = subRaw === "" ? undefined : Number(subRaw);
+      flyToRegion(cluster, subcluster);
+    }
+
+    function setupLegendNavigation() {
+      const container = document.getElementById("cluster-legend");
+      if (!container || container.dataset.bound) return;
+      container.dataset.bound = "1";
+      container.addEventListener("click", (event) => {
+        const item = event.target.closest(".legend-item.jumpable");
+        if (!item) return;
+        event.preventDefault();
+        activateLegendTarget(item);
+      });
+      container.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const item = event.target.closest(".legend-item.jumpable");
+        if (!item) return;
+        event.preventDefault();
+        activateLegendTarget(item);
+      });
     }
 
     function buildClusterLegend(graph) {
       const container = document.getElementById("cluster-legend");
       if (!container) return;
       const clusters = (graph.clusters || []).slice().sort((a, b) => a.id - b.id);
+      const focus = state.legendFocus;
       container.innerHTML = clusters.map((c) => {
         const exemplars = Array.isArray(c.exemplars) ? c.exemplars : [];
         const terms = Array.isArray(c.terms) ? c.terms.join(" · ") : "";
-        const tipParts = [];
+        const tipParts = ["Click to fly here"];
         if (terms) tipParts.push(terms);
         if (exemplars.length) tipParts.push(`e.g. ${exemplars.join(" · ")}`);
         const label = c.label || (c.terms || []).slice(0, 3).join(" · ") || `cluster ${c.id}`;
         const subs = Array.isArray(c.subclusters) ? c.subclusters : [];
-        const subHtml = subs.map((s) => `
-          <div class="legend-item sub" title="${escapeAttr((s.terms || []).join(" · "))}">
+        const continentActive = focus && focus.cluster === c.id && focus.subcluster === undefined;
+        const subHtml = subs.map((s) => {
+          const subActive = focus && focus.cluster === c.id && focus.subcluster === s.id;
+          return `
+          <div class="legend-item sub jumpable${subActive ? " active" : ""}"
+            role="button" tabindex="0"
+            data-cluster="${c.id}" data-subcluster="${s.id}"
+            aria-pressed="${subActive ? "true" : "false"}"
+            title="${escapeAttr(["Click to fly here", (s.terms || []).join(" · ")].filter(Boolean).join(" · "))}">
             <span class="swatch" style="background:${hexCss(subclusterColor(c.id, s.id))}"></span>
             <span>${escapeHtml(s.label || `Region ${s.id + 1}`)} <span style="color:var(--muted)">(${s.size})</span></span>
-          </div>`).join("");
+          </div>`;
+        }).join("");
         return `
-        <div class="legend-continent" title="${escapeAttr(tipParts.join("  —  "))}">
-          <div class="legend-item">
+        <div class="legend-continent">
+          <div class="legend-item jumpable${continentActive ? " active" : ""}"
+            role="button" tabindex="0"
+            data-cluster="${c.id}" data-subcluster=""
+            aria-pressed="${continentActive ? "true" : "false"}"
+            title="${escapeAttr(tipParts.join("  —  "))}">
             <span class="swatch" style="background:${hexCss(clusterColor(c.id))}"></span>
             <span>${escapeHtml(label)} <span style="color:var(--muted)">(${c.size})</span></span>
           </div>
           ${subHtml}
         </div>`;
-      }).join("");
-    }
-
-    function buildAxisLegend(graph) {
-      const container = document.getElementById("axis-legend");
-      if (!container) return;
-      const meta = graph.meta || {};
-      const titleEl = document.getElementById("axis-legend-title");
-      if (titleEl) {
-        const semantic = meta.reduction === "pca" && meta.embedding_model;
-        const basis = semantic ? "PCA on semantic embeddings" : "TruncatedSVD on TF-IDF";
-        const total = typeof meta.variance_explained === "number"
-          ? ` · ${(meta.variance_explained * 100).toFixed(0)}% variance`
-          : "";
-        titleEl.textContent = `Layout axes · ${basis}${total}`;
-      }
-      const axes = (meta.axis_labels || []).slice().sort((a, b) => a.component - b.component);
-      if (!axes.length) {
-        container.innerHTML = `
-          <div class="axis-legend-item">
-            <span></span>
-            <span style="color:var(--muted)">Rebuild cruxes.json to populate axis labels.</span>
-          </div>`;
-        return;
-      }
-      container.innerHTML = axes.map((entry) => {
-        const pct = (entry.variance_explained * 100).toFixed(1);
-        const axisName = entry.axis.toUpperCase();
-        return `
-          <div class="axis-legend-item">
-            <span class="axis-swatch ${entry.axis}"></span>
-            <span>
-              <span class="axis-name">${axisName} · PC${entry.component}</span>
-              <span class="axis-poles">+ ${escapeHtml(entry.positive)} ↔ − ${escapeHtml(entry.negative)}</span>
-              <span class="axis-var">${pct}% variance</span>
-            </span>
-          </div>`;
       }).join("");
     }
 
@@ -1337,7 +1372,6 @@
 
     function buildScene(graph) {
       nodesGroup.clear();
-      spatialGroup.clear();
       if (state.instanced) {
         state.instanced.geometry.dispose();
         state.instanced.material.dispose();
@@ -1394,11 +1428,8 @@
       state.instanced = instanced;
       instanced.renderOrder = 3;
 
-      const bounds = computeNodeBounds();
-      if (bounds) buildSpatialAnchors(bounds);
       frameCloud();
       buildClusterLegend(graph);
-      buildAxisLegend(graph);
     }
 
     function frameCloud() {
@@ -1458,27 +1489,9 @@
       controls.update();
       syncZoomSliderFromCamera();
       updateLabel();
-      updateAxisLabels();
       updateGlobeLabelVisibility();
       renderer.render(scene, camera);
-      if (labelRenderer) labelRenderer.render(scene, camera);
-    }
-
-    async function setupLabelRenderer() {
-      try {
-        const [{ CSS2DRenderer }, { CSS2DObject }] = await Promise.all([
-          import("three/addons/renderers/CSS2DRenderer.js"),
-          import("three/addons/renderers/CSS2DObject.js"),
-        ]);
-        CSS2DObjectClass = CSS2DObject;
-        labelRenderer = new CSS2DRenderer();
-        labelRenderer.setSize(viewport.clientWidth, viewport.clientHeight);
-        labelRenderer.domElement.className = "globe-label-layer";
-        labelRenderer.domElement.style.pointerEvents = "none";
-        viewport.appendChild(labelRenderer.domElement);
-      } catch (err) {
-        console.warn("Globe labels unavailable:", err);
-      }
+      labelRenderer.render(scene, camera);
     }
 
     function scheduleGlobeBuild(graph) {
@@ -1493,20 +1506,16 @@
 
     async function init() {
       try {
-        const graph = await Promise.all([
-          setupLabelRenderer(),
-          fetch("./cruxes.json").then((response) => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-          }),
-        ]).then(([, data]) => data);
+        const response = await fetch("./cruxes.json");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const graph = await response.json();
         state.graph = graph;
         buildScene(graph);
 
         const { meta } = graph;
         subtitle.textContent =
           `${meta.post_count} posts · ${meta.cluster_count} continents (k=${meta.k_selected}) · `
-          + `${meta.double_crux_count} double cruxes · PCA layout`;
+          + `${meta.double_crux_count} double cruxes`;
         errorBox.remove();
         animate();
         scheduleGlobeBuild(graph);
@@ -1518,6 +1527,7 @@
       }
     }
 
+    setupLegendNavigation();
     init();
   </script>
 </body>
