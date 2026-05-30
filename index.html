@@ -944,10 +944,6 @@
       }
     }
 
-    function midDir(dirA, dirB, target) {
-      return slerpDir(dirA, dirB, 0.5, target).normalize();
-    }
-
     function borderSegmentKey(dirA, dirB) {
       const q = (v) => `${Math.round(v.x * 1e4)}:${Math.round(v.y * 1e4)}:${Math.round(v.z * 1e4)}`;
       const ka = q(dirA);
@@ -982,69 +978,84 @@
       subdivide(a, b, 0);
     }
 
-    function borderValue(layer, regionKey) {
-      return layer === "continent" ? clusterFromRegion(regionKey) : regionKey;
+    function bisectorBasis(ai, aj, u, v) {
+      const n = _bisN.copy(ai).sub(aj);
+      if (n.lengthSq() < 1e-10) return false;
+      u.crossVectors(n, ai);
+      if (u.lengthSq() < 1e-8) u.crossVectors(n, _basisFallback);
+      if (u.lengthSq() < 1e-8) u.crossVectors(n, _basisFallback2);
+      u.normalize();
+      v.crossVectors(n, u).normalize();
+      return true;
     }
 
-    /**
-     * Marching-squares segments for one lat/lon cell (cuts diagonals when corners
-     * differ on opposite edges — avoids stair-step grid-only borders).
-     */
-    function collectCellBorderSegments(layer, c00, c01, c10, c11, d00, d01, d10, d11, centerDir) {
-      const v00 = borderValue(layer, c00);
-      const v01 = borderValue(layer, c01);
-      const v10 = borderValue(layer, c10);
-      const v11 = borderValue(layer, c11);
-      const eb = v00 !== v01;
-      const et = v10 !== v11;
-      const er = v01 !== v11;
-      const el = v00 !== v10;
-      const n = (eb ? 1 : 0) + (et ? 1 : 0) + (er ? 1 : 0) + (el ? 1 : 0);
-      if (!n) return [];
+    function dirOnBisector(u, v, t, target) {
+      return target.copy(u).multiplyScalar(Math.cos(t)).addScaledVector(v, Math.sin(t)).normalize();
+    }
 
-      const segs = [];
-      const mb = _midA;
-      const mt = _midB;
-      const ml = _midC;
-      const mr = _midD;
-      if (eb) midDir(d00, d01, mb);
-      if (et) midDir(d10, d11, mt);
-      if (el) midDir(d00, d10, ml);
-      if (er) midDir(d01, d11, mr);
+    /** True when x lies on the spherical Voronoi arc between sites[i] and sites[j]. */
+    function onVoronoiArc(x, sites, i, j) {
+      const di = x.dot(sites[i].dir);
+      const dj = x.dot(sites[j].dir);
+      if (Math.abs(di - dj) > 2e-3) return false;
+      const tie = di;
+      for (let k = 0; k < sites.length; k += 1) {
+        if (k === i || k === j) continue;
+        if (x.dot(sites[k].dir) > tie + 1e-4) return false;
+      }
+      return true;
+    }
 
-      if (n === 1) {
-        if (eb) segs.push([d00, d01]);
-        if (et) segs.push([d10, d11]);
-        if (el) segs.push([d00, d10]);
-        if (er) segs.push([d01, d11]);
-        return segs;
+    function mergeWrappedIntervals(intervals) {
+      if (intervals.length < 2) return intervals;
+      intervals.sort((a, b) => a[0] - b[0]);
+      const twoPi = 2 * Math.PI;
+      const first = intervals[0];
+      const last = intervals[intervals.length - 1];
+      if (first[0] < 0.02 && last[1] > twoPi - 0.02) {
+        intervals[0] = [last[0], first[1]];
+        intervals.pop();
       }
-      if (n === 2) {
-        if (eb && et) {
-          segs.push([mb, mt]);
-          return segs;
+      return intervals;
+    }
+
+    function appendVoronoiBisectorArcs(sites, points, shellRadius, center, maxAngleDeg, seen) {
+      const u = _bisU;
+      const v = _bisV;
+      const x = _bisX;
+      const samples = 720;
+      const twoPi = 2 * Math.PI;
+      for (let i = 0; i < sites.length; i += 1) {
+        for (let j = i + 1; j < sites.length; j += 1) {
+          if (!bisectorBasis(sites[i].dir, sites[j].dir, u, v)) continue;
+
+          const intervals = [];
+          let runStart = null;
+          let prevT = 0;
+          for (let s = 0; s <= samples; s += 1) {
+            const t = (s / samples) * twoPi;
+            dirOnBisector(u, v, t, x);
+            const on = onVoronoiArc(x, sites, i, j);
+            if (on && runStart === null) runStart = t;
+            if (!on && runStart !== null) {
+              intervals.push([runStart, prevT]);
+              runStart = null;
+            }
+            prevT = t;
+          }
+          if (runStart !== null) intervals.push([runStart, twoPi]);
+
+          mergeWrappedIntervals(intervals).forEach(([t0, t1]) => {
+            if (t1 - t0 < 0.02) return;
+            const a = dirOnBisector(u, v, t0, _tmpVecA);
+            const b = dirOnBisector(u, v, t1, _tmpVecB);
+            const key = borderSegmentKey(a, b);
+            if (seen.has(key)) return;
+            seen.add(key);
+            appendAdaptiveBorderArc(points, a, b, shellRadius, center, maxAngleDeg);
+          });
         }
-        if (el && er) {
-          segs.push([ml, mr]);
-          return segs;
-        }
-        if (eb) segs.push([d00, d01]);
-        if (et) segs.push([d10, d11]);
-        if (el) segs.push([d00, d10]);
-        if (er) segs.push([d01, d11]);
-        return segs;
       }
-      if (n === 3) {
-        if (eb) segs.push([d00, d01]);
-        if (et) segs.push([d10, d11]);
-        if (el) segs.push([d00, d10]);
-        if (er) segs.push([d01, d11]);
-        return segs;
-      }
-      const centerVal = borderValue(layer, centerDir);
-      const pairA = centerVal === v00 || centerVal === v11;
-      segs.push(pairA ? [ml, mr] : [mb, mt]);
-      return segs;
     }
 
     function disposeGlobeGroup() {
@@ -1074,10 +1085,12 @@
     const _tmpVecB = new THREE.Vector3();
     const _tmpVecC = new THREE.Vector3();
     const _tmpVecD = new THREE.Vector3();
-    const _midA = new THREE.Vector3();
-    const _midB = new THREE.Vector3();
-    const _midC = new THREE.Vector3();
-    const _midD = new THREE.Vector3();
+    const _bisN = new THREE.Vector3();
+    const _bisU = new THREE.Vector3();
+    const _bisV = new THREE.Vector3();
+    const _bisX = new THREE.Vector3();
+    const _basisFallback = new THREE.Vector3(1, 0, 0);
+    const _basisFallback2 = new THREE.Vector3(0, 0, 1);
     const _cornerDirs = [
       new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(),
     ];
@@ -1158,6 +1171,18 @@
       const continentBorderSeen = new Set();
       const subBorderSeen = new Set();
 
+      const clusterSites = [];
+      const clusterSum = new Map();
+      centroids.forEach(({ cluster, dir }) => {
+        const acc = clusterSum.get(cluster) || new THREE.Vector3();
+        acc.add(dir);
+        clusterSum.set(cluster, acc);
+      });
+      clusterSum.forEach((sum, cluster) => {
+        if (sum.lengthSq() < 1e-8) return;
+        clusterSites.push({ cluster, dir: sum.normalize() });
+      });
+
       function cornerDir(i, j, corner) {
         const ii = i + (corner >> 1);
         const jj = (j + (corner & 1)) % lonN;
@@ -1175,39 +1200,6 @@
         arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
       }
 
-      function dirsEqual(a, b) {
-        return a.dot(b) > 0.99995;
-      }
-
-      function keepSubBorderSegment(seg, c00, c01, c10, c11, d00, d01, d10, d11) {
-        const [a, b] = seg;
-        const sameCluster = (x, y) => clusterFromRegion(x) === clusterFromRegion(y);
-        if (dirsEqual(a, d00) && dirsEqual(b, d01)) return sameCluster(c00, c01) && c00 !== c01;
-        if (dirsEqual(a, d10) && dirsEqual(b, d11)) return sameCluster(c10, c11) && c10 !== c11;
-        if (dirsEqual(a, d00) && dirsEqual(b, d10)) return sameCluster(c00, c10) && c00 !== c10;
-        if (dirsEqual(a, d01) && dirsEqual(b, d11)) return sameCluster(c01, c11) && c01 !== c11;
-        const cl = clusterFromRegion(c00);
-        if (clusterFromRegion(c01) !== cl || clusterFromRegion(c10) !== cl || clusterFromRegion(c11) !== cl) {
-          return false;
-        }
-        return new Set([c00, c01, c10, c11]).size > 1;
-      }
-
-      function pushBorderArc(d0, d1, points, shellRadius, maxAngleDeg, seen) {
-        const key = borderSegmentKey(d0, d1);
-        if (seen.has(key)) return;
-        seen.add(key);
-        appendAdaptiveBorderArc(points, d0, d1, shellRadius, center, maxAngleDeg);
-      }
-
-      function emitCellBorders(layer, segments, shellRadius, maxAngleDeg, points, seen, corners) {
-        segments.forEach((seg) => {
-          if (layer === "region" && !keepSubBorderSegment(seg, ...corners)) return;
-          const [a, b] = seg;
-          pushBorderArc(a, b, points, shellRadius, maxAngleDeg, seen);
-        });
-      }
-
       for (let i = 0; i < latN - 1; i += 1) {
         for (let j = 0; j < lonN; j += 1) {
           const j1 = (j + 1) % lonN;
@@ -1223,19 +1215,37 @@
 
           if (c00 === c10 && c00 === c01) pushLandTri(c00, d00, d10, d01);
           if (c11 === c10 && c11 === c01) pushLandTri(c11, d11, d01, d10);
-
-          const latC = -Math.PI / 2 + (i + 0.5) * (Math.PI / latN);
-          const lonC = -Math.PI + (j + 0.5) * (2 * Math.PI / lonN);
-          const centerLabel = nearestRegion(sphericalDir(latC, lonC, dirScratch));
-
-          const cornerCtx = [c00, c01, c10, c11, d00, d01, d10, d11];
-          const contSegs = collectCellBorderSegments("continent", c00, c01, c10, c11, d00, d01, d10, d11, centerLabel);
-          emitCellBorders("continent", contSegs, continentBorderRadius, GLOBE_CONTINENT_BORDER_ANGLE_DEG, continentBorderPoints, continentBorderSeen, cornerCtx);
-
-          const subSegs = collectCellBorderSegments("region", c00, c01, c10, c11, d00, d01, d10, d11, centerLabel);
-          emitCellBorders("region", subSegs, subBorderRadius, GLOBE_SUB_BORDER_ANGLE_DEG, subBorderPoints, subBorderSeen, cornerCtx);
         }
       }
+
+      // Borders = true spherical Voronoi bisectors (great circles), not lat/lon grid edges.
+      if (clusterSites.length >= 2) {
+        appendVoronoiBisectorArcs(
+          clusterSites,
+          continentBorderPoints,
+          continentBorderRadius,
+          center,
+          GLOBE_CONTINENT_BORDER_ANGLE_DEG,
+          continentBorderSeen,
+        );
+      }
+      const regionsByCluster = new Map();
+      centroids.forEach((site) => {
+        const list = regionsByCluster.get(site.cluster) || [];
+        list.push(site);
+        regionsByCluster.set(site.cluster, list);
+      });
+      regionsByCluster.forEach((regionSites) => {
+        if (regionSites.length < 2) return;
+        appendVoronoiBisectorArcs(
+          regionSites,
+          subBorderPoints,
+          subBorderRadius,
+          center,
+          GLOBE_SUB_BORDER_ANGLE_DEG,
+          subBorderSeen,
+        );
+      });
 
       landVerts.forEach((verts, region) => {
         if (verts.length < 9) return;
