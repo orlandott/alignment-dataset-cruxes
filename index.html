@@ -440,8 +440,8 @@
     const GLOBE_CONTINENT_BORDER = 0x000000;
     const GLOBE_SUB_BORDER = 0x2a3540;
     const REGION_STRIDE = 16;
-    const GLOBE_GRID_LAT = 72;
-    const GLOBE_GRID_LON = 144;
+    const GLOBE_PATCH_SEGMENTS = 72;
+    const GLOBE_PATCH_RINGS = 18;
     // Fixed shell radius (decoupled from drifting post centroid).
     const GLOBE_RADIUS_FRAC = 0.48;
     // Posts sit on the crust, just above colored land.
@@ -451,9 +451,8 @@
     const GLOBE_CONTINENT_ARC_MAX = 1.05;
     const GLOBE_STATE_ARC_MIN = 0.22;
     const GLOBE_STATE_ARC_MAX = 0.58;
-    const GLOBE_SHAPE_WOBBLE = 0.075;
-    // How much of each state wedge posts may use (PCA spread inside subcluster).
-    const GLOBE_POST_STATE_FILL = 0.86;
+    // Fraction of state cap used for random post scatter.
+    const GLOBE_POST_STATE_FILL = 0.82;
 
     const state = {
       graph: null,
@@ -914,20 +913,6 @@
       return target.set(Math.cos(theta) * r, y, Math.sin(theta) * r).normalize();
     }
 
-    function tangentOffsetDir(pole, index, count, spread, target) {
-      const up = _tmpVecA.copy(pole);
-      const ref = Math.abs(up.y) < 0.85 ? _basisRef : _basisRef2;
-      const east = _tmpVecB.crossVectors(up, ref).normalize();
-      const north = _tmpVecC.crossVectors(east, up).normalize();
-      const angle = count > 0 ? (index / count) * Math.PI * 2 : 0;
-      const c = Math.cos(spread);
-      const s = Math.sin(spread);
-      return target.copy(up).multiplyScalar(c)
-        .addScaledVector(east, s * Math.cos(angle))
-        .addScaledVector(north, s * Math.sin(angle))
-        .normalize();
-    }
-
     function arcCosThreshold(frac, minArc, maxArc) {
       const arc = minArc + (maxArc - minArc) * Math.sqrt(Math.max(0, frac));
       return Math.cos(arc);
@@ -945,36 +930,12 @@
       return target.copy(sum).normalize();
     }
 
-    function globeShapeNoise(seed, dir) {
-      const x = dir.x * 4.1 + seed * 0.67;
-      const y = dir.y * 3.7 + seed * 1.09;
-      const z = dir.z * 4.5 + seed * 0.41;
-      return Math.sin(x) * 0.45 + Math.sin(y * 1.3) * 0.35 + Math.cos(z * 0.9) * 0.38;
-    }
-
     function tangentFrame(pole, eastOut, northOut) {
       const up = _tmpVecA.copy(pole).normalize();
       const ref = Math.abs(up.y) < 0.85 ? _basisRef : _basisRef2;
       eastOut.crossVectors(up, ref).normalize();
       northOut.crossVectors(eastOut, up).normalize();
       return up;
-    }
-
-    function continentEffectiveDot(dir, cont) {
-      let dot = dir.dot(cont.dir);
-      dot += globeShapeNoise(cont.shapeSeed, dir) * GLOBE_SHAPE_WOBBLE;
-      const east = _tmpVecB;
-      const north = _tmpVecC;
-      tangentFrame(cont.dir, east, north);
-      const ex = dir.dot(east);
-      const ey = dir.dot(north);
-      const pen = (ex * ex) / (cont.stretchEast * cont.stretchEast)
-        + (ey * ey) / (cont.stretchNorth * cont.stretchNorth);
-      return dot - pen * 0.045;
-    }
-
-    function inContinent(dir, cont) {
-      return continentEffectiveDot(dir, cont) >= cont.cosThreshold;
     }
 
     function buildEarthGeography(graph) {
@@ -992,24 +953,20 @@
         let cumSlice = 0;
         const states = subs.map((sub) => {
           const slice = (sub.size ?? 0) / subTotal;
-          const mid = cumSlice + slice * 0.5;
+          const az0 = cumSlice * Math.PI * 2;
           cumSlice += slice;
-          const orbitDist = subs.length > 1
-            ? continentArc * 0.48 * Math.sqrt(slice)
-            : 0;
-          const stateDir = subs.length > 1
-            ? tangentOffsetDir(dir, Math.floor(mid * 360), 360, orbitDist, new THREE.Vector3())
-            : dir.clone();
+          const az1 = cumSlice * Math.PI * 2;
           let stateArc = continentArc * slice * 0.9;
           stateArc = Math.max(GLOBE_STATE_ARC_MIN, Math.min(continentArc * 0.55, stateArc));
           return {
             key: regionKey(cl.id, sub.id),
             cluster: cl.id,
             subcluster: sub.id,
-            dir: stateDir,
-            cosThreshold: Math.cos(stateArc),
+            az0,
+            az1,
             arc: stateArc,
             size: sub.size ?? 0,
+            wobblePhase: cl.id * 1.9 + sub.id * 2.7,
           };
         });
         if (!states.length) {
@@ -1017,10 +974,11 @@
             key: regionKey(cl.id, 0),
             cluster: cl.id,
             subcluster: 0,
-            dir: dir.clone(),
-            cosThreshold: cosThreshold,
+            az0: 0,
+            az1: Math.PI * 2,
             arc: continentArc,
             size: cl.size ?? 0,
+            wobblePhase: cl.id * 1.9,
           });
         }
         return {
@@ -1029,43 +987,10 @@
           cosThreshold,
           arc: continentArc,
           shapeSeed: cl.id * 19 + 7,
-          stretchEast: 0.78 + hashUnit(String(cl.id), "ew") * 0.44,
-          stretchNorth: 0.78 + hashUnit(String(cl.id), "ns") * 0.44,
           states,
         };
       });
       return { continents, totalPosts };
-    }
-
-    function classifyStateInContinent(dir, cont) {
-      let best = null;
-      let bestScore = -Infinity;
-      cont.states.forEach((st) => {
-        const dot = dir.dot(st.dir);
-        if (dot < st.cosThreshold) return;
-        const score = (dot - st.cosThreshold) * (0.85 + (st.size / (cont.states.reduce((s, x) => s + x.size, 0) || 1)));
-        if (score > bestScore) {
-          bestScore = score;
-          best = st;
-        }
-      });
-      return best;
-    }
-
-    function classifyEarthCell(dir, geo) {
-      let bestCont = null;
-      let bestContScore = -Infinity;
-      geo.continents.forEach((cont) => {
-        const dot = continentEffectiveDot(dir, cont);
-        if (dot < cont.cosThreshold) return;
-        const score = dot - cont.cosThreshold;
-        if (score > bestContScore) {
-          bestContScore = score;
-          bestCont = cont;
-        }
-      });
-      if (!bestCont) return null;
-      return classifyStateInContinent(dir, bestCont) || bestCont.states[0];
     }
 
     function hashUnit(id, salt) {
@@ -1091,27 +1016,34 @@
         .normalize();
     }
 
-    function pcaDirection(node, target) {
-      target.set(node.x, node.y, node.z);
-      if (target.lengthSq() < 1e-10) return target.set(0, 1, 0);
-      return target.normalize();
+    function organicEdgeFactor(phase, az) {
+      return 1
+        + 0.28 * Math.sin(az * 3 + phase)
+        + 0.16 * Math.sin(az * 5 + phase * 1.3)
+        + 0.1 * Math.sin(az * 7 + phase * 0.7)
+        + 0.06 * Math.sin(az * 11 + phase * 2.1);
     }
 
-    /** Project PCA direction into state cap — similar posts stay near each other. */
-    function projectIntoStateCap(rawDir, st, target) {
-      const dot = rawDir.dot(st.dir);
-      const maxArc = (st.arc ?? Math.acos(THREE.MathUtils.clamp(st.cosThreshold, -1, 1)))
-        * GLOBE_POST_STATE_FILL;
-      const cosMax = Math.cos(maxArc);
+    function normalizeAz(az) {
+      const t = Math.PI * 2;
+      return ((az % t) + t) % t;
+    }
 
-      if (dot >= cosMax) return target.copy(rawDir);
+    function stateForAz(cont, az) {
+      const a = normalizeAz(az);
+      for (const st of cont.states) {
+        if (st.az1 > st.az0) {
+          if (a >= st.az0 && a < st.az1) return st;
+        } else if (a >= st.az0 || a < st.az1) return st;
+      }
+      return cont.states[0];
+    }
 
-      const east = _tmpVecB;
-      const north = _tmpVecC;
-      tangentFrame(st.dir, east, north);
-      const az = Math.atan2(rawDir.dot(north), rawDir.dot(east));
-      directionInCap(st.dir, maxArc * 0.96, az, target);
-      return target;
+    function continentInclAt(cont, az, radial, outer) {
+      const maxArc = cont.arc * 0.96;
+      const edge = organicEdgeFactor(cont.shapeSeed, az);
+      if (outer) return maxArc * edge;
+      return maxArc * radial * (1 + (edge - 1) * radial * 0.9);
     }
 
     function postShellDirection(node, geo, target) {
@@ -1122,18 +1054,127 @@
       const st = cont.states.find((s) => s.subcluster === sub) || cont.states[0];
       if (!st) return null;
 
-      const raw = pcaDirection(node, _tmpVecD);
-      projectIntoStateCap(raw, st, target);
+      const u = hashUnit(node.id, "u");
+      const v = hashUnit(node.id, "v");
+      const azSpan = st.az1 > st.az0 ? st.az1 - st.az0 : st.az1 + Math.PI * 2 - st.az0;
+      const az = st.az0 + v * azSpan;
+      const edge = organicEdgeFactor(cont.shapeSeed, az);
+      const maxIncl = cont.arc * edge * GLOBE_POST_STATE_FILL * Math.min(1, st.arc / cont.arc);
+      const cosMax = Math.cos(maxIncl);
+      const incl = Math.acos(1 - u * (1 - cosMax));
+      return directionInCap(cont.dir, incl, az, target);
+    }
 
-      if (!inContinent(target, cont)) {
-        slerpDir(st.dir, raw, 0.35, target).normalize();
-        projectIntoStateCap(target, st, target);
+    function buildContinentPatchMesh(cont, landRadius, center) {
+      const segments = GLOBE_PATCH_SEGMENTS;
+      const rings = GLOBE_PATCH_RINGS;
+      const positions = [];
+      const colors = [];
+      const indices = [];
+      const colorScratch = new THREE.Color();
+
+      const apex = worldOnShell(cont.dir, landRadius, center, _tmpVecA);
+      const apexSt = cont.states[0];
+      positions.push(apex.x, apex.y, apex.z);
+      colorScratch.copy(subclusterColor(cont.cluster, apexSt.subcluster));
+      colors.push(colorScratch.r, colorScratch.g, colorScratch.b);
+
+      const ringBase = 1;
+      const idx = (ir, is) => ringBase + (ir - 1) * (segments + 1) + is;
+
+      for (let ir = 1; ir <= rings; ir += 1) {
+        const radial = ir / rings;
+        const outer = ir === rings;
+        for (let is = 0; is <= segments; is += 1) {
+          const az = (is / segments) * Math.PI * 2;
+          const incl = continentInclAt(cont, az, radial, outer);
+          directionInCap(cont.dir, incl, az, _tmpVecD);
+          worldOnShell(_tmpVecD, landRadius, center, _tmpVecA);
+          positions.push(_tmpVecA.x, _tmpVecA.y, _tmpVecA.z);
+          const st = stateForAz(cont, az);
+          colorScratch.copy(subclusterColor(cont.cluster, st.subcluster));
+          colors.push(colorScratch.r, colorScratch.g, colorScratch.b);
+        }
       }
-      if (target.dot(st.dir) < st.cosThreshold) {
-        const jitter = hashUnit(node.id, "j") * Math.PI * 2;
-        directionInCap(st.dir, (st.arc ?? 0.2) * 0.35, jitter, target);
+
+      for (let is = 0; is < segments; is += 1) {
+        indices.push(0, idx(1, is), idx(1, is + 1));
       }
-      return target;
+      for (let ir = 1; ir < rings; ir += 1) {
+        for (let is = 0; is < segments; is += 1) {
+          const a = idx(ir, is);
+          const b = idx(ir, is + 1);
+          const c = idx(ir + 1, is);
+          const d = idx(ir + 1, is + 1);
+          indices.push(a, c, b, b, c, d);
+        }
+      }
+
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geom.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+      geom.setIndex(indices);
+      return new THREE.Mesh(
+        geom,
+        new THREE.MeshBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity: GLOBE_LAND_OPACITY,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
+      );
+    }
+
+    function addSubclusterBorders(cont, group, landRadius, center) {
+      if (cont.states.length < 2) return;
+      const borderPoints = [];
+      cont.states.forEach((st) => {
+        const az = st.az1;
+        let prev = null;
+        const steps = 10;
+        for (let s = 0; s <= steps; s += 1) {
+          const incl = continentInclAt(cont, az, s / steps, s === steps);
+          directionInCap(cont.dir, incl, az, _tmpVecD);
+          const w = worldOnShell(_tmpVecD, landRadius * 1.02, center, _tmpVecA);
+          if (prev) borderPoints.push(prev.x, prev.y, prev.z, w.x, w.y, w.z);
+          prev = w.clone();
+        }
+      });
+      if (borderPoints.length < 6) return;
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute("position", new THREE.Float32BufferAttribute(borderPoints, 3));
+      const lines = new THREE.LineSegments(
+        geom,
+        new THREE.LineBasicMaterial({ color: GLOBE_SUB_BORDER, transparent: true, opacity: 0.35 }),
+      );
+      lines.renderOrder = 2;
+      group.add(lines);
+    }
+
+    function addContinentOutline(cont, group, landRadius, center) {
+      const segments = 120;
+      const maxArc = cont.arc * 0.97;
+      const phase = cont.shapeSeed;
+      const borderPoints = [];
+      let prev = null;
+      for (let i = 0; i <= segments; i += 1) {
+        const az = (i / segments) * Math.PI * 2;
+        const incl = maxArc * organicEdgeFactor(phase, az);
+        directionInCap(cont.dir, incl, az, _tmpVecD);
+        const w = worldOnShell(_tmpVecD, landRadius * 1.03, center, _tmpVecA);
+        if (prev) borderPoints.push(prev.x, prev.y, prev.z, w.x, w.y, w.z);
+        prev = w.clone();
+      }
+      if (borderPoints.length < 6) return;
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute("position", new THREE.Float32BufferAttribute(borderPoints, 3));
+      const lines = new THREE.LineSegments(
+        geom,
+        new THREE.LineBasicMaterial({ color: GLOBE_CONTINENT_BORDER }),
+      );
+      lines.renderOrder = 3;
+      group.add(lines);
     }
 
     function geographyLabelPos(geo, cluster, subcluster, center, radius, target) {
@@ -1144,7 +1185,12 @@
       }
       const st = cont.states.find((s) => s.subcluster === subcluster);
       if (!st) return null;
-      return worldOnShell(st.dir, radius * 1.025, center, target);
+      const azMid = st.az1 > st.az0
+        ? (st.az0 + st.az1) * 0.5
+        : st.az0 + (((st.az1 - st.az0) + Math.PI * 2) % (Math.PI * 2)) * 0.5;
+      const incl = cont.arc * 0.38 * Math.min(1, st.arc / cont.arc);
+      directionInCap(cont.dir, incl, azMid, _tmpVecD);
+      return worldOnShell(_tmpVecD, radius * 1.025, center, target);
     }
 
     function slerpDir(a, b, t, target) {
@@ -1160,152 +1206,17 @@
       return target.copy(dir).multiplyScalar(radius).add(center);
     }
 
-    function sphericalDir(lat, lon, target) {
-      const cl = Math.cos(lat);
-      const co = Math.cos(lon);
-      const so = Math.sin(lon);
-      return target.set(cl * co, Math.sin(lat), cl * so);
-    }
-
     function buildEarthLand(geo, center, landRadius) {
-      const latN = GLOBE_GRID_LAT;
-      const lonN = GLOBE_GRID_LON;
       if (!geo?.continents?.length) return null;
-
-      const dirScratch = new THREE.Vector3();
-      const cornerDirs = [
-        new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(),
-      ];
-      const labels = new Int32Array(latN * lonN);
-      const clusterAt = new Int32Array(latN * lonN);
-      const OCEAN = -1;
-
-      for (let i = 0; i < latN; i += 1) {
-        const lat = -Math.PI / 2 + (i + 0.5) * (Math.PI / latN);
-        for (let j = 0; j < lonN; j += 1) {
-          const lon = -Math.PI + (j + 0.5) * (2 * Math.PI / lonN);
-          const dir = sphericalDir(lat, lon, dirScratch);
-          const cell = classifyEarthCell(dir, geo);
-          const idx = i * lonN + j;
-          if (!cell) {
-            labels[idx] = OCEAN;
-            clusterAt[idx] = OCEAN;
-          } else {
-            labels[idx] = cell.key;
-            clusterAt[idx] = cell.cluster;
-          }
-        }
-      }
-
-      const landVerts = new Map();
-      const borderPoints = [];
-      const subBorderPoints = [];
-
-      function cornerDir(i, j, corner) {
-        const ii = i + (corner >> 1);
-        const jj = (j + (corner & 1)) % lonN;
-        const lat = -Math.PI / 2 + ii * (Math.PI / latN);
-        const lon = -Math.PI + jj * (2 * Math.PI / lonN);
-        return sphericalDir(lat, lon, cornerDirs[corner]);
-      }
-
-      function pushBorder(d0, d1) {
-        const w0 = worldOnShell(d0, landRadius * 1.04, center, _tmpVecA);
-        const w1 = worldOnShell(d1, landRadius * 1.04, center, _tmpVecB);
-        borderPoints.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z);
-      }
-
-      for (let i = 0; i < latN - 1; i += 1) {
-        for (let j = 0; j < lonN; j += 1) {
-          const j1 = (j + 1) % lonN;
-          const c00 = labels[i * lonN + j];
-          const c10 = labels[(i + 1) * lonN + j];
-          const c01 = labels[i * lonN + j1];
-          const c11 = labels[(i + 1) * lonN + j1];
-          const k00 = clusterAt[i * lonN + j];
-          const k10 = clusterAt[(i + 1) * lonN + j];
-          const k01 = clusterAt[i * lonN + j1];
-          const k11 = clusterAt[(i + 1) * lonN + j1];
-
-          cornerDir(i, j, 0); const d00 = cornerDirs[0].clone();
-          cornerDir(i, j, 1); const d01 = cornerDirs[1].clone();
-          cornerDir(i, j, 2); const d10 = cornerDirs[2].clone();
-          cornerDir(i, j, 3); const d11 = cornerDirs[3].clone();
-
-          if (c00 !== OCEAN && c00 === c10 && c00 === c01) {
-            const arr = landVerts.get(c00) || [];
-            const w0 = worldOnShell(d00, landRadius, center, _tmpVecA);
-            const w1 = worldOnShell(d10, landRadius, center, _tmpVecB);
-            const w2 = worldOnShell(d01, landRadius, center, _tmpVecC);
-            arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
-            landVerts.set(c00, arr);
-          }
-          if (c11 !== OCEAN && c11 === c10 && c11 === c01) {
-            const arr = landVerts.get(c11) || [];
-            const w0 = worldOnShell(d11, landRadius, center, _tmpVecA);
-            const w1 = worldOnShell(d01, landRadius, center, _tmpVecB);
-            const w2 = worldOnShell(d10, landRadius, center, _tmpVecC);
-            arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
-            landVerts.set(c11, arr);
-          }
-
-          if (k00 !== k10 && k00 !== OCEAN && k10 !== OCEAN) pushBorder(d00, d10);
-          if (k01 !== k11 && k01 !== OCEAN && k11 !== OCEAN) pushBorder(d01, d11);
-          if (k00 !== k01 && k00 !== OCEAN && k01 !== OCEAN) pushBorder(d00, d01);
-          if (k10 !== k11 && k10 !== OCEAN && k11 !== OCEAN) pushBorder(d10, d11);
-
-          const subBorder = (dA, dB) => {
-            const w0 = worldOnShell(dA, landRadius * 1.02, center, _tmpVecA);
-            const w1 = worldOnShell(dB, landRadius * 1.02, center, _tmpVecB);
-            subBorderPoints.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z);
-          };
-          if (k00 === k10 && k00 !== OCEAN && c00 !== c10) subBorder(d00, d10);
-          if (k01 === k11 && k01 !== OCEAN && c01 !== c11) subBorder(d01, d11);
-          if (k00 === k01 && k00 !== OCEAN && c00 !== c01) subBorder(d00, d01);
-          if (k10 === k11 && k10 !== OCEAN && c10 !== c11) subBorder(d10, d11);
-        }
-      }
-
       const group = new THREE.Group();
-      landVerts.forEach((verts, regionKey) => {
-        if (verts.length < 9) return;
-        const cluster = clusterFromRegion(regionKey);
-        const sub = subFromRegion(regionKey);
-        const geom = new THREE.BufferGeometry();
-        geom.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-        group.add(new THREE.Mesh(
-          geom,
-          new THREE.MeshBasicMaterial({
-            color: subclusterColor(cluster, sub),
-            transparent: true,
-            opacity: GLOBE_LAND_OPACITY,
-            depthWrite: false,
-            side: THREE.DoubleSide,
-          }),
-        ));
+
+      geo.continents.forEach((cont) => {
+        const mesh = buildContinentPatchMesh(cont, landRadius, center);
+        mesh.renderOrder = 1;
+        group.add(mesh);
+        addSubclusterBorders(cont, group, landRadius, center);
+        addContinentOutline(cont, group, landRadius, center);
       });
-
-      if (subBorderPoints.length >= 6) {
-        const subGeom = new THREE.BufferGeometry();
-        subGeom.setAttribute("position", new THREE.Float32BufferAttribute(subBorderPoints, 3));
-        const subLines = new THREE.LineSegments(
-          subGeom,
-          new THREE.LineBasicMaterial({ color: GLOBE_SUB_BORDER, transparent: true, opacity: 0.35 }),
-        );
-        subLines.renderOrder = 2;
-        group.add(subLines);
-      }
-
-      if (borderPoints.length >= 6) {
-        const borderGeom = new THREE.BufferGeometry();
-        borderGeom.setAttribute("position", new THREE.Float32BufferAttribute(borderPoints, 3));
-        const borders = new THREE.LineSegments(
-          borderGeom,
-          new THREE.LineBasicMaterial({ color: GLOBE_CONTINENT_BORDER }),
-        );
-        borders.renderOrder = 3;
-        group.add(borders);
-      }
 
       group.renderOrder = 1;
       return group;
