@@ -28,6 +28,7 @@ jobs:
         run: |
           mkdir site
           cp index.html cruxes.json site/
+          cp -r details site/
           cp .nojekyll site/
 
       - name: Upload artifact
