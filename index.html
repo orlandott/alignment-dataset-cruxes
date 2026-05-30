@@ -37,7 +37,15 @@
     #viewport { position: relative; min-width: 0; }
     canvas { display: block; }
 
-    #overlay { position: absolute; inset: 0; pointer-events: none; }
+    #overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+
+    .globe-label-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
 
     .label {
       position: absolute;
@@ -76,24 +84,36 @@
     .axis-label.y { color: #3d8a5c; border-color: rgba(61, 138, 92, 0.35); }
     .axis-label.z { color: #3d6a9a; border-color: rgba(61, 106, 154, 0.35); }
 
-    .continent-label {
-      position: absolute;
-      transform: translate(-50%, -50%);
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.94);
-      border: 1.5px solid var(--border);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      max-width: 200px;
-      text-align: center;
-      line-height: 1.25;
+    /* Globe labels (CSS2DRenderer): pinned to the sphere, always upright like Google Earth. */
+    .globe-label {
       pointer-events: none;
-      box-shadow: 0 2px 8px rgba(26, 35, 50, 0.12);
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      transform: translate(-50%, -50%);
+      user-select: none;
+    }
+
+    .globe-label-continent {
+      font-family: Georgia, "Palatino Linotype", "Times New Roman", serif;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #1e2d3d;
+      text-shadow:
+        0 0 6px rgba(255, 255, 255, 0.98),
+        0 0 14px rgba(255, 255, 255, 0.85),
+        0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .globe-label-region {
+      font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: #4a5f73;
+      text-shadow:
+        0 0 4px rgba(255, 255, 255, 0.98),
+        0 0 10px rgba(255, 255, 255, 0.8);
     }
 
     #header { position: absolute; top: 18px; left: 18px; z-index: 2; pointer-events: none; }
@@ -348,6 +368,8 @@
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { CSS2DObject } from "three/addons/renderers/CSS2DObject.js";
+    import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 
     // Distinct, print-friendly palette for k-means topic clusters (extended to
     // 12 so a larger corpus's auto-selected k still gets unique colors).
@@ -453,8 +475,6 @@
       detailRequestId: 0,
       globeCenter: null,
       globeRadius: 0,
-      continentLabelEls: [],
-      continentLabelPositions: [],
     };
 
     const viewport = document.getElementById("viewport");
@@ -475,6 +495,12 @@
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     viewport.insertBefore(renderer.domElement, overlay);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(viewport.clientWidth, viewport.clientHeight);
+    labelRenderer.domElement.className = "globe-label-layer";
+    labelRenderer.domElement.style.pointerEvents = "none";
+    viewport.appendChild(labelRenderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -561,6 +587,8 @@
 
     const nodesGroup = new THREE.Group();
     const globeGroup = new THREE.Group();
+    const globeLabelsGroup = new THREE.Group();
+    globeGroup.add(globeLabelsGroup);
     const spatialGroup = new THREE.Group();
     scene.add(spatialGroup, globeGroup, nodesGroup);
 
@@ -578,6 +606,7 @@
       camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(clientWidth, clientHeight);
+      labelRenderer.setSize(clientWidth, clientHeight);
     }
     window.addEventListener("resize", resize);
     resize();
@@ -854,13 +883,36 @@
       });
     }
 
-    function updateContinentLabels() {
-      state.continentLabelEls.forEach((el, i) => {
-        const screen = projectToOverlay(state.continentLabelPositions[i]);
-        if (!screen) { el.style.display = "none"; return; }
-        el.style.display = "block";
-        el.style.left = `${screen.x}px`;
-        el.style.top = `${screen.y}px`;
+    const _labelWorldPos = new THREE.Vector3();
+    const _labelNormal = new THREE.Vector3();
+    const _labelToCam = new THREE.Vector3();
+
+    function addGlobeLabel(text, className, worldPos) {
+      const el = document.createElement("div");
+      el.className = `globe-label ${className}`;
+      el.textContent = text;
+      const obj = new CSS2DObject(el);
+      obj.position.copy(worldPos);
+      globeLabelsGroup.add(obj);
+      return obj;
+    }
+
+    function updateGlobeLabelVisibility() {
+      if (!state.globeCenter) return;
+      const center = state.globeCenter;
+      globeLabelsGroup.children.forEach((obj) => {
+        const el = obj.element;
+        if (!el) return;
+        obj.getWorldPosition(_labelWorldPos);
+        _labelNormal.copy(_labelWorldPos).sub(center).normalize();
+        _labelToCam.copy(camera.position).sub(_labelWorldPos).normalize();
+        const facing = _labelNormal.dot(_labelToCam);
+        if (facing < 0.08) {
+          el.style.visibility = "hidden";
+          return;
+        }
+        el.style.visibility = "visible";
+        el.style.opacity = String(Math.min(1, Math.max(0.35, (facing - 0.08) / 0.35)));
       });
     }
 
@@ -948,6 +1000,7 @@
 
     function disposeGlobeGroup() {
       globeGroup.traverse((obj) => {
+        if (obj.element?.parentNode) obj.element.parentNode.removeChild(obj.element);
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {
           if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
@@ -955,9 +1008,7 @@
         }
       });
       globeGroup.clear();
-      state.continentLabelEls.forEach((el) => el.remove());
-      state.continentLabelEls = [];
-      state.continentLabelPositions = [];
+      globeGroup.add(globeLabelsGroup);
     }
 
     const _tmpVecA = new THREE.Vector3();
@@ -978,7 +1029,8 @@
 
       const landRadius = radius * 1.01;
       const borderRadius = radius * 1.07;
-      const labelRadius = radius * 1.14;
+      const continentLabelRadius = radius * 1.12;
+      const regionLabelRadius = radius * 1.05;
 
       // Ocean globe (like Earth's seas) — posts sit on the crust above this.
       const ocean = new THREE.Mesh(
@@ -1141,7 +1193,13 @@
       const contLines = globeGroup.children[globeGroup.children.length - 1];
       if (contLines) contLines.renderOrder = 3;
 
-      // Continent labels (parent cluster); region labels omitted to avoid clutter.
+      // Labels pinned on the globe (CSS2D): continents = large caps; regions = smaller.
+      while (globeLabelsGroup.children.length) {
+        const obj = globeLabelsGroup.children[0];
+        if (obj.element?.parentNode) obj.element.parentNode.removeChild(obj.element);
+        globeLabelsGroup.remove(obj);
+      }
+
       const continentDirs = new Map();
       centroids.forEach(({ cluster, dir }) => {
         if (!continentDirs.has(cluster)) continentDirs.set(cluster, []);
@@ -1151,14 +1209,19 @@
         const sum = new THREE.Vector3();
         dirs.forEach((d) => sum.add(d));
         if (sum.lengthSq() < 1e-8) return;
-        const label = document.createElement("div");
-        label.className = "continent-label";
-        label.textContent = clusterLabel(cluster);
-        label.style.borderColor = hexCss(clusterColor(cluster));
-        overlay.appendChild(label);
-        state.continentLabelEls.push(label);
-        state.continentLabelPositions.push(
-          worldOnShell(sum.normalize(), labelRadius, center, new THREE.Vector3()),
+        addGlobeLabel(
+          clusterLabel(cluster),
+          "globe-label-continent",
+          worldOnShell(sum.normalize(), continentLabelRadius, center, new THREE.Vector3()),
+        );
+      });
+
+      centroids.forEach(({ cluster, subcluster, dir }) => {
+        if (subclusterCount(cluster) < 2) return;
+        addGlobeLabel(
+          subclusterLabel(cluster, subcluster),
+          "globe-label-region",
+          worldOnShell(dir, regionLabelRadius, center, new THREE.Vector3()),
         );
       });
     }
@@ -1395,8 +1458,9 @@
       syncZoomSliderFromCamera();
       updateLabel();
       updateAxisLabels();
-      updateContinentLabels();
+      updateGlobeLabelVisibility();
       renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
     }
 
     async function init() {
