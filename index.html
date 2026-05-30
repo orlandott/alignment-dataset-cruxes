@@ -451,9 +451,9 @@
     const GLOBE_CONTINENT_ARC_MAX = 1.05;
     const GLOBE_STATE_ARC_MIN = 0.22;
     const GLOBE_STATE_ARC_MAX = 0.58;
-    const GLOBE_STATE_ORBIT = 0.09;
-    // Posts use at most this fraction of their state cap radius (stay off borders).
-    const GLOBE_POST_CAP_FRAC = 0.38;
+    const GLOBE_SHAPE_WOBBLE = 0.075;
+    // How much of each state wedge posts may use (PCA spread inside subcluster).
+    const GLOBE_POST_STATE_FILL = 0.86;
 
     const state = {
       graph: null,
@@ -933,37 +933,83 @@
       return Math.cos(arc);
     }
 
+    function clusterPcaCentroid(graph, clusterId, target) {
+      const sum = new THREE.Vector3();
+      let n = 0;
+      graph.nodes.forEach((node) => {
+        if ((node.cluster ?? 0) !== clusterId) return;
+        sum.add(_tmpVecA.set(node.x, node.y, node.z));
+        n += 1;
+      });
+      if (!n || sum.lengthSq() < 1e-10) return null;
+      return target.copy(sum).normalize();
+    }
+
+    function globeShapeNoise(seed, dir) {
+      const x = dir.x * 4.1 + seed * 0.67;
+      const y = dir.y * 3.7 + seed * 1.09;
+      const z = dir.z * 4.5 + seed * 0.41;
+      return Math.sin(x) * 0.45 + Math.sin(y * 1.3) * 0.35 + Math.cos(z * 0.9) * 0.38;
+    }
+
+    function tangentFrame(pole, eastOut, northOut) {
+      const up = _tmpVecA.copy(pole).normalize();
+      const ref = Math.abs(up.y) < 0.85 ? _basisRef : _basisRef2;
+      eastOut.crossVectors(up, ref).normalize();
+      northOut.crossVectors(eastOut, up).normalize();
+      return up;
+    }
+
+    function continentEffectiveDot(dir, cont) {
+      let dot = dir.dot(cont.dir);
+      dot += globeShapeNoise(cont.shapeSeed, dir) * GLOBE_SHAPE_WOBBLE;
+      const east = _tmpVecB;
+      const north = _tmpVecC;
+      tangentFrame(cont.dir, east, north);
+      const ex = dir.dot(east);
+      const ey = dir.dot(north);
+      const pen = (ex * ex) / (cont.stretchEast * cont.stretchEast)
+        + (ey * ey) / (cont.stretchNorth * cont.stretchNorth);
+      return dot - pen * 0.045;
+    }
+
+    function inContinent(dir, cont) {
+      return continentEffectiveDot(dir, cont) >= cont.cosThreshold;
+    }
+
     function buildEarthGeography(graph) {
       const clusters = (graph.clusters || []).slice().sort((a, b) => a.id - b.id);
       const totalPosts = clusters.reduce((s, c) => s + (c.size ?? 0), 0) || 1;
       const continents = clusters.map((cl, slot) => {
-        const dir = fibonacciSphereDir(slot, clusters.length, new THREE.Vector3());
+        const anchor = fibonacciSphereDir(slot, clusters.length, new THREE.Vector3());
+        const pca = clusterPcaCentroid(graph, cl.id, new THREE.Vector3());
+        const dir = pca ? anchor.lerp(pca, 0.42).normalize() : anchor;
         const frac = (cl.size ?? 0) / totalPosts;
         const cosThreshold = arcCosThreshold(frac, GLOBE_CONTINENT_ARC_MIN, GLOBE_CONTINENT_ARC_MAX);
-        const subs = cl.subclusters || [];
-        const subTotal = subs.reduce((s, sub) => s + (sub.size ?? 0), 0) || 1;
         const continentArc = Math.acos(cosThreshold);
-        const orbit = subs.length > 1
-          ? Math.min(GLOBE_STATE_ORBIT, (continentArc * 0.7) / subs.length)
-          : 0;
-        const states = subs.map((sub, si) => {
+        const subs = (cl.subclusters || []).slice().sort((a, b) => a.id - b.id);
+        const subTotal = subs.reduce((s, sub) => s + (sub.size ?? 0), 0) || 1;
+        let cumSlice = 0;
+        const states = subs.map((sub) => {
+          const slice = (sub.size ?? 0) / subTotal;
+          const mid = cumSlice + slice * 0.5;
+          cumSlice += slice;
+          const orbitDist = subs.length > 1
+            ? continentArc * 0.48 * Math.sqrt(slice)
+            : 0;
           const stateDir = subs.length > 1
-            ? tangentOffsetDir(dir, si, subs.length, orbit, new THREE.Vector3())
+            ? tangentOffsetDir(dir, Math.floor(mid * 360), 360, orbitDist, new THREE.Vector3())
             : dir.clone();
-          const subFrac = (sub.size ?? 0) / subTotal;
-          let stateArc = continentArc * 0.82 * Math.sqrt(subFrac);
-          stateArc = Math.max(GLOBE_STATE_ARC_MIN, Math.min(GLOBE_STATE_ARC_MAX, stateArc));
-          if (subs.length > 1) {
-            stateArc = Math.min(stateArc, orbit * 0.92);
-          }
-          const stateCos = Math.cos(stateArc);
+          let stateArc = continentArc * slice * 0.9;
+          stateArc = Math.max(GLOBE_STATE_ARC_MIN, Math.min(continentArc * 0.55, stateArc));
           return {
             key: regionKey(cl.id, sub.id),
             cluster: cl.id,
             subcluster: sub.id,
             dir: stateDir,
-            cosThreshold: stateCos,
+            cosThreshold: Math.cos(stateArc),
             arc: stateArc,
+            size: sub.size ?? 0,
           };
         });
         if (!states.length) {
@@ -973,18 +1019,44 @@
             subcluster: 0,
             dir: dir.clone(),
             cosThreshold: cosThreshold,
+            arc: continentArc,
+            size: cl.size ?? 0,
           });
         }
-        return { cluster: cl.id, dir, cosThreshold, states };
+        return {
+          cluster: cl.id,
+          dir,
+          cosThreshold,
+          arc: continentArc,
+          shapeSeed: cl.id * 19 + 7,
+          stretchEast: 0.78 + hashUnit(String(cl.id), "ew") * 0.44,
+          stretchNorth: 0.78 + hashUnit(String(cl.id), "ns") * 0.44,
+          states,
+        };
       });
       return { continents, totalPosts };
+    }
+
+    function classifyStateInContinent(dir, cont) {
+      let best = null;
+      let bestScore = -Infinity;
+      cont.states.forEach((st) => {
+        const dot = dir.dot(st.dir);
+        if (dot < st.cosThreshold) return;
+        const score = (dot - st.cosThreshold) * (0.85 + (st.size / (cont.states.reduce((s, x) => s + x.size, 0) || 1)));
+        if (score > bestScore) {
+          bestScore = score;
+          best = st;
+        }
+      });
+      return best;
     }
 
     function classifyEarthCell(dir, geo) {
       let bestCont = null;
       let bestContScore = -Infinity;
       geo.continents.forEach((cont) => {
-        const dot = dir.dot(cont.dir);
+        const dot = continentEffectiveDot(dir, cont);
         if (dot < cont.cosThreshold) return;
         const score = dot - cont.cosThreshold;
         if (score > bestContScore) {
@@ -993,19 +1065,7 @@
         }
       });
       if (!bestCont) return null;
-
-      let bestState = bestCont.states[0];
-      let bestStateScore = -Infinity;
-      bestCont.states.forEach((st) => {
-        const dot = dir.dot(st.dir);
-        if (dot < st.cosThreshold) return;
-        const score = dot - st.cosThreshold;
-        if (score > bestStateScore) {
-          bestStateScore = score;
-          bestState = st;
-        }
-      });
-      return bestState;
+      return classifyStateInContinent(dir, bestCont) || bestCont.states[0];
     }
 
     function hashUnit(id, salt) {
@@ -1031,18 +1091,29 @@
         .normalize();
     }
 
-    function maxPostInclination(st, cont) {
-      const stateArc = st.arc ?? Math.acos(THREE.MathUtils.clamp(st.cosThreshold, -1, 1));
-      let incl = stateArc * GLOBE_POST_CAP_FRAC;
-      cont.states.forEach((other) => {
-        if (other.subcluster === st.subcluster) return;
-        const sep = Math.acos(THREE.MathUtils.clamp(st.dir.dot(other.dir), -1, 1));
-        incl = Math.min(incl, sep * 0.42);
-      });
-      return Math.max(0.02, incl);
+    function pcaDirection(node, target) {
+      target.set(node.x, node.y, node.z);
+      if (target.lengthSq() < 1e-10) return target.set(0, 1, 0);
+      return target.normalize();
     }
 
-    /** Uniform scatter inside one state cap (no spiral, no neighbor bleed). */
+    /** Project PCA direction into state cap — similar posts stay near each other. */
+    function projectIntoStateCap(rawDir, st, target) {
+      const dot = rawDir.dot(st.dir);
+      const maxArc = (st.arc ?? Math.acos(THREE.MathUtils.clamp(st.cosThreshold, -1, 1)))
+        * GLOBE_POST_STATE_FILL;
+      const cosMax = Math.cos(maxArc);
+
+      if (dot >= cosMax) return target.copy(rawDir);
+
+      const east = _tmpVecB;
+      const north = _tmpVecC;
+      tangentFrame(st.dir, east, north);
+      const az = Math.atan2(rawDir.dot(north), rawDir.dot(east));
+      directionInCap(st.dir, maxArc * 0.96, az, target);
+      return target;
+    }
+
     function postShellDirection(node, geo, target) {
       const cluster = node.cluster ?? 0;
       const sub = node.subcluster ?? 0;
@@ -1051,15 +1122,16 @@
       const st = cont.states.find((s) => s.subcluster === sub) || cont.states[0];
       if (!st) return null;
 
-      const u = hashUnit(node.id, "u");
-      const v = hashUnit(node.id, "v");
-      const maxIncl = maxPostInclination(st, cont);
-      const incl = maxIncl * Math.sqrt(u);
-      const az = v * Math.PI * 2;
-      directionInCap(st.dir, incl, az, target);
+      const raw = pcaDirection(node, _tmpVecD);
+      projectIntoStateCap(raw, st, target);
 
+      if (!inContinent(target, cont)) {
+        slerpDir(st.dir, raw, 0.35, target).normalize();
+        projectIntoStateCap(target, st, target);
+      }
       if (target.dot(st.dir) < st.cosThreshold) {
-        directionInCap(st.dir, maxIncl * 0.5, az, target);
+        const jitter = hashUnit(node.id, "j") * Math.PI * 2;
+        directionInCap(st.dir, (st.arc ?? 0.2) * 0.35, jitter, target);
       }
       return target;
     }
