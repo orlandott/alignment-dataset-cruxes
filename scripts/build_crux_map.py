@@ -53,6 +53,17 @@ from scripts.double_crux import (
 )
 from scripts.post_claims import looks_like_transcript, summarize_claims
 
+TRANSCRIPT_CLUSTER_LABEL = "Podcasts & Transcripts"
+TRANSCRIPT_TERM_SEEDS = (
+    "transcript",
+    "podcast",
+    "episode",
+    "interview",
+    "axrp",
+    "conversation",
+    "discussion",
+)
+
 AUTHORED_CLAIMS_PATH = ROOT / "data" / "authored_claims.json"
 AUTHORED_CRUXES_PATH = ROOT / "data" / "authored_cruxes.json"
 COMMENT_CACHE_PATH = ROOT / "data" / "processed" / "comments_cache.jsonl"
@@ -650,6 +661,70 @@ def choose_k(coords: np.ndarray, *, min_k: int = MIN_K, max_k: int = MAX_K) -> i
     return best_k
 
 
+def is_transcript_post(post: Post) -> bool:
+    # Speaker-turn detection relies on markdown labels (**Name:**); don't strip those.
+    return looks_like_transcript(post.text, post.title)
+
+
+def transcript_post_indices(posts: list[Post]) -> np.ndarray:
+    return np.array(
+        [i for i, post in enumerate(posts) if is_transcript_post(post)],
+        dtype=int,
+    )
+
+
+def merge_transcript_terms(terms: list[str], *, top_n: int = 4) -> list[str]:
+    merged: list[str] = []
+    for term in (*TRANSCRIPT_TERM_SEEDS, *terms):
+        if term not in merged:
+            merged.append(term)
+        if len(merged) >= top_n:
+            break
+    return merged
+
+
+def compute_cluster_labels(
+    posts: list[Post],
+    cluster_space: np.ndarray,
+    *,
+    n_clusters: int,
+) -> tuple[np.ndarray, int, int | None]:
+    """Cluster posts; transcripts share one dedicated continent cluster.
+
+    Returns ``(labels, k_regular, transcript_cluster_id)``. Thematic k-means
+    runs on non-transcript posts only; all transcripts use id ``k_regular``.
+    """
+    n = len(posts)
+    if n == 0:
+        return np.zeros(0, dtype=int), 0, None
+
+    tr_idx = transcript_post_indices(posts)
+    if tr_idx.size == 0:
+        k = min(n_clusters, n) if n_clusters and n_clusters > 0 else choose_k(cluster_space)
+        return compute_clusters(cluster_space, k), int(k), None
+
+    reg_mask = np.ones(n, dtype=bool)
+    reg_mask[tr_idx] = False
+    reg_idx = np.where(reg_mask)[0]
+
+    if reg_idx.size == 0:
+        return np.zeros(n, dtype=int), 0, 0
+
+    reg_space = cluster_space[reg_idx]
+    if n_clusters and n_clusters > 0:
+        k_reg = min(max(2, n_clusters), reg_idx.size)
+    elif reg_idx.size < MIN_K:
+        k_reg = max(1, reg_idx.size)
+    else:
+        k_reg = choose_k(reg_space)
+
+    reg_labels = compute_clusters(reg_space, k_reg)
+    labels = np.full(n, k_reg, dtype=int)
+    labels[reg_idx] = reg_labels
+    labels[tr_idx] = k_reg
+    return labels, int(k_reg), int(k_reg)
+
+
 def compute_clusters(coords: np.ndarray, n_clusters: int) -> np.ndarray:
     """Return an (n,) array of k-means labels for the given coords."""
     n = coords.shape[0]
@@ -937,7 +1012,7 @@ CLUSTER_THEMES: tuple[dict, ...] = (
         "keywords": (
             "bing", "sydney", "chatgpt", "openai", "microsoft", "deepmind",
             "anthropic", "chatbot", "twitter", "news", "announcement",
-            "release", "podcast", "interview",
+            "release",
         ),
     },
     {
@@ -1237,11 +1312,9 @@ def build_graph(
     cluster_space = geo.cluster_features
     axis_labels = describe_pca_axes(geo.scores, geo.vectorizer, geo.matrix, geo.variance)
 
-    if n_clusters and n_clusters > 0:
-        k = min(n_clusters, len(posts))
-    else:
-        k = choose_k(cluster_space)
-    labels = compute_clusters(cluster_space, k)
+    labels, k_regular, transcript_cluster_id = compute_cluster_labels(
+        posts, cluster_space, n_clusters=n_clusters
+    )
     sub_labels, sub_meta_by_parent = compute_subclusters(
         cluster_space, labels, geo.matrix, geo.vectorizer, posts
     )
@@ -1249,6 +1322,14 @@ def build_graph(
     match_terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels, top_n=25)
     exemplars = cluster_exemplars(cluster_space, labels, posts)
     themes = assign_cluster_themes(match_terms, exemplars)
+    if transcript_cluster_id is not None:
+        themes[transcript_cluster_id] = TRANSCRIPT_CLUSTER_LABEL
+        terms[transcript_cluster_id] = merge_transcript_terms(
+            terms.get(transcript_cluster_id, []), top_n=4
+        )
+        match_terms[transcript_cluster_id] = merge_transcript_terms(
+            match_terms.get(transcript_cluster_id, []), top_n=25
+        )
 
     comment_cache = comments_mod.load_comment_cache(comment_cache_path)
     reference_cache = comments_mod.load_reference_cache(reference_cache_path)
@@ -1313,6 +1394,7 @@ def build_graph(
                 "referenced_by": referenced_by,
                 "cluster": cluster,
                 "subcluster": subcluster,
+                "is_transcript": is_transcript_post(post),
                 "x": float(row[0]),
                 "y": float(row[1]),
                 "z": float(row[2]),
@@ -1340,7 +1422,9 @@ def build_graph(
             "model": None if dry_run or method != "anthropic" else MODEL,
             "post_count": len(posts),
             "cluster_count": len(cluster_meta),
-            "k_selected": int(k),
+            "k_selected": int(k_regular),
+            "transcript_cluster_id": transcript_cluster_id,
+            "transcript_count": int(transcript_post_indices(posts).size),
             "auto_k": not (n_clusters and n_clusters > 0),
             "comment_count": comment_total,
             "double_crux_count": crux_total,

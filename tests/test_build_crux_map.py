@@ -3,17 +3,20 @@ import numpy as np
 import scripts.build_crux_map as bcm
 from scripts.build_crux_map import (
     Post,
+    TRANSCRIPT_CLUSTER_LABEL,
     assign_cluster_themes,
     build_comment_block,
     choose_k,
     cluster_exemplars,
     cluster_label,
     cluster_top_terms,
+    compute_cluster_labels,
     compute_clusters,
     compute_post_coords,
     compute_subclusters,
     describe_pca_axes,
     filter_rows_by_relevance,
+    is_transcript_post,
     parse_model_json,
     post_summary,
     row_passes_keyword_relevance,
@@ -89,6 +92,49 @@ def test_compute_clusters_groups_neighbors():
     assert labels[0] == labels[1]
     assert labels[2] == labels[3]
     assert labels[0] != labels[2]
+
+
+def test_is_transcript_post_detects_podcast_transcript():
+    body = "\n".join(f"**Host:** q{i}\n**Guest:** a{i}" for i in range(10))
+    post = Post(
+        "t1",
+        "AXRP Episode 99 - Alignment chat",
+        "https://x/p/t1",
+        "lesswrong",
+        "2024",
+        ("Host",),
+        body,
+    )
+    assert is_transcript_post(post) is True
+    essay = Post(
+        "t2",
+        "Why corrigibility matters",
+        "https://x/p/t2",
+        "lesswrong",
+        "2024",
+        ("Author",),
+        "I argue that corrigibility is central to AI alignment research.",
+    )
+    assert is_transcript_post(essay) is False
+
+
+def test_compute_cluster_labels_groups_transcripts_together():
+    body = "\n".join(f"**Daniel Filan:** q{i}\nQuintin Pope: a{i}" for i in range(12))
+    posts = [
+        Post("a", "Risk essay", "u1", "lesswrong", "2020", ("A",), "AI safety and existential risk from AGI systems"),
+        Post("b", "Interp essay", "u2", "lesswrong", "2020", ("A",), "Mechanistic interpretability of transformer circuits and neurons"),
+        Post("c", "Policy essay", "u3", "lesswrong", "2020", ("A",), "AI governance policy regulation and catastrophic risk"),
+        Post("d", "Forecast essay", "u4", "lesswrong", "2020", ("A",), "Forecasting AGI timelines and compute scaling trends"),
+        Post("t1", "Podcast transcript A", "u5", "lesswrong", "2024", ("B",), body),
+        Post("t2", "Full transcript of interview", "u6", "lesswrong", "2024", ("B",), body + " extra"),
+    ]
+    geo = compute_post_coords(posts, use_embeddings=False)
+    labels, k_reg, tr_id = compute_cluster_labels(posts, geo.cluster_features, n_clusters=0)
+    tr_indices = [i for i, p in enumerate(posts) if is_transcript_post(p)]
+    assert len(tr_indices) == 2
+    assert tr_id == k_reg
+    assert labels[tr_indices[0]] == labels[tr_indices[1]] == tr_id
+    assert len(set(labels[i] for i in range(len(posts)) if i not in tr_indices)) >= 2
 
 
 def test_compute_clusters_handles_single_post():

@@ -6,15 +6,18 @@
   <title>Alignment world</title>
   <style>
     :root {
-      --bg: #f5f7fa;
-      --panel: #ffffff;
-      --border: #d0dae6;
-      --text: #1a2332;
-      --muted: #5c6b7f;
-      --empirical: #2563eb;
-      --values: #b45309;
-      --prediction: #0d9488;
-      --accent: #6d28d9;
+      --space: #000000;
+      --bg: #000000;
+      --panel: #141820;
+      --border: #2a3344;
+      --text: #e8edf4;
+      --muted: #8b9bb0;
+      --empirical: #6ba3ff;
+      --values: #f0a04d;
+      --prediction: #4fd4c8;
+      --accent: #a78bfa;
+      --glass: rgba(12, 16, 24, 0.82);
+      --glass-border: rgba(255, 255, 255, 0.12);
     }
 
     * { box-sizing: border-box; }
@@ -34,8 +37,8 @@
       height: 100vh;
     }
 
-    #viewport { position: relative; min-width: 0; }
-    canvas { display: block; }
+    #viewport { position: relative; min-width: 0; background: var(--space); }
+    canvas { display: block; background: var(--space); }
 
     #overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 
@@ -52,8 +55,8 @@
       transform: translate(-50%, -135%);
       padding: 3px 7px;
       border-radius: 5px;
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid var(--accent);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
       color: var(--text);
       font-size: 11px;
       max-width: 240px;
@@ -61,7 +64,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       pointer-events: none;
-      box-shadow: 0 2px 6px rgba(26, 35, 50, 0.12);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
       display: none;
     }
 
@@ -79,11 +83,12 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.16em;
-      color: #1e2d3d;
+      color: #f2f6fc;
       text-shadow:
-        0 0 6px rgba(255, 255, 255, 0.98),
-        0 0 14px rgba(255, 255, 255, 0.85),
-        0 1px 0 rgba(255, 255, 255, 0.9);
+        0 0 3px #000,
+        0 0 8px #000,
+        0 1px 2px #000,
+        0 0 12px rgba(0, 0, 0, 0.85);
     }
 
     .globe-label-region {
@@ -91,14 +96,22 @@
       font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.04em;
-      color: #4a5f73;
+      color: #c5d0e0;
       text-shadow:
-        0 0 4px rgba(255, 255, 255, 0.98),
-        0 0 10px rgba(255, 255, 255, 0.8);
+        0 0 2px #000,
+        0 0 6px #000,
+        0 1px 2px #000;
     }
 
     #header { position: absolute; top: 18px; left: 18px; z-index: 2; pointer-events: none; }
-    #header h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; letter-spacing: 0.02em; }
+    #header h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #f5f8fc;
+      text-shadow: 0 0 12px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
+    }
     #header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 460px; line-height: 1.45; }
 
     #legend {
@@ -107,12 +120,13 @@
       bottom: 18px;
       z-index: 2;
       padding: 10px 14px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--glass-border);
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(8px);
-      box-shadow: 0 1px 4px rgba(26, 35, 50, 0.06);
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       font-size: 12px;
+      color: var(--text);
       pointer-events: none;
       max-width: 380px;
     }
@@ -143,13 +157,13 @@
       padding: 3px 6px;
       transition: background 0.15s ease;
     }
-    .legend-item.jumpable:hover { background: rgba(109, 40, 217, 0.08); }
+    .legend-item.jumpable:hover { background: rgba(167, 139, 250, 0.15); }
     .legend-item.jumpable:focus-visible {
-      outline: 2px solid rgba(109, 40, 217, 0.45);
+      outline: 2px solid rgba(167, 139, 250, 0.55);
       outline-offset: 1px;
     }
     .legend-item.jumpable.active {
-      background: rgba(109, 40, 217, 0.12);
+      background: rgba(167, 139, 250, 0.22);
       font-weight: 600;
     }
     .legend-item.sub {
@@ -163,7 +177,10 @@
 
     #hint {
       position: absolute; right: 18px; bottom: 18px; z-index: 2;
-      color: var(--muted); font-size: 12px; pointer-events: none;
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+      text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
     }
 
     #zoom-control {
@@ -175,11 +192,11 @@
       align-items: center;
       gap: 8px;
       padding: 8px 12px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--glass-border);
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(8px);
-      box-shadow: 0 1px 4px rgba(26, 35, 50, 0.06);
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       font-size: 12px;
       color: var(--muted);
     }
@@ -196,9 +213,9 @@
       width: 26px;
       height: 26px;
       padding: 0;
-      border: 1px solid var(--border);
+      border: 1px solid var(--glass-border);
       border-radius: 6px;
-      background: var(--panel);
+      background: rgba(255, 255, 255, 0.06);
       color: var(--text);
       font-size: 16px;
       line-height: 1;
@@ -243,7 +260,7 @@
       padding: 12px 14px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: rgba(245, 247, 250, 0.9);
+      background: rgba(255, 255, 255, 0.04);
     }
     .comment-head { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
     .comment-head strong { color: var(--text); }
@@ -267,7 +284,7 @@
 
     .crux-box {
       padding: 14px; border: 1px solid var(--accent); border-radius: 10px;
-      background: rgba(109, 40, 217, 0.04);
+      background: rgba(167, 139, 250, 0.08);
     }
     .crux-question { font-size: 15px; line-height: 1.5; margin: 0 0 12px; }
     .crux-evidence h4 {
@@ -281,7 +298,8 @@
 
     #error {
       position: absolute; inset: 0; display: none; place-items: center;
-      padding: 24px; background: rgba(245, 247, 250, 0.96); z-index: 10; text-align: center;
+      padding: 24px; background: rgba(0, 0, 0, 0.92); z-index: 10; text-align: center;
+      color: var(--text);
     }
     #error.visible { display: grid; }
 
@@ -411,16 +429,16 @@
     // A large SCALE with modest point radii gives a few thousand posts room to
     // breathe instead of clumping into a dense ball.
     const SCALE = 900;
-    const SCENE_BG = 0xf5f7fa;
+    const SCENE_BG = 0x000000;
     // Proportional wheel zoom: scales with deltaY so one mouse notch is gentle
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
     const GLOBE_LAT = 40;
     const GLOBE_LON = 80;
-    const GLOBE_OCEAN = 0xb8d4e8;
-    const GLOBE_BORDER = 0x3a4a5c;
-    const GLOBE_SUB_BORDER = 0x8aa0b4;
+    const GLOBE_OCEAN = 0x0a1424;
+    const GLOBE_BORDER = 0x6a8aaa;
+    const GLOBE_SUB_BORDER = 0x3d5268;
     const GLOBE_LAND_OPACITY = 0.52;
     const REGION_STRIDE = 16;
     const GLOBE_BORDER_STEPS = 5;

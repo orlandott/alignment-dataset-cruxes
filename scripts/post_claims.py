@@ -29,8 +29,12 @@ SPEAKER_TURN = re.compile(
 # An explicit "transcript" in the title is decisive on its own; "podcast"/"AXRP"
 # only flags a transcript when the body also has back-and-forth speaker turns
 # (an AXRP *announcement* post, for example, is not a transcript).
-EXPLICIT_TRANSCRIPT_TITLE = re.compile(r"\btranscript\b", re.IGNORECASE)
-PODCAST_TITLE = re.compile(r"\bAXRP\b|\bpodcast\b", re.IGNORECASE)
+EXPLICIT_TRANSCRIPT_TITLE = re.compile(
+    r"\btranscripts?\b|\btranscription\b", re.IGNORECASE
+)
+PODCAST_TITLE = re.compile(
+    r"\bAXRP\b|\bpodcasts?\b|\binterview\b", re.IGNORECASE
+)
 
 # Min turns for a name to count as a recurring speaker, and the totals that
 # separate a real transcript (hundreds of turns) from a short illustrative
