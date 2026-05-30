@@ -446,10 +446,10 @@
     // Posts sit on the crust, just above colored land.
     const GLOBE_POST_SHELL_FRAC = GLOBE_RADIUS_FRAC * 1.045;
     // Continent cap angular radius (radians), scaled by sqrt(post fraction).
-    const GLOBE_CONTINENT_ARC_MIN = 0.32;
-    const GLOBE_CONTINENT_ARC_MAX = 0.92;
-    const GLOBE_STATE_ARC_MIN = 0.18;
-    const GLOBE_STATE_ARC_MAX = 0.52;
+    const GLOBE_CONTINENT_ARC_MIN = 0.40;
+    const GLOBE_CONTINENT_ARC_MAX = 1.05;
+    const GLOBE_STATE_ARC_MIN = 0.22;
+    const GLOBE_STATE_ARC_MAX = 0.58;
     const GLOBE_STATE_ORBIT = 0.11;
 
     const state = {
@@ -993,6 +993,42 @@
       return bestState;
     }
 
+    function hashUnit(id, salt) {
+      let h = 2166136261;
+      const s = `${id}\0${salt}`;
+      for (let i = 0; i < s.length; i += 1) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0) / 4294967295;
+    }
+
+    /** Stable direction on the crust inside the post's state (never ocean). */
+    function postShellDirection(node, geo, target) {
+      const cluster = node.cluster ?? 0;
+      const sub = node.subcluster ?? 0;
+      const cont = geo.continents.find((c) => c.cluster === cluster);
+      if (!cont) return null;
+      const st = cont.states.find((s) => s.subcluster === sub) || cont.states[0];
+      if (!st) return null;
+
+      const u = hashUnit(node.id, "u");
+      const v = hashUnit(node.id, "v");
+      const stateArc = Math.acos(THREE.MathUtils.clamp(st.cosThreshold, -1, 1));
+      let spread = stateArc * (0.22 + 0.68 * Math.sqrt(u));
+      const ring = Math.floor(v * 512);
+      tangentOffsetDir(st.dir, ring, 512, spread, target);
+
+      if (target.dot(cont.dir) < cont.cosThreshold) {
+        spread *= 0.55;
+        tangentOffsetDir(st.dir, ring, 512, spread, target);
+      }
+      if (target.dot(st.dir) < st.cosThreshold) {
+        return target.copy(st.dir);
+      }
+      return target;
+    }
+
     function geographyLabelPos(geo, cluster, subcluster, center, radius, target) {
       const cont = geo.continents.find((c) => c.cluster === cluster);
       if (!cont) return null;
@@ -1204,7 +1240,7 @@
       const { center, radius } = frame;
       state.globeCenter = center;
       state.globeRadius = radius;
-      state.earthGeo = buildEarthGeography(graph);
+      if (!state.earthGeo) state.earthGeo = buildEarthGeography(graph);
 
       const landRadius = radius * 1.01;
 
@@ -1383,6 +1419,7 @@
     const _tmpColor = new THREE.Color();
 
     function buildScene(graph) {
+      state.earthGeo = buildEarthGeography(graph);
       nodesGroup.clear();
       if (state.instanced) {
         state.instanced.geometry.dispose();
@@ -1420,14 +1457,15 @@
       instanced.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3);
 
       const shellR = SCALE * GLOBE_POST_SHELL_FRAC;
-      const rawDir = new THREE.Vector3();
+      const geo = state.earthGeo;
+      const dirScratch = new THREE.Vector3();
 
       graph.nodes.forEach((node, i) => {
         const radius = nodeRadius(sizeOf(node), minV, maxV);
-        rawDir.set(node.x * SCALE, node.y * SCALE, node.z * SCALE);
-        const pos = rawDir.lengthSq() < 1e-10
-          ? new THREE.Vector3(0, shellR, 0)
-          : rawDir.normalize().multiplyScalar(shellR);
+        const dir = postShellDirection(node, geo, dirScratch);
+        const pos = dir
+          ? dir.clone().multiplyScalar(shellR)
+          : new THREE.Vector3(0, shellR, 0);
         _tmpMatrix.makeScale(radius, radius, radius);
         _tmpMatrix.setPosition(pos);
         instanced.setMatrixAt(i, _tmpMatrix);
