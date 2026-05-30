@@ -411,8 +411,8 @@
       const base = new THREE.Color(subclusterColor(cluster, subcluster));
       const hsl = { h: 0, s: 0, l: 0 };
       base.getHSL(hsl);
-      hsl.l = Math.min(0.72, hsl.l * 1.1 + 0.22);
-      hsl.s = Math.min(1, hsl.s * 1.08);
+      hsl.l = Math.min(0.68, hsl.l * 1.05 + 0.18);
+      hsl.s = Math.min(1, hsl.s * 1.22);
       return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l).getHex();
     }
 
@@ -444,27 +444,28 @@
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
-    const GLOBE_OCEAN = 0x1a5270;
-    const GLOBE_LAND_OPACITY = 0.9;
+    const GLOBE_OCEAN = 0x0a2840;
+    const GLOBE_LAND_OPACITY = 1;
     const GLOBE_CONTINENT_BORDER = 0x000000;
     const GLOBE_SUB_BORDER = 0x2a3540;
     const REGION_STRIDE = 16;
     const GLOBE_PATCH_SEGMENTS = 72;
     const GLOBE_PATCH_RINGS = 18;
     // Fixed shell radius (decoupled from drifting post centroid).
-    const GLOBE_RADIUS_FRAC = 0.48;
+    const GLOBE_RADIUS_FRAC = 0.54;
     // Posts sit on the crust, just above colored land.
     const GLOBE_POST_SHELL_FRAC = GLOBE_RADIUS_FRAC * 1.045;
     // Continent cap angular radius (radians), scaled by sqrt(post fraction).
-    const GLOBE_CONTINENT_ARC_MIN = 0.28;
-    const GLOBE_CONTINENT_ARC_MAX = 0.52;
-    const GLOBE_CONTINENT_MIN_GAP = 0.18;
-    const GLOBE_CONTINENT_CENTER_SEP = 0.52;
+    // Sized so ~7 overlapping caps cover ~70% of the sphere (30% ocean).
+    const GLOBE_CONTINENT_ARC_MIN = 0.72;
+    const GLOBE_CONTINENT_ARC_MAX = 1.02;
+    const GLOBE_CONTINENT_MIN_GAP = 0.08;
+    const GLOBE_CONTINENT_CENTER_SEP = 0.44;
     const GLOBE_STATE_ARC_MIN = 0.22;
     const GLOBE_STATE_ARC_MAX = 0.58;
     // How much of each subcluster wedge posts may occupy.
-    const GLOBE_POST_STATE_FILL = 0.9;
-    const GLOBE_LAND_INNER_FRAC = 0.12;
+    const GLOBE_POST_STATE_FILL = 0.62;
+    const GLOBE_LAND_INNER_FRAC = 0.02;
 
     const state = {
       graph: null,
@@ -942,13 +943,11 @@
       const clusters = (graph.clusters || []).slice().sort((a, b) => a.id - b.id);
       const totalPosts = clusters.reduce((s, c) => s + (c.size ?? 0), 0) || 1;
       const nCont = clusters.length;
-      const arcScale = Math.min(1, 2.1 / Math.sqrt(nCont));
       const continents = clusters.map((cl, slot) => {
         const dir = fibonacciSphereDir(slot, nCont, new THREE.Vector3());
         const frac = (cl.size ?? 0) / totalPosts;
         const cosThreshold = arcCosThreshold(frac, GLOBE_CONTINENT_ARC_MIN, GLOBE_CONTINENT_ARC_MAX);
-        let continentArc = Math.acos(cosThreshold) * arcScale;
-        continentArc = Math.max(GLOBE_CONTINENT_ARC_MIN * 0.85, continentArc);
+        const continentArc = Math.acos(cosThreshold);
         const subs = (cl.subclusters || []).slice().sort((a, b) => a.id - b.id);
         const subTotal = subs.reduce((s, sub) => s + (sub.size ?? 0), 0) || 1;
         let cumSlice = 0;
@@ -1070,21 +1069,20 @@
       if (!st) return null;
 
       const seed = `${node.id}\0${cluster}\0${sub}`;
-      const hu = hashUnit(seed, "u");
-      const hv = hashUnit(seed, "v");
-      const hw = hashUnit(seed, "w");
       const azSpan = st.az1 > st.az0 ? st.az1 - st.az0 : st.az1 + Math.PI * 2 - st.az0;
-      const az = st.az0 + hu * azSpan;
-      const radial = GLOBE_LAND_INNER_FRAC + Math.sqrt(hv) * (1 - GLOBE_LAND_INNER_FRAC);
-      const incl = continentInclAt(cont, az, radial, hw > 0.97);
-      directionInCap(cont.dir, incl * GLOBE_POST_STATE_FILL, az, target);
-      tangentFrame(target, _tmpVecB, _tmpVecC);
-      const jitter = cont.arc * 0.055;
-      target
-        .addScaledVector(_tmpVecB, (hashUnit(seed, "jx") - 0.5) * jitter)
-        .addScaledVector(_tmpVecC, (hashUnit(seed, "jy") - 0.5) * jitter)
-        .normalize();
-      return target;
+      const azMid = st.az0 + azSpan * 0.5;
+      let u = hashUnit(seed, "u") * 2 - 1;
+      let v = hashUnit(seed, "v") * 2 - 1;
+      const r2 = u * u + v * v;
+      if (r2 > 1) {
+        const s = 0.82 / Math.sqrt(r2);
+        u *= s;
+        v *= s;
+      }
+      const maxIncl = cont.arc * GLOBE_POST_STATE_FILL;
+      const incl = Math.pow(Math.sqrt(u * u + v * v), 1.7) * maxIncl * 0.52;
+      const az = azMid + Math.atan2(v, u) * Math.min(azSpan * 0.48, Math.PI * 0.5);
+      return directionInCap(cont.dir, incl, az, target);
     }
 
     function buildStateWedgeMesh(cont, st, landRadius, center) {
@@ -1178,7 +1176,7 @@
       geom.setAttribute("position", new THREE.Float32BufferAttribute(borderPoints, 3));
       const lines = new THREE.LineSegments(
         geom,
-        new THREE.LineBasicMaterial({ color: GLOBE_CONTINENT_BORDER }),
+        new THREE.LineBasicMaterial({ color: GLOBE_CONTINENT_BORDER, transparent: true, opacity: 0.45 }),
       );
       lines.renderOrder = 3;
       group.add(lines);
@@ -1223,8 +1221,6 @@
           mesh.renderOrder = 1;
           group.add(mesh);
         });
-        addSubclusterBorders(cont, group, landRadius, center);
-        addContinentOutline(cont, group, landRadius, center);
       });
 
       group.renderOrder = 1;
@@ -1269,10 +1265,10 @@
       state.globeRadius = radius;
       if (!state.earthGeo) state.earthGeo = buildEarthGeography(graph);
 
-      const landRadius = radius * 1.01;
+      const landRadius = radius * 1.015;
 
       const ocean = new THREE.Mesh(
-        new THREE.SphereGeometry(radius * 0.998, 64, 48),
+        new THREE.SphereGeometry(radius * 0.992, 64, 48),
         new THREE.MeshBasicMaterial({ color: GLOBE_OCEAN, transparent: false, depthWrite: true }),
       );
       ocean.position.copy(center);
