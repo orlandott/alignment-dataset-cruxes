@@ -443,6 +443,8 @@
     const GLOBE_GRID_LON = 144;
     // Fixed shell radius (decoupled from drifting post centroid).
     const GLOBE_RADIUS_FRAC = 0.48;
+    // Posts sit on the crust, just above colored land.
+    const GLOBE_POST_SHELL_FRAC = GLOBE_RADIUS_FRAC * 1.045;
     // Continent cap angular radius (radians), scaled by sqrt(post fraction).
     const GLOBE_CONTINENT_ARC_MIN = 0.32;
     const GLOBE_CONTINENT_ARC_MAX = 0.92;
@@ -1417,9 +1419,15 @@
       instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       instanced.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3);
 
+      const shellR = SCALE * GLOBE_POST_SHELL_FRAC;
+      const rawDir = new THREE.Vector3();
+
       graph.nodes.forEach((node, i) => {
         const radius = nodeRadius(sizeOf(node), minV, maxV);
-        const pos = new THREE.Vector3(node.x * SCALE, node.y * SCALE, node.z * SCALE);
+        rawDir.set(node.x * SCALE, node.y * SCALE, node.z * SCALE);
+        const pos = rawDir.lengthSq() < 1e-10
+          ? new THREE.Vector3(0, shellR, 0)
+          : rawDir.normalize().multiplyScalar(shellR);
         _tmpMatrix.makeScale(radius, radius, radius);
         _tmpMatrix.setPosition(pos);
         instanced.setMatrixAt(i, _tmpMatrix);
@@ -1443,16 +1451,11 @@
     }
 
     function frameCloud() {
-      // LSA's first component is all-positive, so the cloud sits off-origin and
-      // is a thin shell. Fit the camera to its bounding sphere (centroid +
-      // max radius) so the whole cloud is framed regardless of offset.
-      const center = new THREE.Vector3();
+      const center = new THREE.Vector3(0, 0, 0);
       const count = state.positions.length;
       if (!count) return;
-      state.positions.forEach((pos) => center.add(pos));
-      center.multiplyScalar(1 / count);
 
-      let radius = 1;
+      let radius = SCALE * GLOBE_POST_SHELL_FRAC;
       state.positions.forEach((pos) => {
         radius = Math.max(radius, pos.distanceTo(center));
       });
