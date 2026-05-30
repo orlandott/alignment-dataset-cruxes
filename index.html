@@ -456,14 +456,15 @@
     // Posts sit on the crust, just above colored land.
     const GLOBE_POST_SHELL_FRAC = GLOBE_RADIUS_FRAC * 1.045;
     // Continent cap angular radius (radians), scaled by sqrt(post fraction).
-    const GLOBE_CONTINENT_ARC_MIN = 0.36;
-    const GLOBE_CONTINENT_ARC_MAX = 0.88;
-    const GLOBE_CONTINENT_MIN_GAP = 0.22;
+    const GLOBE_CONTINENT_ARC_MIN = 0.28;
+    const GLOBE_CONTINENT_ARC_MAX = 0.52;
+    const GLOBE_CONTINENT_MIN_GAP = 0.18;
+    const GLOBE_CONTINENT_CENTER_SEP = 0.52;
     const GLOBE_STATE_ARC_MIN = 0.22;
     const GLOBE_STATE_ARC_MAX = 0.58;
     // How much of each subcluster wedge posts may occupy.
-    const GLOBE_POST_STATE_FILL = 0.84;
-    const GLOBE_POST_PCA_NUDGE = 0.12;
+    const GLOBE_POST_STATE_FILL = 0.9;
+    const GLOBE_LAND_INNER_FRAC = 0.12;
 
     const state = {
       graph: null,
@@ -929,18 +930,6 @@
       return Math.cos(arc);
     }
 
-    function clusterPcaCentroid(graph, clusterId, target) {
-      const sum = new THREE.Vector3();
-      let n = 0;
-      graph.nodes.forEach((node) => {
-        if ((node.cluster ?? 0) !== clusterId) return;
-        sum.add(_tmpVecA.set(node.x, node.y, node.z));
-        n += 1;
-      });
-      if (!n || sum.lengthSq() < 1e-10) return null;
-      return target.copy(sum).normalize();
-    }
-
     function tangentFrame(pole, eastOut, northOut) {
       const up = _tmpVecA.copy(pole).normalize();
       const ref = Math.abs(up.y) < 0.85 ? _basisRef : _basisRef2;
@@ -952,13 +941,14 @@
     function buildEarthGeography(graph) {
       const clusters = (graph.clusters || []).slice().sort((a, b) => a.id - b.id);
       const totalPosts = clusters.reduce((s, c) => s + (c.size ?? 0), 0) || 1;
+      const nCont = clusters.length;
+      const arcScale = Math.min(1, 2.1 / Math.sqrt(nCont));
       const continents = clusters.map((cl, slot) => {
-        const anchor = fibonacciSphereDir(slot, clusters.length, new THREE.Vector3());
-        const pca = clusterPcaCentroid(graph, cl.id, new THREE.Vector3());
-        const dir = pca ? anchor.lerp(pca, 0.12).normalize() : anchor;
+        const dir = fibonacciSphereDir(slot, nCont, new THREE.Vector3());
         const frac = (cl.size ?? 0) / totalPosts;
         const cosThreshold = arcCosThreshold(frac, GLOBE_CONTINENT_ARC_MIN, GLOBE_CONTINENT_ARC_MAX);
-        const continentArc = Math.acos(cosThreshold);
+        let continentArc = Math.acos(cosThreshold) * arcScale;
+        continentArc = Math.max(GLOBE_CONTINENT_ARC_MIN * 0.85, continentArc);
         const subs = (cl.subclusters || []).slice().sort((a, b) => a.id - b.id);
         const subTotal = subs.reduce((s, sub) => s + (sub.size ?? 0), 0) || 1;
         let cumSlice = 0;
@@ -1002,7 +992,6 @@
         };
       });
       separateContinents(continents);
-      computeStateBounds(graph, continents);
       return { continents, totalPosts };
     }
 
@@ -1014,13 +1003,17 @@
           for (let j = i + 1; j < continents.length; j += 1) {
             const a = continents[i];
             const b = continents[j];
-            const need = Math.cos(a.arc + b.arc + GLOBE_CONTINENT_MIN_GAP);
+            const sep = Math.max(
+              GLOBE_CONTINENT_CENTER_SEP,
+              a.arc + b.arc + GLOBE_CONTINENT_MIN_GAP,
+            );
+            const need = Math.cos(sep);
             const dot = a.dir.dot(b.dir);
             if (dot <= need) continue;
             axis.copy(a.dir).cross(b.dir);
             if (axis.lengthSq() < 1e-8) axis.set(1, 0, 0).cross(a.dir);
             axis.normalize();
-            const push = 0.018 + 0.07 * (dot - need);
+            const push = 0.025 + 0.09 * (dot - need);
             a.dir.applyAxisAngle(axis, push).normalize();
             b.dir.applyAxisAngle(axis, -push).normalize();
             moved = true;
@@ -1028,40 +1021,6 @@
         }
         if (!moved) break;
       }
-    }
-
-    function computeStateBounds(graph, continents) {
-      continents.forEach((cont) => {
-        tangentFrame(cont.dir, _tmpVecB, _tmpVecC);
-        const east = _tmpVecB;
-        const north = _tmpVecC;
-        cont.states.forEach((st) => {
-          st.bounds = {
-            minE: Infinity, maxE: -Infinity, minN: Infinity, maxN: -Infinity, has: false,
-          };
-        });
-        graph.nodes.forEach((node) => {
-          if ((node.cluster ?? 0) !== cont.cluster) return;
-          const st = cont.states.find((s) => s.subcluster === (node.subcluster ?? 0))
-            || cont.states[0];
-          if (!st) return;
-          const p = _tmpVecA.set(node.x, node.y, node.z);
-          if (p.lengthSq() < 1e-10) return;
-          p.normalize();
-          const e = p.dot(east);
-          const n = p.dot(north);
-          const b = st.bounds;
-          b.minE = Math.min(b.minE, e);
-          b.maxE = Math.max(b.maxE, e);
-          b.minN = Math.min(b.minN, n);
-          b.maxN = Math.max(b.maxN, n);
-          b.has = true;
-        });
-        cont.states.forEach((st) => {
-          if (st.bounds.has) return;
-          st.bounds = { minE: -0.25, maxE: 0.25, minN: -0.25, maxN: 0.25, has: true };
-        });
-      });
     }
 
     function hashUnit(id, salt) {
@@ -1102,12 +1061,6 @@
       return maxArc * radial * (1 + (edge - 1) * radial * 0.9);
     }
 
-    function pcaDirection(node, target) {
-      target.set(node.x, node.y, node.z);
-      if (target.lengthSq() < 1e-10) return target.set(0, 1, 0);
-      return target.normalize();
-    }
-
     function postShellDirection(node, geo, target) {
       const cluster = node.cluster ?? 0;
       const sub = node.subcluster ?? 0;
@@ -1116,30 +1069,21 @@
       const st = cont.states.find((s) => s.subcluster === sub) || cont.states[0];
       if (!st) return null;
 
-      const hu = hashUnit(node.id, "u");
-      const hv = hashUnit(node.id, "v");
+      const seed = `${node.id}\0${cluster}\0${sub}`;
+      const hu = hashUnit(seed, "u");
+      const hv = hashUnit(seed, "v");
+      const hw = hashUnit(seed, "w");
       const azSpan = st.az1 > st.az0 ? st.az1 - st.az0 : st.az1 + Math.PI * 2 - st.az0;
       const az = st.az0 + hu * azSpan;
-      const edge = organicEdgeFactor(cont.shapeSeed, az);
-      const maxIncl = cont.arc * edge * GLOBE_POST_STATE_FILL * Math.min(1, st.arc / cont.arc);
-      const incl = Math.acos(1 - hv * (1 - Math.cos(maxIncl)));
-      directionInCap(cont.dir, incl, az, target);
-
-      if (st.bounds?.has && GLOBE_POST_PCA_NUDGE > 0) {
-        tangentFrame(cont.dir, _tmpVecB, _tmpVecC);
-        const raw = pcaDirection(node, _tmpVecD);
-        const b = st.bounds;
-        const spanE = Math.max(b.maxE - b.minE, 1e-5);
-        const spanN = Math.max(b.maxN - b.minN, 1e-5);
-        const pu = THREE.MathUtils.clamp((raw.dot(_tmpVecB) - b.minE) / spanE, 0, 1);
-        const pv = THREE.MathUtils.clamp((raw.dot(_tmpVecC) - b.minN) / spanN, 0, 1);
-        const pcaAz = st.az0 + pu * azSpan;
-        const pcaEdge = organicEdgeFactor(cont.shapeSeed, pcaAz);
-        const pcaMax = cont.arc * pcaEdge * GLOBE_POST_STATE_FILL * Math.min(1, st.arc / cont.arc);
-        const pcaIncl = Math.acos(1 - pv * (1 - Math.cos(pcaMax)));
-        directionInCap(cont.dir, pcaIncl, pcaAz, _tmpVecD);
-        slerpDir(target, _tmpVecD, GLOBE_POST_PCA_NUDGE, target);
-      }
+      const radial = GLOBE_LAND_INNER_FRAC + Math.sqrt(hv) * (1 - GLOBE_LAND_INNER_FRAC);
+      const incl = continentInclAt(cont, az, radial, hw > 0.97);
+      directionInCap(cont.dir, incl * GLOBE_POST_STATE_FILL, az, target);
+      tangentFrame(target, _tmpVecB, _tmpVecC);
+      const jitter = cont.arc * 0.055;
+      target
+        .addScaledVector(_tmpVecB, (hashUnit(seed, "jx") - 0.5) * jitter)
+        .addScaledVector(_tmpVecC, (hashUnit(seed, "jy") - 0.5) * jitter)
+        .normalize();
       return target;
     }
 
@@ -1147,7 +1091,7 @@
       const azSpan = st.az1 > st.az0 ? st.az1 - st.az0 : st.az1 + Math.PI * 2 - st.az0;
       const segments = Math.max(10, Math.ceil(GLOBE_PATCH_SEGMENTS * azSpan / (Math.PI * 2)));
       const rings = GLOBE_PATCH_RINGS;
-      const innerFrac = 0.1;
+      const innerFrac = GLOBE_LAND_INNER_FRAC;
       const positions = [];
       const indices = [];
       const idx = (ir, is) => ir * (segments + 1) + is;
