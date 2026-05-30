@@ -11,6 +11,7 @@ from scripts.build_crux_map import (
     cluster_top_terms,
     compute_clusters,
     compute_post_coords,
+    compute_subclusters,
     describe_pca_axes,
     parse_model_json,
     post_summary,
@@ -146,6 +147,20 @@ def test_cluster_label_falls_back_to_terms():
     assert cluster_label("AI Risk & Policy", ["risks", "safety"]) == "AI Risk & Policy"
     assert cluster_label(None, ["risks", "safety", "ais", "control"]) == "risks · safety · ais"
     assert cluster_label(None, []) == "Misc"
+
+
+def test_compute_subclusters_within_parents():
+    posts = _posts() * 8  # 32 posts, duplicated text blocks still split in subclusters
+    geo = compute_post_coords(posts, use_embeddings=False)
+    labels = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    sub_labels, meta = compute_subclusters(
+        geo.cluster_features, labels, geo.matrix, geo.vectorizer, posts
+    )
+    assert sub_labels.shape == (32,)
+    assert 0 in meta and 1 in meta
+    assert len(meta[0]) >= 1
+    assert sum(s["size"] for s in meta[0]) == 16
 
 
 def test_cluster_exemplars_returns_titles_nearest_centroid():

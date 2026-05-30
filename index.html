@@ -125,8 +125,15 @@
       margin-bottom: 6px;
     }
 
-    #cluster-legend { display: flex; flex-direction: column; gap: 5px; }
+    #cluster-legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-continent { display: flex; flex-direction: column; gap: 4px; }
     .legend-item { display: flex; align-items: center; gap: 7px; line-height: 1.3; }
+    .legend-item.sub {
+      padding-left: 18px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .legend-item.sub .swatch { width: 9px; height: 9px; }
     .swatch { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
 
     #axis-legend { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
@@ -294,7 +301,7 @@
         <p id="subtitle">Loading alignment research posts…</p>
       </div>
       <div id="legend">
-        <span class="legend-title">Topic continents · each colored region is a cluster</span>
+        <span class="legend-title">Continents & regions · shades = subclusters within each theme</span>
         <div id="cluster-legend"></div>
         <span class="legend-title" style="margin-top:8px" id="axis-legend-title">Layout axes</span>
         <div id="axis-legend"></div>
@@ -356,6 +363,52 @@
       return CLUSTER_COLORS[cluster % CLUSTER_COLORS.length];
     }
 
+    function subclusterCount(cluster) {
+      const subs = clusterEntry(cluster)?.subclusters;
+      return Array.isArray(subs) && subs.length ? subs.length : 1;
+    }
+
+    function subclusterEntry(cluster, subcluster) {
+      const subs = clusterEntry(cluster)?.subclusters || [];
+      return subs.find((s) => s.id === subcluster) || null;
+    }
+
+    function subclusterLabel(cluster, subcluster) {
+      const entry = subclusterEntry(cluster, subcluster);
+      if (entry?.label) return entry.label;
+      return `Region ${subcluster + 1}`;
+    }
+
+    function subclusterColor(cluster, subcluster) {
+      const count = subclusterCount(cluster);
+      const base = new THREE.Color(clusterColor(cluster));
+      if (count <= 1) return base.getHex();
+      const hsl = { h: 0, s: 0, l: 0 };
+      base.getHSL(hsl);
+      const t = subcluster / Math.max(1, count - 1);
+      hsl.l = 0.28 + t * 0.44;
+      hsl.s = Math.min(1, hsl.s * (0.8 + t * 0.3));
+      return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l).getHex();
+    }
+
+    function regionKey(cluster, subcluster) {
+      return cluster * REGION_STRIDE + subcluster;
+    }
+
+    function clusterFromRegion(key) {
+      return Math.floor(key / REGION_STRIDE);
+    }
+
+    function subFromRegion(key) {
+      return key % REGION_STRIDE;
+    }
+
+    function nodeRegionColor(node) {
+      const cluster = node.cluster ?? 0;
+      const sub = node.subcluster ?? 0;
+      return subclusterColor(cluster, sub);
+    }
+
     // Posts sit on a (roughly) unit spherical shell after L2-normalization, so
     // crowding is governed by point size relative to SCALE, not by post count.
     // A large SCALE with modest point radii gives a few thousand posts room to
@@ -376,7 +429,9 @@
     const GLOBE_LON = 112;
     const GLOBE_OCEAN = 0xb8d4e8;
     const GLOBE_BORDER = 0x3a4a5c;
+    const GLOBE_SUB_BORDER = 0x8aa0b4;
     const GLOBE_LAND_OPACITY = 0.52;
+    const REGION_STRIDE = 16;
     const GLOBE_BORDER_STEPS = 5;
 
     const state = {
@@ -639,29 +694,46 @@
       return html;
     }
 
-    function renderClusterTheme(cluster) {
+    function renderClusterTheme(node) {
+      const cluster = node.cluster;
+      const sub = node.subcluster ?? 0;
+      const subEntry = subclusterEntry(cluster, sub);
       const exemplars = clusterExemplars(cluster).slice(0, 3);
       const terms = clusterTerms(cluster);
-      if (!exemplars.length && !terms) return "";
+      const subTerms = subEntry?.terms?.join(" · ") || "";
+      const subEx = (subEntry?.exemplars || []).slice(0, 2);
       const items = exemplars.map((t) => `<li>${escapeHtml(t)}</li>`).join("");
+      const subItems = subEx.map((t) => `<li>${escapeHtml(t)}</li>`).join("");
       const termsLine = terms
-        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Key terms: ${escapeHtml(terms)}</p>`
+        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Continent terms: ${escapeHtml(terms)}</p>`
+        : "";
+      const subLine = subTerms
+        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Region terms: ${escapeHtml(subTerms)}</p>`
         : "";
       const exemplarBlock = exemplars.length
-        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Representative posts:</p><ul class="claims-list">${items}</ul>`
+        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Representative posts (continent):</p><ul class="claims-list">${items}</ul>`
+        : "";
+      const subBlock = subItems
+        ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Representative posts (region):</p><ul class="claims-list">${subItems}</ul>`
         : "";
       return `
         <div class="section">
-          <h3>Topic cluster · ${escapeHtml(clusterLabel(cluster))}</h3>
+          <h3>Continent · ${escapeHtml(clusterLabel(cluster))}</h3>
+          <p style="font-size:13px;margin:0 0 8px">
+            <span class="swatch" style="display:inline-block;vertical-align:middle;background:${hexCss(subclusterColor(cluster, sub))}"></span>
+            Region · ${escapeHtml(subclusterLabel(cluster, sub))}
+          </p>
           ${termsLine}
+          ${subLine}
           ${exemplarBlock}
+          ${subBlock}
         </div>`;
     }
 
     function nodeHeaderHtml(node) {
       const date = (node.date || "").slice(0, 10);
       return `
-        <span class="badge" style="background:${hexCss(clusterColor(node.cluster))}22;color:${hexCss(clusterColor(node.cluster))}">${escapeHtml(clusterLabel(node.cluster))}</span>
+        <span class="badge" style="background:${hexCss(subclusterColor(node.cluster, node.subcluster ?? 0))}22;color:${hexCss(subclusterColor(node.cluster, node.subcluster ?? 0))}">${escapeHtml(clusterLabel(node.cluster))} · ${escapeHtml(subclusterLabel(node.cluster, node.subcluster ?? 0))}</span>
         <h2>${escapeHtml(node.label)}</h2>
         <p class="meta-line">
           ${escapeHtml(node.author)} · ${escapeHtml(node.source)} · ${escapeHtml(date)}
@@ -683,7 +755,7 @@
       setPanelHtml(`
         ${nodeHeaderHtml(node)}
         ${body}
-        ${renderClusterTheme(node.cluster)}
+        ${renderClusterTheme(node)}
       `);
     }
 
@@ -917,32 +989,39 @@
       ocean.renderOrder = 0;
       globeGroup.add(ocean);
 
-      // Cluster centroids on the unit sphere (mean direction of member posts).
-      const dirsByCluster = new Map();
+      // Subcluster centroids on the unit sphere (mean direction per region).
+      const dirsByRegion = new Map();
       graph.nodes.forEach((node) => {
         const idx = state.indexById.get(node.id);
         if (idx === undefined) return;
         const dir = _tmpVecA.copy(state.positions[idx]).sub(center).normalize();
-        const list = dirsByCluster.get(node.cluster) || [];
+        const sub = node.subcluster ?? 0;
+        const key = regionKey(node.cluster, sub);
+        const list = dirsByRegion.get(key) || [];
         list.push(dir.clone());
-        dirsByCluster.set(node.cluster, list);
+        dirsByRegion.set(key, list);
       });
 
       const centroids = [];
-      dirsByCluster.forEach((dirs, cluster) => {
+      dirsByRegion.forEach((dirs, key) => {
         const sum = new THREE.Vector3();
         dirs.forEach((d) => sum.add(d));
         if (sum.lengthSq() < 1e-8) return;
-        centroids.push({ cluster, dir: sum.normalize() });
+        centroids.push({
+          key,
+          cluster: clusterFromRegion(key),
+          subcluster: subFromRegion(key),
+          dir: sum.normalize(),
+        });
       });
       if (centroids.length < 2) return;
 
-      function nearestCluster(dir) {
-        let best = centroids[0].cluster;
+      function nearestRegion(dir) {
+        let best = centroids[0].key;
         let bestDot = -Infinity;
-        centroids.forEach(({ cluster, dir: cDir }) => {
+        centroids.forEach(({ key, dir: cDir }) => {
           const d = dir.dot(cDir);
-          if (d > bestDot) { bestDot = d; best = cluster; }
+          if (d > bestDot) { bestDot = d; best = key; }
         });
         return best;
       }
@@ -955,12 +1034,13 @@
         const lat = -Math.PI / 2 + (i + 0.5) * (Math.PI / latN);
         for (let j = 0; j < lonN; j += 1) {
           const lon = -Math.PI + (j + 0.5) * (2 * Math.PI / lonN);
-          labels[i * lonN + j] = nearestCluster(sphericalDir(lat, lon, dirScratch));
+          labels[i * lonN + j] = nearestRegion(sphericalDir(lat, lon, dirScratch));
         }
       }
 
       const landVerts = new Map();
-      const borderPoints = [];
+      const continentBorderPoints = [];
+      const subBorderPoints = [];
 
       function cornerDir(i, j, corner) {
         const ii = i + (corner >> 1);
@@ -970,13 +1050,18 @@
         return sphericalDir(lat, lon, _cornerDirs[corner]);
       }
 
-      function pushLandTri(cluster, d0, d1, d2) {
-        if (!landVerts.has(cluster)) landVerts.set(cluster, []);
-        const arr = landVerts.get(cluster);
+      function pushLandTri(region, d0, d1, d2) {
+        if (!landVerts.has(region)) landVerts.set(region, []);
+        const arr = landVerts.get(region);
         const w0 = worldOnShell(d0, landRadius, center, _tmpVecA);
         const w1 = worldOnShell(d1, landRadius, center, _tmpVecB);
         const w2 = worldOnShell(d2, landRadius, center, _tmpVecC);
         arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
+      }
+
+      function addBorderBetween(a, b, d0, d1, points) {
+        if (a === b) return;
+        appendGreatCircle(points, d0, d1, borderRadius, center, GLOBE_BORDER_STEPS);
       }
 
       for (let i = 0; i < latN - 1; i += 1) {
@@ -995,22 +1080,40 @@
           if (c00 === c10 && c00 === c01) pushLandTri(c00, d00, d10, d01);
           if (c11 === c10 && c11 === c01) pushLandTri(c11, d11, d01, d10);
 
-          if (c00 !== c10) appendGreatCircle(borderPoints, d00, d10, borderRadius, center, GLOBE_BORDER_STEPS);
-          if (c01 !== c11) appendGreatCircle(borderPoints, d01, d11, borderRadius, center, GLOBE_BORDER_STEPS);
-          if (c00 !== c01) appendGreatCircle(borderPoints, d00, d01, borderRadius, center, GLOBE_BORDER_STEPS);
-          if (c10 !== c11) appendGreatCircle(borderPoints, d10, d11, borderRadius, center, GLOBE_BORDER_STEPS);
+          if (clusterFromRegion(c00) !== clusterFromRegion(c10)) {
+            addBorderBetween(c00, c10, d00, d10, continentBorderPoints);
+          } else if (c00 !== c10) {
+            addBorderBetween(c00, c10, d00, d10, subBorderPoints);
+          }
+          if (clusterFromRegion(c01) !== clusterFromRegion(c11)) {
+            addBorderBetween(c01, c11, d01, d11, continentBorderPoints);
+          } else if (c01 !== c11) {
+            addBorderBetween(c01, c11, d01, d11, subBorderPoints);
+          }
+          if (clusterFromRegion(c00) !== clusterFromRegion(c01)) {
+            addBorderBetween(c00, c01, d00, d01, continentBorderPoints);
+          } else if (c00 !== c01) {
+            addBorderBetween(c00, c01, d00, d01, subBorderPoints);
+          }
+          if (clusterFromRegion(c10) !== clusterFromRegion(c11)) {
+            addBorderBetween(c10, c11, d10, d11, continentBorderPoints);
+          } else if (c10 !== c11) {
+            addBorderBetween(c10, c11, d10, d11, subBorderPoints);
+          }
         }
       }
 
-      landVerts.forEach((verts, cluster) => {
+      landVerts.forEach((verts, region) => {
         if (verts.length < 9) return;
+        const cluster = clusterFromRegion(region);
+        const sub = subFromRegion(region);
         const geom = new THREE.BufferGeometry();
         geom.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
         geom.computeVertexNormals();
         const mesh = new THREE.Mesh(
           geom,
           new THREE.MeshBasicMaterial({
-            color: clusterColor(cluster),
+            color: subclusterColor(cluster, sub),
             transparent: true,
             opacity: GLOBE_LAND_OPACITY,
             depthWrite: false,
@@ -1021,30 +1124,42 @@
         globeGroup.add(mesh);
       });
 
-      if (borderPoints.length >= 6) {
+      function addBorderLines(points, color) {
+        if (points.length < 6) return;
         const borderGeom = new THREE.BufferGeometry();
-        borderGeom.setAttribute("position", new THREE.Float32BufferAttribute(borderPoints, 3));
-        const borders = new THREE.LineSegments(
+        borderGeom.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
+        globeGroup.add(new THREE.LineSegments(
           borderGeom,
-          new THREE.LineBasicMaterial({
-            color: GLOBE_BORDER,
-            transparent: false,
-            linewidth: 1,
-          }),
-        );
-        borders.renderOrder = 2;
-        globeGroup.add(borders);
+          new THREE.LineBasicMaterial({ color, transparent: false }),
+        ));
       }
 
-      // Continent name labels at each cluster centroid on the shell.
+      addBorderLines(subBorderPoints, GLOBE_SUB_BORDER);
+      const subLines = globeGroup.children[globeGroup.children.length - 1];
+      if (subLines) subLines.renderOrder = 2;
+      addBorderLines(continentBorderPoints, GLOBE_BORDER);
+      const contLines = globeGroup.children[globeGroup.children.length - 1];
+      if (contLines) contLines.renderOrder = 3;
+
+      // Continent labels (parent cluster); region labels omitted to avoid clutter.
+      const continentDirs = new Map();
       centroids.forEach(({ cluster, dir }) => {
+        if (!continentDirs.has(cluster)) continentDirs.set(cluster, []);
+        continentDirs.get(cluster).push(dir);
+      });
+      continentDirs.forEach((dirs, cluster) => {
+        const sum = new THREE.Vector3();
+        dirs.forEach((d) => sum.add(d));
+        if (sum.lengthSq() < 1e-8) return;
         const label = document.createElement("div");
         label.className = "continent-label";
         label.textContent = clusterLabel(cluster);
         label.style.borderColor = hexCss(clusterColor(cluster));
         overlay.appendChild(label);
         state.continentLabelEls.push(label);
-        state.continentLabelPositions.push(worldOnShell(dir, labelRadius, center, new THREE.Vector3()));
+        state.continentLabelPositions.push(
+          worldOnShell(sum.normalize(), labelRadius, center, new THREE.Vector3()),
+        );
       });
     }
 
@@ -1094,10 +1209,19 @@
         if (terms) tipParts.push(terms);
         if (exemplars.length) tipParts.push(`e.g. ${exemplars.join(" · ")}`);
         const label = c.label || (c.terms || []).slice(0, 3).join(" · ") || `cluster ${c.id}`;
+        const subs = Array.isArray(c.subclusters) ? c.subclusters : [];
+        const subHtml = subs.map((s) => `
+          <div class="legend-item sub" title="${escapeAttr((s.terms || []).join(" · "))}">
+            <span class="swatch" style="background:${hexCss(subclusterColor(c.id, s.id))}"></span>
+            <span>${escapeHtml(s.label || `Region ${s.id + 1}`)} <span style="color:var(--muted)">(${s.size})</span></span>
+          </div>`).join("");
         return `
-        <div class="legend-item" title="${escapeAttr(tipParts.join("  —  "))}">
-          <span class="swatch" style="background:${hexCss(clusterColor(c.id))}"></span>
-          <span>${escapeHtml(label)} <span style="color:var(--muted)">(${c.size})</span></span>
+        <div class="legend-continent" title="${escapeAttr(tipParts.join("  —  "))}">
+          <div class="legend-item">
+            <span class="swatch" style="background:${hexCss(clusterColor(c.id))}"></span>
+            <span>${escapeHtml(label)} <span style="color:var(--muted)">(${c.size})</span></span>
+          </div>
+          ${subHtml}
         </div>`;
       }).join("");
     }
@@ -1190,7 +1314,7 @@
         _tmpMatrix.setPosition(pos);
         instanced.setMatrixAt(i, _tmpMatrix);
 
-        const color = new THREE.Color(clusterColor(node.cluster));
+        const color = new THREE.Color(nodeRegionColor(node));
         instanced.setColorAt(i, color);
 
         state.nodeOrder[i] = node;

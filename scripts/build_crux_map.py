@@ -81,6 +81,12 @@ CLUSTER_COMPONENTS = 20
 MIN_K = 6
 MAX_K = 12
 
+# Within each top-level "continent", re-cluster posts into sub-regions (3–6 by
+# silhouette, same method as the top level but scoped to one parent cluster).
+SUBCLUSTER_MIN_K = 3
+SUBCLUSTER_MAX_K = 6
+SUBCLUSTER_MIN_POSTS = 12  # fewer posts → 1–2 sub-regions only
+
 _authored_claims_cache: dict[str, list[str]] | None = None
 _authored_cruxes_cache: dict[str, dict] | None = None
 
@@ -482,6 +488,131 @@ def compute_clusters(coords: np.ndarray, n_clusters: int) -> np.ndarray:
     if k < 2 or n == 0:
         return np.zeros(n, dtype=int)
     return KMeans(n_clusters=k, random_state=42, n_init=10).fit_predict(coords)
+
+
+def choose_sub_k(coords: np.ndarray) -> int:
+    """Pick 3–6 subclusters inside one parent cluster (or fewer when tiny)."""
+    n = coords.shape[0]
+    if n < 4:
+        return max(1, n)
+    if n < SUBCLUSTER_MIN_POSTS:
+        return max(1, min(2, n - 1))
+    upper = min(SUBCLUSTER_MAX_K, n - 1)
+    lower = min(SUBCLUSTER_MIN_K, upper)
+    return choose_k(coords, min_k=lower, max_k=upper)
+
+
+def cluster_top_terms_subset(
+    matrix,
+    vectorizer: TfidfVectorizer,
+    row_indices: np.ndarray,
+    labels: np.ndarray,
+    *,
+    top_n: int = 4,
+) -> dict[int, list[str]]:
+    """Distinctive terms per label within a row subset (e.g. subclusters)."""
+    try:
+        features = vectorizer.get_feature_names_out()
+    except Exception:
+        return {}
+    if hasattr(matrix, "toarray"):
+        dense = matrix[row_indices].toarray()
+    else:
+        dense = np.asarray(matrix)[row_indices]
+    terms: dict[int, list[str]] = {}
+    for cluster in sorted(set(int(c) for c in labels)):
+        mask = labels == cluster
+        if not mask.any():
+            continue
+        in_mean = dense[mask].mean(axis=0)
+        out_mean = dense[~mask].mean(axis=0) if (~mask).any() else np.zeros_like(in_mean)
+        score = in_mean - out_mean
+        order = np.argsort(-score)
+        picked: list[str] = []
+        for idx in order:
+            term = features[idx]
+            if not _is_label_term(term):
+                continue
+            picked.append(term)
+            if len(picked) >= top_n:
+                break
+        terms[cluster] = picked
+    return terms
+
+
+def cluster_exemplars_subset(
+    space: np.ndarray,
+    row_indices: np.ndarray,
+    labels: np.ndarray,
+    posts: list[Post],
+    *,
+    top_n: int = 2,
+) -> dict[int, list[str]]:
+    """Exemplar titles per label within a row subset."""
+    exemplars: dict[int, list[str]] = {}
+    for cluster in sorted(set(int(c) for c in labels)):
+        local = np.where(labels == cluster)[0]
+        if local.size == 0:
+            continue
+        idx = row_indices[local]
+        centroid = space[idx].mean(axis=0)
+        dist = np.linalg.norm(space[idx] - centroid, axis=1)
+        nearest = idx[np.argsort(dist)[:top_n]]
+        exemplars[cluster] = [posts[i].title for i in nearest]
+    return exemplars
+
+
+def subcluster_label(terms: list[str], sub_id: int) -> str:
+    if terms:
+        return " · ".join(terms[:3])
+    return f"Region {sub_id + 1}"
+
+
+def compute_subclusters(
+    cluster_space: np.ndarray,
+    parent_labels: np.ndarray,
+    matrix,
+    vectorizer: TfidfVectorizer,
+    posts: list[Post],
+) -> tuple[np.ndarray, dict[int, list[dict]]]:
+    """Return per-post subcluster ids and metadata nested under each parent."""
+    n = parent_labels.shape[0]
+    sub_labels = np.zeros(n, dtype=int)
+    meta_by_parent: dict[int, list[dict]] = {}
+
+    for parent in sorted(set(int(c) for c in parent_labels)):
+        row_indices = np.where(parent_labels == parent)[0]
+        if row_indices.size == 0:
+            continue
+        feats = cluster_space[row_indices]
+        k_sub = choose_sub_k(feats)
+        if k_sub < 2 or row_indices.size < 4:
+            local = np.zeros(row_indices.size, dtype=int)
+            k_sub = 1
+        else:
+            local = compute_clusters(feats, k_sub)
+
+        for offset, post_i in enumerate(row_indices):
+            sub_labels[post_i] = int(local[offset])
+
+        sub_terms = cluster_top_terms_subset(
+            matrix, vectorizer, row_indices, local, top_n=4
+        )
+        sub_exemplars = cluster_exemplars_subset(
+            cluster_space, row_indices, local, posts, top_n=2
+        )
+        meta_by_parent[parent] = [
+            {
+                "id": int(sid),
+                "label": subcluster_label(sub_terms.get(sid, []), sid),
+                "terms": sub_terms.get(sid, []),
+                "exemplars": sub_exemplars.get(sid, []),
+                "size": int((local == sid).sum()),
+            }
+            for sid in sorted(set(int(s) for s in local))
+        ]
+
+    return sub_labels, meta_by_parent
 
 
 # Contraction fragments ("don't" → "don") and weak generic words that the
@@ -941,6 +1072,9 @@ def build_graph(
     else:
         k = choose_k(cluster_space)
     labels = compute_clusters(cluster_space, k)
+    sub_labels, sub_meta_by_parent = compute_subclusters(
+        cluster_space, labels, geo.matrix, geo.vectorizer, posts
+    )
     terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels)
     match_terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels, top_n=25)
     exemplars = cluster_exemplars(cluster_space, labels, posts)
@@ -957,6 +1091,7 @@ def build_graph(
     for index, post in enumerate(posts):
         row = coords[index] if index < coords.shape[0] else np.zeros(3)
         cluster = int(labels[index]) if index < len(labels) else 0
+        subcluster = int(sub_labels[index]) if index < len(sub_labels) else 0
 
         comment_block: dict | None = None
         referenced_by: int | None = None
@@ -1007,6 +1142,7 @@ def build_graph(
                 "comment_count": post.comment_count,
                 "referenced_by": referenced_by,
                 "cluster": cluster,
+                "subcluster": subcluster,
                 "x": float(row[0]),
                 "y": float(row[1]),
                 "z": float(row[2]),
@@ -1020,6 +1156,7 @@ def build_graph(
             "terms": terms.get(cluster, []),
             "exemplars": exemplars.get(cluster, []),
             "size": int((labels == cluster).sum()),
+            "subclusters": sub_meta_by_parent.get(cluster, []),
         }
         for cluster in sorted(set(int(c) for c in labels))
     ]
@@ -1047,6 +1184,8 @@ def build_graph(
             "detail_shard_prefix": DETAIL_SHARD_PREFIX,
             "details_dir": "details",
             "lazy_details": True,
+            "subcluster_min_k": SUBCLUSTER_MIN_K,
+            "subcluster_max_k": SUBCLUSTER_MAX_K,
         },
         "clusters": cluster_meta,
         "nodes": nodes,
