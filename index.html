@@ -684,8 +684,8 @@
         if (i === sel) {
           _tmpColor.copy(HIGHLIGHT_COLOR);
         } else if (dim) {
-          // Fade unselected points toward the background so the pick pops.
-          _tmpColor.copy(base).lerp(SCENE_BG_COLOR, 0.82);
+          // Mute unselected points (still fully opaque) so the pick pops.
+          _tmpColor.copy(base).multiplyScalar(0.38).lerp(SCENE_BG_COLOR, 0.35);
         } else {
           _tmpColor.copy(base);
         }
@@ -935,7 +935,16 @@
       const count = graph.nodes.length;
       // One unit sphere, low-poly (cheap), reused for every post via instancing.
       const geometry = new THREE.SphereGeometry(1, 12, 12);
-      const material = new THREE.MeshBasicMaterial({ vertexColors: false, transparent: true, opacity: 1 });
+      // Opaque, depth-writing spheres: the cloud is a thin shell (like a
+      // planet surface), not a glass ball — you shouldn't see through to the
+      // far side when orbiting.
+      const material = new THREE.MeshBasicMaterial({
+        vertexColors: false,
+        transparent: false,
+        opacity: 1,
+        depthWrite: true,
+        depthTest: true,
+      });
       const instanced = new THREE.InstancedMesh(geometry, material, count);
       instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       instanced.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3);
