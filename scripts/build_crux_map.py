@@ -74,9 +74,12 @@ MAX_COMMENT_CHARS = 1_600
 # cluster separation at 50D.
 CLUSTER_COMPONENTS = 20
 
-# Auto-k search range for silhouette selection.
-MIN_K = 3
-MAX_K = 10
+# Auto-k search range for silhouette selection. On a few thousand dense-embedded
+# posts the silhouette score keeps drifting toward very few, very broad clusters,
+# but the map is far more legible with several named themes — so the floor is
+# raised so auto-k still lands on interpretable topic groups.
+MIN_K = 6
+MAX_K = 12
 
 _authored_claims_cache: dict[str, list[str]] | None = None
 _authored_cruxes_cache: dict[str, dict] | None = None
@@ -115,10 +118,16 @@ def truncate(text: str, limit: int = MAX_PASSAGE_CHARS) -> str:
 
 
 _MD_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+_MD_ORPHAN = re.compile(r"\]\([^)\n]{0,200}\)")
 _URL = re.compile(r"https?://\S+")
 _CSS_DECL = re.compile(r"\{[^{}]*\}")
 _CSS_SELECTOR = re.compile(r"[.#][A-Za-z][\w]*-[\w-]*")
 _MJX_TOKEN = re.compile(r"\b(?:mjx|MJX)[\w-]*")
+# Leftover CSS noise after the brace-block strip: attribute selectors like
+# ``[tabindex]`` and pseudo-classes like ``:focus`` (commonly emitted by the
+# MathJax stylesheets baked into post bodies) otherwise leak into labels.
+_CSS_ATTR = re.compile(r"\[[^\]\n]{0,40}\]")
+_CSS_PSEUDO = re.compile(r":[A-Za-z][A-Za-z-]{1,20}")
 
 
 def clean_text(text: str) -> str:
@@ -129,12 +138,16 @@ def clean_text(text: str) -> str:
     """
     text = re.sub(r"<[^>]+>", " ", text or "")
     text = _MD_LINK.sub(r"\1", text)
+    # Orphan link tails like ``](#fnref-3)`` left by malformed/footnote markdown.
+    text = _MD_ORPHAN.sub(" ", text)
     text = _URL.sub(" ", text)
     text = _CSS_DECL.sub(" ", text)
     text = _CSS_SELECTOR.sub(" ", text)
+    text = _CSS_ATTR.sub(" ", text)
+    text = _CSS_PSEUDO.sub(" ", text)
     text = _MJX_TOKEN.sub(" ", text)
     text = re.sub(r"@[A-Za-z-]+", " ", text)
-    text = re.sub(r"[*_`>#]+", " ", text)
+    text = re.sub(r"[*_`>#\[\]]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -200,7 +213,13 @@ def parse_posts(max_posts: int, top_authors: int) -> tuple[list[Post], list[str]
         for author in row["authors"]:
             author_counts[author] += 1
 
-    selected_set = {author for author, _ in author_counts.most_common(top_authors)}
+    # top_authors <= 0 means "no author cap" — keep every eligible post. This is
+    # how we scale to thousands of posts (the prolific-author filter was tuned
+    # for a few hundred).
+    if top_authors and top_authors > 0:
+        selected_set = {author for author, _ in author_counts.most_common(top_authors)}
+    else:
+        selected_set = set(author_counts)
     filtered = [row for row in eligible if any(a in selected_set for a in row["authors"])]
 
     # Collapse LW/AF cross-posts (same title + author) to the highest-karma copy
@@ -259,7 +278,7 @@ def _pick_axis_terms(
     picked: list[str] = []
     for idx in order:
         term = features[idx]
-        if len(term) < 3 or "{" in term or term.startswith("mjx"):
+        if not _is_label_term(term):
             continue
         picked.append(term)
         if len(picked) >= top_n:
@@ -474,6 +493,14 @@ _LABEL_STOP = frozenset(
         "wasn t", "doesn t", "don t", "didn t",
         "things", "thing", "know", "lot", "way", "ways", "actually", "really",
         "maybe", "doesn t", "kind", "sort", "stuff", "bit", "yeah", "okay",
+        # Conversational filler that dominates a "general discourse" cluster and
+        # drowns out its actual distinctive vocabulary.
+        "think", "like", "just", "people", "want", "need", "going", "make",
+        "good", "point", "sure", "probably", "say", "said", "got", "use",
+        # CSS / HTML / MathJax artifacts that survive cleaning in some bodies.
+        "tabindex", "focus", "hover", "body", "span", "div", "href", "aria",
+        "chtml", "mjx", "colspan", "rowspan", "noopener", "footnote",
+        "alice", "bob",
     }
 )
 
@@ -873,6 +900,18 @@ def build_comment_block(
     }
 
 
+# Detail files are sharded by the first two hex chars of the post id. With ~3k
+# uniformly-distributed ids that is ~256 small files of ~12 posts each — few
+# enough to keep the repo tidy, granular enough that a click pulls down only a
+# sliver of the (otherwise large) per-post summary/comment/crux payload.
+DETAIL_SHARD_PREFIX = 2
+
+
+def detail_shard(post_id: str) -> str:
+    prefix = "".join(c for c in post_id[:DETAIL_SHARD_PREFIX] if c.isalnum())
+    return prefix.lower() or "_"
+
+
 def build_graph(
     posts: list[Post],
     *,
@@ -882,7 +921,16 @@ def build_graph(
     reference_cache_path: Path,
     offline: bool,
     dry_run: bool,
-) -> dict:
+    fetch_references: bool = False,
+) -> tuple[dict, dict[str, dict]]:
+    """Return ``(graph, details)``.
+
+    ``graph`` is the lightweight payload the map loads up front: meta, clusters,
+    axis labels, and one minimal node per post (position, cluster, and the few
+    fields needed to render a point + its hover label). ``details`` maps post id
+    to the heavy panel content (summary, top comment, double crux) that the
+    frontend fetches lazily, one shard at a time, only when a point is clicked.
+    """
     geo = compute_post_coords(posts)
     coords = geo.coords
     cluster_space = geo.cluster_features
@@ -901,7 +949,8 @@ def build_graph(
     comment_cache = comments_mod.load_comment_cache(comment_cache_path)
     reference_cache = comments_mod.load_reference_cache(reference_cache_path)
 
-    nodes = []
+    nodes: list[dict] = []
+    details: dict[str, dict] = {}
     comment_total = 0
     crux_total = 0
     referenced_total = 0
@@ -911,7 +960,9 @@ def build_graph(
 
         comment_block: dict | None = None
         referenced_by: int | None = None
+        summary: list[str] = []
         if not dry_run:
+            summary = post_summary(post)
             comment = resolve_top_comment(
                 post,
                 cache=comment_cache,
@@ -925,14 +976,23 @@ def build_graph(
                 if crux and crux.get("has_crux"):
                     crux_total += 1
 
+            # Pingbacks need one network round-trip per post, so at 3k scale we
+            # only use them when explicitly requested or already cached; the map
+            # falls back to comment_count for point size otherwise.
             referenced_by = resolve_referenced_by(
                 post,
                 cache=reference_cache,
                 cache_path=reference_cache_path,
-                offline=offline,
+                offline=offline or not fetch_references,
             )
             if referenced_by:
                 referenced_total += 1
+
+            details[post.id] = {
+                "id": post.id,
+                "summary": summary,
+                "top_comment": comment_block,
+            }
 
         nodes.append(
             {
@@ -950,8 +1010,6 @@ def build_graph(
                 "x": float(row[0]),
                 "y": float(row[1]),
                 "z": float(row[2]),
-                "summary": post_summary(post),
-                "top_comment": comment_block,
             }
         )
 
@@ -966,7 +1024,7 @@ def build_graph(
         for cluster in sorted(set(int(c) for c in labels))
     ]
 
-    return {
+    graph = {
         "meta": {
             "generated_at": datetime.now(UTC).isoformat(),
             "dataset": REPO_ID,
@@ -986,17 +1044,48 @@ def build_graph(
             "embedding_model": geo.embedding_model,
             "variance_explained": round(float(sum(geo.variance[:3])), 4),
             "axis_labels": axis_labels,
+            "detail_shard_prefix": DETAIL_SHARD_PREFIX,
+            "details_dir": "details",
+            "lazy_details": True,
         },
         "clusters": cluster_meta,
         "nodes": nodes,
         "edges": [],
     }
+    return graph, details
+
+
+def write_details(details: dict[str, dict], details_dir: Path) -> int:
+    """Write per-post detail payloads as id-prefix shards; return shard count.
+
+    The directory is rebuilt from scratch so stale posts (dropped between runs)
+    don't linger and get served as ghosts.
+    """
+    import shutil
+
+    if details_dir.exists():
+        shutil.rmtree(details_dir)
+    details_dir.mkdir(parents=True, exist_ok=True)
+
+    shards: dict[str, dict[str, dict]] = {}
+    for post_id, payload in details.items():
+        shards.setdefault(detail_shard(post_id), {})[post_id] = payload
+
+    for shard, payloads in shards.items():
+        path = details_dir / f"{shard}.json"
+        path.write_text(json.dumps(payloads, ensure_ascii=False) + "\n", encoding="utf-8")
+    return len(shards)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build cruxes.json for Crux Map")
-    parser.add_argument("--max-posts", type=int, default=400)
-    parser.add_argument("--top-authors", type=int, default=40)
+    parser.add_argument("--max-posts", type=int, default=3000)
+    parser.add_argument(
+        "--top-authors",
+        type=int,
+        default=0,
+        help="Restrict to the N most prolific authors (0 = no cap; default 0)",
+    )
     parser.add_argument(
         "--clusters",
         type=int,
@@ -1018,6 +1107,18 @@ def parse_args() -> argparse.Namespace:
         "--dry-run",
         action="store_true",
         help="Build nodes + PCA + clusters only (no comments/cruxes)",
+    )
+    parser.add_argument(
+        "--fetch-references",
+        action="store_true",
+        help="Fetch pingback (referenced-by) counts for point size; one network "
+        "call per post, so off by default at scale (falls back to comment_count)",
+    )
+    parser.add_argument(
+        "--details-dir",
+        type=Path,
+        default=ROOT / "details",
+        help="Directory for lazily-loaded per-post detail shards",
     )
     parser.add_argument(
         "--comment-cache",
@@ -1047,7 +1148,7 @@ def main() -> int:
     log(f"Loaded {len(posts)} posts across {len(authors)} authors")
 
     log("Building post map (PCA + clusters + comments + double cruxes)...")
-    graph = build_graph(
+    graph, details = build_graph(
         posts,
         method=args.method,
         n_clusters=args.clusters,
@@ -1055,16 +1156,23 @@ def main() -> int:
         reference_cache_path=args.reference_cache,
         offline=args.offline,
         dry_run=args.dry_run,
+        fetch_references=args.fetch_references,
     )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(graph, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    shard_count = 0
+    if details:
+        shard_count = write_details(details, args.details_dir)
+
     meta = graph["meta"]
     log(
         f"Wrote {args.output} ({meta['post_count']} posts, "
         f"{meta['cluster_count']} clusters (k={meta['k_selected']}), "
         f"{meta['comment_count']} top comments, "
-        f"{meta['double_crux_count']} double cruxes)"
+        f"{meta['double_crux_count']} double cruxes); "
+        f"{len(details)} detail payloads across {shard_count} shards in {args.details_dir}"
     )
     return 0
 

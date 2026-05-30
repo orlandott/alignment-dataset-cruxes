@@ -278,7 +278,7 @@
         <div id="cluster-legend"></div>
         <span class="legend-title" style="margin-top:8px" id="axis-legend-title">Layout axes</span>
         <div id="axis-legend"></div>
-        <span class="legend-title" style="margin-top:8px">Point size · times referenced by other posts</span>
+        <span class="legend-title" style="margin-top:8px">Point size · how much the post is discussed (comments / references)</span>
       </div>
       <div id="zoom-control">
         <span class="zoom-label">Zoom</span>
@@ -322,10 +322,12 @@
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-    // Distinct, print-friendly palette for k-means topic clusters.
+    // Distinct, print-friendly palette for k-means topic clusters (extended to
+    // 12 so a larger corpus's auto-selected k still gets unique colors).
     const CLUSTER_COLORS = [
       0x4e79a7, 0xf28e2b, 0x59a14f, 0xe15759, 0xb07aa1,
       0x76b7b2, 0xedc948, 0xff9da7, 0x9c755f, 0x86bcb6,
+      0x499894, 0xd37295,
     ];
     const CLUSTER_FALLBACK = 0x6b7a8f;
 
@@ -334,8 +336,12 @@
       return CLUSTER_COLORS[cluster % CLUSTER_COLORS.length];
     }
 
-    const SCALE = 240;
-    const BOUNDS_PADDING = 52;
+    // Posts sit on a (roughly) unit spherical shell after L2-normalization, so
+    // crowding is governed by point size relative to SCALE, not by post count.
+    // A large SCALE with modest point radii gives a few thousand posts room to
+    // breathe instead of clumping into a dense ball.
+    const SCALE = 900;
+    const BOUNDS_PADDING = 120;
     const SCENE_BG = 0xf5f7fa;
     const AXIS_COLORS = { x: 0xa84848, y: 0x3d8a5c, z: 0x3d6a9a };
     const BOX_COLOR = 0x7a8fa3;
@@ -352,10 +358,18 @@
       selectedNode: null,
       hoverNode: null,
       nodeById: new Map(),
-      nodeMeshes: new Map(),
+      // 3000+ posts render as a single InstancedMesh (one draw call, flat
+      // shading) instead of one lit Mesh per post.
+      instanced: null,
+      nodeOrder: [],          // instanceId -> node
+      indexById: new Map(),   // node id -> instanceId
+      positions: [],          // instanceId -> THREE.Vector3 (world)
+      baseColors: [],         // instanceId -> THREE.Color (cluster color)
       labelEl: null,
       axisLabelEls: [],
       axisLabelPositions: [],
+      detailCache: new Map(), // shard prefix -> { id: detail }
+      detailRequestId: 0,
     };
 
     const viewport = document.getElementById("viewport");
@@ -366,11 +380,12 @@
     const errorBox = document.getElementById("error");
     const errorDetail = document.getElementById("error-detail");
 
+    const SCENE_BG_COLOR = new THREE.Color(SCENE_BG);
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(SCENE_BG);
+    scene.background = SCENE_BG_COLOR.clone();
 
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 5000);
-    camera.position.set(0, 120, 460);
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 40000);
+    camera.position.set(0, 400, 1600);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -456,13 +471,8 @@
       });
     }
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.72));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.88);
-    keyLight.position.set(120, 200, 140);
-    scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0xdce8f8, 0.42);
-    fillLight.position.set(-160, -80, -120);
-    scene.add(fillLight);
+    // No scene lights: points use flat MeshBasicMaterial (unlit), which is far
+    // cheaper to shade and renders instantly for thousands of instances.
 
     const nodesGroup = new THREE.Group();
     const spatialGroup = new THREE.Group();
@@ -487,12 +497,12 @@
     resize();
 
     function nodeRadius(value, minV, maxV) {
-      // Radius grows with pingback count so the most-referenced (most
-      // influential) posts are clearly the biggest balls. Floor keeps
-      // zero-pingback posts visible and clickable.
-      if (maxV <= minV) return 6;
+      // Radius grows with how much a post is referenced/discussed so the most
+      // influential posts read as the biggest balls. Kept modest relative to
+      // the (now much larger) SCALE so a few thousand points stay uncrowded.
+      if (maxV <= minV) return 7;
       const t = (Math.sqrt(value) - Math.sqrt(minV)) / (Math.sqrt(maxV) - Math.sqrt(minV));
-      return 3.5 + t * 18.5;
+      return 5 + t * 16;
     }
 
     function escapeHtml(text) {
@@ -551,17 +561,17 @@
       panelContent.innerHTML = "";
     }
 
-    function renderSummary(node) {
-      const claims = Array.isArray(node.summary) ? node.summary : [];
+    function renderSummary(detail) {
+      const claims = Array.isArray(detail?.summary) ? detail.summary : [];
       if (!claims.length) {
-        return `<div class="section"><h3>Post summary</h3><p style="font-size:13.5px;color:var(--muted)">No summary available.</p></div>`;
+        return `<div class="section"><h3>What the post says</h3><p style="font-size:13.5px;color:var(--muted)">No summary available.</p></div>`;
       }
       const items = claims.map((c) => `<li>${escapeHtml(c)}</li>`).join("");
       return `<div class="section"><h3>What the post says</h3><ul class="claims-list">${items}</ul></div>`;
     }
 
-    function renderComment(node) {
-      const tc = node.top_comment;
+    function renderComment(detail) {
+      const tc = detail?.top_comment;
       if (!tc) {
         return `<div class="section"><h3>Top comment</h3><p style="font-size:13.5px;color:var(--muted)">No comment found for this post.</p></div>`;
       }
@@ -617,9 +627,9 @@
         </div>`;
     }
 
-    function renderNodePanel(node) {
+    function nodeHeaderHtml(node) {
       const date = (node.date || "").slice(0, 10);
-      setPanelHtml(`
+      return `
         <span class="badge" style="background:${hexCss(clusterColor(node.cluster))}22;color:${hexCss(clusterColor(node.cluster))}">${escapeHtml(clusterLabel(node.cluster))}</span>
         <h2>${escapeHtml(node.label)}</h2>
         <p class="meta-line">
@@ -627,26 +637,77 @@
           · ${node.karma} karma · ${node.comment_count} comments
           ${typeof node.referenced_by === "number" ? `· referenced by ${node.referenced_by} other post${node.referenced_by === 1 ? "" : "s"}` : ""}
           ${node.url ? `<br/><a href="${escapeAttr(node.url)}" target="_blank" rel="noopener">Read the post →</a>` : ""}
-        </p>
-        ${renderSummary(node)}
-        ${renderComment(node)}
+        </p>`;
+    }
+
+    function renderNodePanel(node, detail, { loading = false, error = false } = {}) {
+      let body;
+      if (loading) {
+        body = `<div class="section"><p class="placeholder">Loading post details…</p></div>`;
+      } else if (error) {
+        body = `<div class="section"><p style="font-size:13.5px;color:var(--muted)">Details unavailable for this post.</p></div>`;
+      } else {
+        body = `${renderSummary(detail)}${renderComment(detail)}`;
+      }
+      setPanelHtml(`
+        ${nodeHeaderHtml(node)}
+        ${body}
         ${renderClusterTheme(node.cluster)}
       `);
     }
 
+    function shardForId(id) {
+      const n = state.graph?.meta?.detail_shard_prefix ?? 2;
+      const prefix = String(id).slice(0, n).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      return prefix || "_";
+    }
+
+    async function loadDetail(node) {
+      const dir = state.graph?.meta?.details_dir || "details";
+      const shard = shardForId(node.id);
+      if (!state.detailCache.has(shard)) {
+        const response = await fetch(`./${dir}/${shard}.json`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        state.detailCache.set(shard, await response.json());
+      }
+      return state.detailCache.get(shard)?.[node.id] ?? null;
+    }
+
+    const HIGHLIGHT_COLOR = new THREE.Color(0x5b4fc8);
+
     function applyHighlight() {
-      const sel = state.selectedNode?.id;
-      state.nodeMeshes.forEach((mesh, id) => {
-        const active = !sel || id === sel;
-        mesh.material.emissive.setHex(id === sel ? 0x5b4fc8 : 0x000000);
-        mesh.material.opacity = active ? 1 : 0.18;
+      const inst = state.instanced;
+      if (!inst || !inst.instanceColor) return;
+      const sel = state.selectedNode ? state.indexById.get(state.selectedNode.id) : undefined;
+      const dim = sel !== undefined;
+      state.baseColors.forEach((base, i) => {
+        if (i === sel) {
+          _tmpColor.copy(HIGHLIGHT_COLOR);
+        } else if (dim) {
+          // Fade unselected points toward the background so the pick pops.
+          _tmpColor.copy(base).lerp(SCENE_BG_COLOR, 0.82);
+        } else {
+          _tmpColor.copy(base);
+        }
+        inst.setColorAt(i, _tmpColor);
       });
+      inst.instanceColor.needsUpdate = true;
     }
 
     function selectNode(node) {
       state.selectedNode = node;
-      renderNodePanel(node);
       applyHighlight();
+      const requestId = ++state.detailRequestId;
+      renderNodePanel(node, null, { loading: true });
+      loadDetail(node)
+        .then((detail) => {
+          if (state.detailRequestId !== requestId) return; // superseded by a newer click
+          renderNodePanel(node, detail, { error: !detail });
+        })
+        .catch(() => {
+          if (state.detailRequestId !== requestId) return;
+          renderNodePanel(node, null, { error: true });
+        });
     }
     function clearSelection() {
       state.selectedNode = null;
@@ -669,9 +730,10 @@
     function updateLabel() {
       const node = state.hoverNode || state.selectedNode;
       if (!node) { state.labelEl.style.display = "none"; return; }
-      const mesh = state.nodeMeshes.get(node.id);
-      if (!mesh) { state.labelEl.style.display = "none"; return; }
-      const screen = projectToOverlay(mesh.position);
+      const idx = state.indexById.get(node.id);
+      const pos = idx === undefined ? null : state.positions[idx];
+      if (!pos) { state.labelEl.style.display = "none"; return; }
+      const screen = projectToOverlay(pos);
       if (!screen) { state.labelEl.style.display = "none"; return; }
       state.labelEl.textContent = node.label;
       state.labelEl.style.display = "block";
@@ -691,7 +753,7 @@
 
     function computeNodeBounds() {
       const box = new THREE.Box3();
-      state.nodeMeshes.forEach((mesh) => box.expandByPoint(mesh.position));
+      state.positions.forEach((pos) => box.expandByPoint(pos));
       if (box.isEmpty()) return null;
       return {
         min: box.min.clone().subScalar(BOUNDS_PADDING),
@@ -844,36 +906,59 @@
       }).join("");
     }
 
+    const _tmpMatrix = new THREE.Matrix4();
+    const _tmpScale = new THREE.Vector3();
+    const _tmpColor = new THREE.Color();
+
     function buildScene(graph) {
       nodesGroup.clear();
       spatialGroup.clear();
-      state.nodeMeshes.clear();
+      if (state.instanced) {
+        state.instanced.geometry.dispose();
+        state.instanced.material.dispose();
+        state.instanced = null;
+      }
       state.nodeById.clear();
+      state.indexById.clear();
+      state.nodeOrder = [];
+      state.positions = [];
+      state.baseColors = [];
       graph.nodes.forEach((node) => state.nodeById.set(node.id, node));
 
-      // Size encodes how much each post is referenced by other posts (LW
-      // pingbacks); fall back to comment_count when references are unavailable.
+      // Size encodes how much each post is referenced/discussed; prefer pingback
+      // count, fall back to comment_count (always present, no network).
       const sizeOf = (n) => Math.max(1, (n.referenced_by ?? n.comment_count ?? 0) + 1);
       const sizes = graph.nodes.map(sizeOf);
       const minV = Math.min(...sizes);
       const maxV = Math.max(...sizes);
 
-      graph.nodes.forEach((node) => {
+      const count = graph.nodes.length;
+      // One unit sphere, low-poly (cheap), reused for every post via instancing.
+      const geometry = new THREE.SphereGeometry(1, 12, 12);
+      const material = new THREE.MeshBasicMaterial({ vertexColors: false, transparent: true, opacity: 1 });
+      const instanced = new THREE.InstancedMesh(geometry, material, count);
+      instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      instanced.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3);
+
+      graph.nodes.forEach((node, i) => {
         const radius = nodeRadius(sizeOf(node), minV, maxV);
-        const geometry = new THREE.SphereGeometry(radius, 20, 20);
-        const material = new THREE.MeshStandardMaterial({
-          color: clusterColor(node.cluster),
-          roughness: 0.44,
-          metalness: 0.05,
-          emissive: 0x000000,
-          transparent: true,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(node.x * SCALE, node.y * SCALE, node.z * SCALE);
-        mesh.userData = { kind: "node", nodeId: node.id };
-        nodesGroup.add(mesh);
-        state.nodeMeshes.set(node.id, mesh);
+        const pos = new THREE.Vector3(node.x * SCALE, node.y * SCALE, node.z * SCALE);
+        _tmpMatrix.makeScale(radius, radius, radius);
+        _tmpMatrix.setPosition(pos);
+        instanced.setMatrixAt(i, _tmpMatrix);
+
+        const color = new THREE.Color(clusterColor(node.cluster));
+        instanced.setColorAt(i, color);
+
+        state.nodeOrder[i] = node;
+        state.indexById.set(node.id, i);
+        state.positions[i] = pos;
+        state.baseColors[i] = color;
       });
+      instanced.instanceMatrix.needsUpdate = true;
+      if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
+      nodesGroup.add(instanced);
+      state.instanced = instanced;
 
       const bounds = computeNodeBounds();
       if (bounds) buildSpatialAnchors(bounds);
@@ -887,14 +972,14 @@
       // is a thin shell. Fit the camera to its bounding sphere (centroid +
       // max radius) so the whole cloud is framed regardless of offset.
       const center = new THREE.Vector3();
-      let count = 0;
-      state.nodeMeshes.forEach((mesh) => { center.add(mesh.position); count += 1; });
+      const count = state.positions.length;
       if (!count) return;
+      state.positions.forEach((pos) => center.add(pos));
       center.multiplyScalar(1 / count);
 
       let radius = 1;
-      state.nodeMeshes.forEach((mesh) => {
-        radius = Math.max(radius, mesh.position.distanceTo(center));
+      state.positions.forEach((pos) => {
+        radius = Math.max(radius, pos.distanceTo(center));
       });
 
       const fovV = (camera.fov * Math.PI) / 180;
@@ -912,23 +997,24 @@
     }
 
     function pickNode(event) {
+      if (!state.instanced) return null;
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects([...state.nodeMeshes.values()], false);
-      return hits[0]?.object ?? null;
+      const hits = raycaster.intersectObject(state.instanced, false);
+      const id = hits[0]?.instanceId;
+      return id === undefined ? null : state.nodeOrder[id] ?? null;
     }
 
     renderer.domElement.addEventListener("click", (event) => {
-      const object = pickNode(event);
-      if (!object) { clearSelection(); return; }
-      selectNode(state.nodeById.get(object.userData.nodeId));
+      const node = pickNode(event);
+      if (!node) { clearSelection(); return; }
+      selectNode(node);
     });
 
     renderer.domElement.addEventListener("pointermove", (event) => {
-      const object = pickNode(event);
-      const node = object ? state.nodeById.get(object.userData.nodeId) : null;
+      const node = pickNode(event);
       state.hoverNode = node;
       renderer.domElement.style.cursor = node ? "pointer" : "default";
     });
