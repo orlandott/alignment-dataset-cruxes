@@ -407,6 +407,15 @@
       return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l).getHex();
     }
 
+    function landColor(cluster, subcluster) {
+      const base = new THREE.Color(subclusterColor(cluster, subcluster));
+      const hsl = { h: 0, s: 0, l: 0 };
+      base.getHSL(hsl);
+      hsl.l = Math.min(0.72, hsl.l * 1.1 + 0.22);
+      hsl.s = Math.min(1, hsl.s * 1.08);
+      return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l).getHex();
+    }
+
     function regionKey(cluster, subcluster) {
       return cluster * REGION_STRIDE + subcluster;
     }
@@ -436,7 +445,7 @@
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
     const GLOBE_OCEAN = 0x1a5270;
-    const GLOBE_LAND_OPACITY = 0.78;
+    const GLOBE_LAND_OPACITY = 0.9;
     const GLOBE_CONTINENT_BORDER = 0x000000;
     const GLOBE_SUB_BORDER = 0x2a3540;
     const REGION_STRIDE = 16;
@@ -447,12 +456,14 @@
     // Posts sit on the crust, just above colored land.
     const GLOBE_POST_SHELL_FRAC = GLOBE_RADIUS_FRAC * 1.045;
     // Continent cap angular radius (radians), scaled by sqrt(post fraction).
-    const GLOBE_CONTINENT_ARC_MIN = 0.40;
-    const GLOBE_CONTINENT_ARC_MAX = 1.05;
+    const GLOBE_CONTINENT_ARC_MIN = 0.36;
+    const GLOBE_CONTINENT_ARC_MAX = 0.88;
+    const GLOBE_CONTINENT_MIN_GAP = 0.22;
     const GLOBE_STATE_ARC_MIN = 0.22;
     const GLOBE_STATE_ARC_MAX = 0.58;
-    // Fraction of state cap used for random post scatter.
-    const GLOBE_POST_STATE_FILL = 0.82;
+    // How much of each subcluster wedge posts may occupy.
+    const GLOBE_POST_STATE_FILL = 0.84;
+    const GLOBE_POST_PCA_NUDGE = 0.12;
 
     const state = {
       graph: null,
@@ -944,7 +955,7 @@
       const continents = clusters.map((cl, slot) => {
         const anchor = fibonacciSphereDir(slot, clusters.length, new THREE.Vector3());
         const pca = clusterPcaCentroid(graph, cl.id, new THREE.Vector3());
-        const dir = pca ? anchor.lerp(pca, 0.42).normalize() : anchor;
+        const dir = pca ? anchor.lerp(pca, 0.12).normalize() : anchor;
         const frac = (cl.size ?? 0) / totalPosts;
         const cosThreshold = arcCosThreshold(frac, GLOBE_CONTINENT_ARC_MIN, GLOBE_CONTINENT_ARC_MAX);
         const continentArc = Math.acos(cosThreshold);
@@ -990,7 +1001,67 @@
           states,
         };
       });
+      separateContinents(continents);
+      computeStateBounds(graph, continents);
       return { continents, totalPosts };
+    }
+
+    function separateContinents(continents) {
+      const axis = new THREE.Vector3();
+      for (let pass = 0; pass < 140; pass += 1) {
+        let moved = false;
+        for (let i = 0; i < continents.length; i += 1) {
+          for (let j = i + 1; j < continents.length; j += 1) {
+            const a = continents[i];
+            const b = continents[j];
+            const need = Math.cos(a.arc + b.arc + GLOBE_CONTINENT_MIN_GAP);
+            const dot = a.dir.dot(b.dir);
+            if (dot <= need) continue;
+            axis.copy(a.dir).cross(b.dir);
+            if (axis.lengthSq() < 1e-8) axis.set(1, 0, 0).cross(a.dir);
+            axis.normalize();
+            const push = 0.018 + 0.07 * (dot - need);
+            a.dir.applyAxisAngle(axis, push).normalize();
+            b.dir.applyAxisAngle(axis, -push).normalize();
+            moved = true;
+          }
+        }
+        if (!moved) break;
+      }
+    }
+
+    function computeStateBounds(graph, continents) {
+      continents.forEach((cont) => {
+        tangentFrame(cont.dir, _tmpVecB, _tmpVecC);
+        const east = _tmpVecB;
+        const north = _tmpVecC;
+        cont.states.forEach((st) => {
+          st.bounds = {
+            minE: Infinity, maxE: -Infinity, minN: Infinity, maxN: -Infinity, has: false,
+          };
+        });
+        graph.nodes.forEach((node) => {
+          if ((node.cluster ?? 0) !== cont.cluster) return;
+          const st = cont.states.find((s) => s.subcluster === (node.subcluster ?? 0))
+            || cont.states[0];
+          if (!st) return;
+          const p = _tmpVecA.set(node.x, node.y, node.z);
+          if (p.lengthSq() < 1e-10) return;
+          p.normalize();
+          const e = p.dot(east);
+          const n = p.dot(north);
+          const b = st.bounds;
+          b.minE = Math.min(b.minE, e);
+          b.maxE = Math.max(b.maxE, e);
+          b.minN = Math.min(b.minN, n);
+          b.maxN = Math.max(b.maxN, n);
+          b.has = true;
+        });
+        cont.states.forEach((st) => {
+          if (st.bounds.has) return;
+          st.bounds = { minE: -0.25, maxE: 0.25, minN: -0.25, maxN: 0.25, has: true };
+        });
+      });
     }
 
     function hashUnit(id, salt) {
@@ -1024,26 +1095,17 @@
         + 0.06 * Math.sin(az * 11 + phase * 2.1);
     }
 
-    function normalizeAz(az) {
-      const t = Math.PI * 2;
-      return ((az % t) + t) % t;
-    }
-
-    function stateForAz(cont, az) {
-      const a = normalizeAz(az);
-      for (const st of cont.states) {
-        if (st.az1 > st.az0) {
-          if (a >= st.az0 && a < st.az1) return st;
-        } else if (a >= st.az0 || a < st.az1) return st;
-      }
-      return cont.states[0];
-    }
-
     function continentInclAt(cont, az, radial, outer) {
       const maxArc = cont.arc * 0.96;
       const edge = organicEdgeFactor(cont.shapeSeed, az);
       if (outer) return maxArc * edge;
       return maxArc * radial * (1 + (edge - 1) * radial * 0.9);
+    }
+
+    function pcaDirection(node, target) {
+      target.set(node.x, node.y, node.z);
+      if (target.lengthSq() < 1e-10) return target.set(0, 1, 0);
+      return target.normalize();
     }
 
     function postShellDirection(node, geo, target) {
@@ -1054,53 +1116,55 @@
       const st = cont.states.find((s) => s.subcluster === sub) || cont.states[0];
       if (!st) return null;
 
-      const u = hashUnit(node.id, "u");
-      const v = hashUnit(node.id, "v");
+      const hu = hashUnit(node.id, "u");
+      const hv = hashUnit(node.id, "v");
       const azSpan = st.az1 > st.az0 ? st.az1 - st.az0 : st.az1 + Math.PI * 2 - st.az0;
-      const az = st.az0 + v * azSpan;
+      const az = st.az0 + hu * azSpan;
       const edge = organicEdgeFactor(cont.shapeSeed, az);
       const maxIncl = cont.arc * edge * GLOBE_POST_STATE_FILL * Math.min(1, st.arc / cont.arc);
-      const cosMax = Math.cos(maxIncl);
-      const incl = Math.acos(1 - u * (1 - cosMax));
-      return directionInCap(cont.dir, incl, az, target);
+      const incl = Math.acos(1 - hv * (1 - Math.cos(maxIncl)));
+      directionInCap(cont.dir, incl, az, target);
+
+      if (st.bounds?.has && GLOBE_POST_PCA_NUDGE > 0) {
+        tangentFrame(cont.dir, _tmpVecB, _tmpVecC);
+        const raw = pcaDirection(node, _tmpVecD);
+        const b = st.bounds;
+        const spanE = Math.max(b.maxE - b.minE, 1e-5);
+        const spanN = Math.max(b.maxN - b.minN, 1e-5);
+        const pu = THREE.MathUtils.clamp((raw.dot(_tmpVecB) - b.minE) / spanE, 0, 1);
+        const pv = THREE.MathUtils.clamp((raw.dot(_tmpVecC) - b.minN) / spanN, 0, 1);
+        const pcaAz = st.az0 + pu * azSpan;
+        const pcaEdge = organicEdgeFactor(cont.shapeSeed, pcaAz);
+        const pcaMax = cont.arc * pcaEdge * GLOBE_POST_STATE_FILL * Math.min(1, st.arc / cont.arc);
+        const pcaIncl = Math.acos(1 - pv * (1 - Math.cos(pcaMax)));
+        directionInCap(cont.dir, pcaIncl, pcaAz, _tmpVecD);
+        slerpDir(target, _tmpVecD, GLOBE_POST_PCA_NUDGE, target);
+      }
+      return target;
     }
 
-    function buildContinentPatchMesh(cont, landRadius, center) {
-      const segments = GLOBE_PATCH_SEGMENTS;
+    function buildStateWedgeMesh(cont, st, landRadius, center) {
+      const azSpan = st.az1 > st.az0 ? st.az1 - st.az0 : st.az1 + Math.PI * 2 - st.az0;
+      const segments = Math.max(10, Math.ceil(GLOBE_PATCH_SEGMENTS * azSpan / (Math.PI * 2)));
       const rings = GLOBE_PATCH_RINGS;
+      const innerFrac = 0.1;
       const positions = [];
-      const colors = [];
       const indices = [];
-      const colorScratch = new THREE.Color();
+      const idx = (ir, is) => ir * (segments + 1) + is;
 
-      const apex = worldOnShell(cont.dir, landRadius, center, _tmpVecA);
-      const apexSt = cont.states[0];
-      positions.push(apex.x, apex.y, apex.z);
-      colorScratch.copy(subclusterColor(cont.cluster, apexSt.subcluster));
-      colors.push(colorScratch.r, colorScratch.g, colorScratch.b);
-
-      const ringBase = 1;
-      const idx = (ir, is) => ringBase + (ir - 1) * (segments + 1) + is;
-
-      for (let ir = 1; ir <= rings; ir += 1) {
-        const radial = ir / rings;
+      for (let ir = 0; ir <= rings; ir += 1) {
+        const radial = innerFrac + (ir / rings) * (1 - innerFrac);
         const outer = ir === rings;
         for (let is = 0; is <= segments; is += 1) {
-          const az = (is / segments) * Math.PI * 2;
+          const az = st.az0 + (is / segments) * azSpan;
           const incl = continentInclAt(cont, az, radial, outer);
           directionInCap(cont.dir, incl, az, _tmpVecD);
           worldOnShell(_tmpVecD, landRadius, center, _tmpVecA);
           positions.push(_tmpVecA.x, _tmpVecA.y, _tmpVecA.z);
-          const st = stateForAz(cont, az);
-          colorScratch.copy(subclusterColor(cont.cluster, st.subcluster));
-          colors.push(colorScratch.r, colorScratch.g, colorScratch.b);
         }
       }
 
-      for (let is = 0; is < segments; is += 1) {
-        indices.push(0, idx(1, is), idx(1, is + 1));
-      }
-      for (let ir = 1; ir < rings; ir += 1) {
+      for (let ir = 0; ir < rings; ir += 1) {
         for (let is = 0; is < segments; is += 1) {
           const a = idx(ir, is);
           const b = idx(ir, is + 1);
@@ -1112,12 +1176,11 @@
 
       const geom = new THREE.BufferGeometry();
       geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-      geom.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
       geom.setIndex(indices);
       return new THREE.Mesh(
         geom,
         new THREE.MeshBasicMaterial({
-          vertexColors: true,
+          color: landColor(cont.cluster, st.subcluster),
           transparent: true,
           opacity: GLOBE_LAND_OPACITY,
           depthWrite: false,
@@ -1211,9 +1274,11 @@
       const group = new THREE.Group();
 
       geo.continents.forEach((cont) => {
-        const mesh = buildContinentPatchMesh(cont, landRadius, center);
-        mesh.renderOrder = 1;
-        group.add(mesh);
+        cont.states.forEach((st) => {
+          const mesh = buildStateWedgeMesh(cont, st, landRadius, center);
+          mesh.renderOrder = 1;
+          group.add(mesh);
+        });
         addSubclusterBorders(cont, group, landRadius, center);
         addContinentOutline(cont, group, landRadius, center);
       });
