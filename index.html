@@ -76,6 +76,26 @@
     .axis-label.y { color: #3d8a5c; border-color: rgba(61, 138, 92, 0.35); }
     .axis-label.z { color: #3d6a9a; border-color: rgba(61, 106, 154, 0.35); }
 
+    .continent-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1.5px solid var(--border);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      max-width: 200px;
+      text-align: center;
+      line-height: 1.25;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(26, 35, 50, 0.12);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     #header { position: absolute; top: 18px; left: 18px; z-index: 2; pointer-events: none; }
     #header h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; letter-spacing: 0.02em; }
     #header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 460px; line-height: 1.45; }
@@ -274,7 +294,7 @@
         <p id="subtitle">Loading alignment research posts…</p>
       </div>
       <div id="legend">
-        <span class="legend-title">Topic clusters · pick a color to explore a theme</span>
+        <span class="legend-title">Topic continents · each colored region is a cluster</span>
         <div id="cluster-legend"></div>
         <span class="legend-title" style="margin-top:8px" id="axis-legend-title">Layout axes</span>
         <div id="axis-legend"></div>
@@ -286,7 +306,7 @@
         <input type="range" id="zoom-slider" min="0" max="100" value="50" aria-label="Zoom level" />
         <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
       </div>
-      <div id="hint">Drag to orbit · Scroll or slider to zoom · Click a post</div>
+      <div id="hint">Drag to orbit the globe · Scroll or slider to zoom · Click a post</div>
       <div id="overlay"></div>
       <div id="error">
         <div>
@@ -301,9 +321,9 @@
     </div>
     <aside id="panel">
       <div class="placeholder" id="panel-empty">
-        Each point is a post, placed by PCA on its content and colored by k-means topic cluster.
-        Click a post to read its summary, its top comment, and — when the comment pushes back —
-        the double crux between them.
+        Each point is a post on a globe of alignment research: colored landmasses are topic
+        continents (k-means clusters), with borders between them. Click a post to read its
+        summary, top comment, and double crux when the comment pushes back.
       </div>
       <div id="panel-content" hidden></div>
     </aside>
@@ -352,6 +372,12 @@
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
+    const GLOBE_LAT = 56;
+    const GLOBE_LON = 112;
+    const GLOBE_OCEAN = 0xb8d4e8;
+    const GLOBE_BORDER = 0x3a4a5c;
+    const GLOBE_LAND_OPACITY = 0.52;
+    const GLOBE_BORDER_STEPS = 5;
 
     const state = {
       graph: null,
@@ -370,6 +396,10 @@
       axisLabelPositions: [],
       detailCache: new Map(), // shard prefix -> { id: detail }
       detailRequestId: 0,
+      globeCenter: null,
+      globeRadius: 0,
+      continentLabelEls: [],
+      continentLabelPositions: [],
     };
 
     const viewport = document.getElementById("viewport");
@@ -475,8 +505,9 @@
     // cheaper to shade and renders instantly for thousands of instances.
 
     const nodesGroup = new THREE.Group();
+    const globeGroup = new THREE.Group();
     const spatialGroup = new THREE.Group();
-    scene.add(spatialGroup, nodesGroup);
+    scene.add(spatialGroup, globeGroup, nodesGroup);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -751,6 +782,16 @@
       });
     }
 
+    function updateContinentLabels() {
+      state.continentLabelEls.forEach((el, i) => {
+        const screen = projectToOverlay(state.continentLabelPositions[i]);
+        if (!screen) { el.style.display = "none"; return; }
+        el.style.display = "block";
+        el.style.left = `${screen.x}px`;
+        el.style.top = `${screen.y}px`;
+      });
+    }
+
     function computeNodeBounds() {
       const box = new THREE.Box3();
       state.positions.forEach((pos) => box.expandByPoint(pos));
@@ -790,6 +831,223 @@
       return Math.min(GRID_DIV_MAX, Math.max(GRID_DIV_MIN, raw));
     }
 
+    function computeGlobeFrame() {
+      const center = new THREE.Vector3();
+      const count = state.positions.length;
+      if (!count) return null;
+      state.positions.forEach((pos) => center.add(pos));
+      center.multiplyScalar(1 / count);
+      let sumR = 0;
+      state.positions.forEach((pos) => { sumR += pos.distanceTo(center); });
+      return { center, radius: sumR / count };
+    }
+
+    function sphericalDir(lat, lon, target) {
+      const cl = Math.cos(lat);
+      const co = Math.cos(lon);
+      const so = Math.sin(lon);
+      return target.set(cl * co, Math.sin(lat), cl * so);
+    }
+
+    function slerpDir(a, b, t, target) {
+      const dot = THREE.MathUtils.clamp(a.dot(b), -1, 1);
+      const omega = Math.acos(dot);
+      if (omega < 1e-5) return target.copy(a);
+      const s = Math.sin(omega);
+      return target.copy(a).multiplyScalar(Math.sin((1 - t) * omega) / s)
+        .addScaledVector(b, Math.sin(t * omega) / s);
+    }
+
+    function worldOnShell(dir, radius, center, target) {
+      return target.copy(dir).multiplyScalar(radius).add(center);
+    }
+
+    function appendGreatCircle(points, dirA, dirB, radius, center, steps) {
+      const a = _tmpVecA.copy(dirA).normalize();
+      const b = _tmpVecB.copy(dirB).normalize();
+      if (a.dot(b) > 0.9995) return;
+      let prev = worldOnShell(a, radius, center, _tmpVecC);
+      for (let s = 1; s <= steps; s += 1) {
+        const p = worldOnShell(slerpDir(a, b, s / steps, _tmpVecD), radius, center, _tmpVecC);
+        points.push(prev.x, prev.y, prev.z, p.x, p.y, p.z);
+        prev = p;
+      }
+    }
+
+    function disposeGlobeGroup() {
+      globeGroup.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+          else obj.material.dispose();
+        }
+      });
+      globeGroup.clear();
+      state.continentLabelEls.forEach((el) => el.remove());
+      state.continentLabelEls = [];
+      state.continentLabelPositions = [];
+    }
+
+    const _tmpVecA = new THREE.Vector3();
+    const _tmpVecB = new THREE.Vector3();
+    const _tmpVecC = new THREE.Vector3();
+    const _tmpVecD = new THREE.Vector3();
+    const _cornerDirs = [
+      new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(),
+    ];
+
+    function buildContinentGlobe(graph) {
+      disposeGlobeGroup();
+      const frame = computeGlobeFrame();
+      if (!frame) return;
+      const { center, radius } = frame;
+      state.globeCenter = center;
+      state.globeRadius = radius;
+
+      const landRadius = radius * 1.01;
+      const borderRadius = radius * 1.07;
+      const labelRadius = radius * 1.14;
+
+      // Ocean globe (like Earth's seas) — posts sit on the crust above this.
+      const ocean = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * 0.995, 48, 32),
+        new THREE.MeshBasicMaterial({ color: GLOBE_OCEAN, transparent: false, depthWrite: true }),
+      );
+      ocean.position.copy(center);
+      ocean.renderOrder = 0;
+      globeGroup.add(ocean);
+
+      // Cluster centroids on the unit sphere (mean direction of member posts).
+      const dirsByCluster = new Map();
+      graph.nodes.forEach((node) => {
+        const idx = state.indexById.get(node.id);
+        if (idx === undefined) return;
+        const dir = _tmpVecA.copy(state.positions[idx]).sub(center).normalize();
+        const list = dirsByCluster.get(node.cluster) || [];
+        list.push(dir.clone());
+        dirsByCluster.set(node.cluster, list);
+      });
+
+      const centroids = [];
+      dirsByCluster.forEach((dirs, cluster) => {
+        const sum = new THREE.Vector3();
+        dirs.forEach((d) => sum.add(d));
+        if (sum.lengthSq() < 1e-8) return;
+        centroids.push({ cluster, dir: sum.normalize() });
+      });
+      if (centroids.length < 2) return;
+
+      function nearestCluster(dir) {
+        let best = centroids[0].cluster;
+        let bestDot = -Infinity;
+        centroids.forEach(({ cluster, dir: cDir }) => {
+          const d = dir.dot(cDir);
+          if (d > bestDot) { bestDot = d; best = cluster; }
+        });
+        return best;
+      }
+
+      const latN = GLOBE_LAT;
+      const lonN = GLOBE_LON;
+      const labels = new Int32Array(latN * lonN);
+      const dirScratch = new THREE.Vector3();
+      for (let i = 0; i < latN; i += 1) {
+        const lat = -Math.PI / 2 + (i + 0.5) * (Math.PI / latN);
+        for (let j = 0; j < lonN; j += 1) {
+          const lon = -Math.PI + (j + 0.5) * (2 * Math.PI / lonN);
+          labels[i * lonN + j] = nearestCluster(sphericalDir(lat, lon, dirScratch));
+        }
+      }
+
+      const landVerts = new Map();
+      const borderPoints = [];
+
+      function cornerDir(i, j, corner) {
+        const ii = i + (corner >> 1);
+        const jj = (j + (corner & 1)) % lonN;
+        const lat = -Math.PI / 2 + ii * (Math.PI / latN);
+        const lon = -Math.PI + jj * (2 * Math.PI / lonN);
+        return sphericalDir(lat, lon, _cornerDirs[corner]);
+      }
+
+      function pushLandTri(cluster, d0, d1, d2) {
+        if (!landVerts.has(cluster)) landVerts.set(cluster, []);
+        const arr = landVerts.get(cluster);
+        const w0 = worldOnShell(d0, landRadius, center, _tmpVecA);
+        const w1 = worldOnShell(d1, landRadius, center, _tmpVecB);
+        const w2 = worldOnShell(d2, landRadius, center, _tmpVecC);
+        arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
+      }
+
+      for (let i = 0; i < latN - 1; i += 1) {
+        for (let j = 0; j < lonN; j += 1) {
+          const j1 = (j + 1) % lonN;
+          const c00 = labels[i * lonN + j];
+          const c10 = labels[(i + 1) * lonN + j];
+          const c01 = labels[i * lonN + j1];
+          const c11 = labels[(i + 1) * lonN + j1];
+
+          cornerDir(i, j, 0); const d00 = _cornerDirs[0].clone();
+          cornerDir(i, j, 1); const d01 = _cornerDirs[1].clone();
+          cornerDir(i, j, 2); const d10 = _cornerDirs[2].clone();
+          cornerDir(i, j, 3); const d11 = _cornerDirs[3].clone();
+
+          if (c00 === c10 && c00 === c01) pushLandTri(c00, d00, d10, d01);
+          if (c11 === c10 && c11 === c01) pushLandTri(c11, d11, d01, d10);
+
+          if (c00 !== c10) appendGreatCircle(borderPoints, d00, d10, borderRadius, center, GLOBE_BORDER_STEPS);
+          if (c01 !== c11) appendGreatCircle(borderPoints, d01, d11, borderRadius, center, GLOBE_BORDER_STEPS);
+          if (c00 !== c01) appendGreatCircle(borderPoints, d00, d01, borderRadius, center, GLOBE_BORDER_STEPS);
+          if (c10 !== c11) appendGreatCircle(borderPoints, d10, d11, borderRadius, center, GLOBE_BORDER_STEPS);
+        }
+      }
+
+      landVerts.forEach((verts, cluster) => {
+        if (verts.length < 9) return;
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+        geom.computeVertexNormals();
+        const mesh = new THREE.Mesh(
+          geom,
+          new THREE.MeshBasicMaterial({
+            color: clusterColor(cluster),
+            transparent: true,
+            opacity: GLOBE_LAND_OPACITY,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+          }),
+        );
+        mesh.renderOrder = 1;
+        globeGroup.add(mesh);
+      });
+
+      if (borderPoints.length >= 6) {
+        const borderGeom = new THREE.BufferGeometry();
+        borderGeom.setAttribute("position", new THREE.Float32BufferAttribute(borderPoints, 3));
+        const borders = new THREE.LineSegments(
+          borderGeom,
+          new THREE.LineBasicMaterial({
+            color: GLOBE_BORDER,
+            transparent: false,
+            linewidth: 1,
+          }),
+        );
+        borders.renderOrder = 2;
+        globeGroup.add(borders);
+      }
+
+      // Continent name labels at each cluster centroid on the shell.
+      centroids.forEach(({ cluster, dir }) => {
+        const label = document.createElement("div");
+        label.className = "continent-label";
+        label.textContent = clusterLabel(cluster);
+        label.style.borderColor = hexCss(clusterColor(cluster));
+        overlay.appendChild(label);
+        state.continentLabelEls.push(label);
+        state.continentLabelPositions.push(worldOnShell(dir, labelRadius, center, new THREE.Vector3()));
+      });
+    }
+
     function buildSpatialAnchors(bounds) {
       spatialGroup.clear();
       state.axisLabelEls.forEach((el) => el.remove());
@@ -822,32 +1080,7 @@
       addAxisLabel("y", new THREE.Vector3(o.x, o.y + axisLen, o.z));
       addAxisLabel("z", new THREE.Vector3(o.x, o.y, o.z + axisLen));
 
-      const { x: x0, y: y0, z: z0 } = min;
-      const { x: x1, y: y1, z: z1 } = max;
-      const boxPoints = new Float32Array([
-        x0, y0, z0, x1, y0, z0, x1, y0, z0, x1, y0, z1,
-        x1, y0, z1, x0, y0, z1, x0, y0, z1, x0, y0, z0,
-        x0, y0, z0, x0, y1, z0, x0, y0, z1, x0, y1, z1,
-        x0, y1, z0, x0, y1, z1, x1, y0, z0, x1, y1, z0,
-        x1, y1, z0, x0, y1, z0,
-      ]);
-      const boxGeometry = new THREE.BufferGeometry();
-      boxGeometry.setAttribute("position", new THREE.BufferAttribute(boxPoints, 3));
-      spatialGroup.add(new THREE.LineSegments(
-        boxGeometry,
-        new THREE.LineBasicMaterial({ color: BOX_COLOR, transparent: true, opacity: 0.65 }),
-      ));
-
-      const points = [];
-      addPlaneGrid(points, "xz", y0, x0, x1, z0, z1, gridDivisions(x1 - x0));
-      addPlaneGrid(points, "xy", z0, x0, x1, y0, y1, gridDivisions(x1 - x0));
-      addPlaneGrid(points, "yz", x0, y0, y1, z0, z1, gridDivisions(z1 - z0));
-      const gridGeometry = new THREE.BufferGeometry();
-      gridGeometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(points), 3));
-      spatialGroup.add(new THREE.LineSegments(
-        gridGeometry,
-        new THREE.LineBasicMaterial({ color: GRID_COLOR, transparent: true, opacity: 0.5 }),
-      ));
+      // Bounding box / floor grid omitted — the globe layer reads as a planet.
     }
 
     function buildClusterLegend(graph) {
@@ -913,6 +1146,7 @@
     function buildScene(graph) {
       nodesGroup.clear();
       spatialGroup.clear();
+      disposeGlobeGroup();
       if (state.instanced) {
         state.instanced.geometry.dispose();
         state.instanced.material.dispose();
@@ -968,6 +1202,9 @@
       if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
       nodesGroup.add(instanced);
       state.instanced = instanced;
+      instanced.renderOrder = 3;
+
+      buildContinentGlobe(graph);
 
       const bounds = computeNodeBounds();
       if (bounds) buildSpatialAnchors(bounds);
@@ -1034,6 +1271,7 @@
       syncZoomSliderFromCamera();
       updateLabel();
       updateAxisLabels();
+      updateContinentLabels();
       renderer.render(scene, camera);
     }
 
