@@ -344,8 +344,7 @@
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-    import { CSS2DObject } from "three/addons/renderers/CSS2DObject.js";
-    import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
+    import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 
     // Distinct, print-friendly palette for k-means topic clusters (extended to
     // 12 so a larger corpus's auto-selected k still gets unique colors).
@@ -444,6 +443,7 @@
       globeCenter: null,
       globeRadius: 0,
       legendFocus: null, // { cluster, subcluster? }
+      animateStarted: false,
     };
 
     let flyAnim = null;
@@ -1424,28 +1424,53 @@
       });
     }
 
+    function showLoadError(message) {
+      console.error(message);
+      errorDetail.textContent = String(message);
+      errorBox.classList.add("visible");
+      subtitle.textContent = "Failed to load graph data.";
+    }
+
     async function init() {
       try {
+        subtitle.textContent = "Loading posts…";
         const response = await fetch("./cruxes.json");
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const graph = await response.json();
         state.graph = graph;
-        buildScene(graph);
 
         const { meta } = graph;
         subtitle.textContent =
           `${meta.post_count} posts · ${meta.cluster_count} continents (k=${meta.k_selected}) · `
           + `${meta.double_crux_count} double cruxes`;
         errorBox.remove();
-        animate();
-        scheduleGlobeBuild(graph);
+
+        // Show the point cloud and legend before the heavy globe tessellation.
+        requestAnimationFrame(() => {
+          try {
+            buildScene(graph);
+            if (!state.animateStarted) {
+              state.animateStarted = true;
+              animate();
+            }
+            scheduleGlobeBuild(graph);
+          } catch (err) {
+            showLoadError(err.message || err);
+          }
+        });
       } catch (error) {
-        console.error(error);
-        errorDetail.textContent = error.message;
-        errorBox.classList.add("visible");
-        subtitle.textContent = "Failed to load graph data.";
+        showLoadError(error.message || error);
       }
     }
+
+    window.addEventListener("error", (event) => {
+      if (state.graph) return;
+      showLoadError(event.message || "Script error");
+    });
+    window.addEventListener("unhandledrejection", (event) => {
+      if (state.graph) return;
+      showLoadError(event.reason?.message || event.reason || "Failed to load");
+    });
 
     setupLegendNavigation();
     init();
