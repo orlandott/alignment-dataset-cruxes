@@ -437,16 +437,16 @@
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
-    const GLOBE_LAT = 56;
-    const GLOBE_LON = 112;
+    const GLOBE_LAT = 80;
+    const GLOBE_LON = 160;
     const GLOBE_OCEAN = 0x0a1424;
     const GLOBE_CONTINENT_BORDER = 0x000000;
     const GLOBE_SUB_BORDER = 0x3a4555;
     const GLOBE_LAND_OPACITY = 0.52;
     const REGION_STRIDE = 16;
-    // Great-circle subdivision: higher = smoother curves (less jagged on the shell).
-    const GLOBE_CONTINENT_BORDER_STEPS = 32;
-    const GLOBE_SUB_BORDER_STEPS = 14;
+    // Max turn per border segment (degrees on the shell); lower = smoother curves.
+    const GLOBE_CONTINENT_BORDER_ANGLE_DEG = 1.1;
+    const GLOBE_SUB_BORDER_ANGLE_DEG = 2.4;
     const GLOBE_CONTINENT_LINE_PX = 2.5;
     const GLOBE_SUB_LINE_PX = 0.65;
 
@@ -934,8 +934,8 @@
     function appendGreatCircle(points, dirA, dirB, radius, center, steps) {
       const a = _tmpVecA.copy(dirA).normalize();
       const b = _tmpVecB.copy(dirB).normalize();
-      if (a.dot(b) > 0.9995) return;
-      const segs = Math.max(4, steps);
+      if (a.dot(b) > 0.9998) return;
+      const segs = Math.max(2, steps);
       let prev = worldOnShell(a, radius, center, _tmpVecC);
       for (let s = 1; s <= segs; s += 1) {
         const p = worldOnShell(slerpDir(a, b, s / segs, _tmpVecD), radius, center, _tmpVecC);
@@ -944,15 +944,107 @@
       }
     }
 
-    /** Split a cell-edge arc at its spherical midpoint for gentler curves. */
-    function appendSmoothedBorderArc(points, dirA, dirB, radius, center, steps) {
+    function midDir(dirA, dirB, target) {
+      return slerpDir(dirA, dirB, 0.5, target).normalize();
+    }
+
+    function borderSegmentKey(dirA, dirB) {
+      const q = (v) => `${Math.round(v.x * 1e4)}:${Math.round(v.y * 1e4)}:${Math.round(v.z * 1e4)}`;
+      const ka = q(dirA);
+      const kb = q(dirB);
+      return ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+    }
+
+    /** Recursively subdivide until each chord spans at most maxAngleDeg on the sphere. */
+    function appendAdaptiveBorderArc(points, dirA, dirB, radius, center, maxAngleDeg) {
+      const maxAngle = maxAngleDeg * (Math.PI / 180);
       const a = _tmpVecA.copy(dirA).normalize();
       const b = _tmpVecB.copy(dirB).normalize();
-      if (a.dot(b) > 0.9995) return;
-      const mid = slerpDir(a, b, 0.5, _tmpVecD).normalize();
-      const half = Math.max(4, Math.ceil(steps / 2));
-      appendGreatCircle(points, a, mid, radius, center, half);
-      appendGreatCircle(points, mid, b, radius, center, half);
+      if (a.dot(b) > 0.9998) return;
+
+      function emit(from, to) {
+        const ang = Math.acos(THREE.MathUtils.clamp(from.dot(to), -1, 1));
+        const steps = Math.max(2, Math.ceil(ang / maxAngle));
+        appendGreatCircle(points, from, to, radius, center, steps);
+      }
+
+      function subdivide(from, to, depth) {
+        const ang = Math.acos(THREE.MathUtils.clamp(from.dot(to), -1, 1));
+        if (ang <= maxAngle || depth > 12) {
+          emit(from, to);
+          return;
+        }
+        const mid = slerpDir(from, to, 0.5, _tmpVecD).normalize();
+        subdivide(from, mid, depth + 1);
+        subdivide(mid, to, depth + 1);
+      }
+
+      subdivide(a, b, 0);
+    }
+
+    function borderValue(layer, regionKey) {
+      return layer === "continent" ? clusterFromRegion(regionKey) : regionKey;
+    }
+
+    /**
+     * Marching-squares segments for one lat/lon cell (cuts diagonals when corners
+     * differ on opposite edges — avoids stair-step grid-only borders).
+     */
+    function collectCellBorderSegments(layer, c00, c01, c10, c11, d00, d01, d10, d11, centerDir) {
+      const v00 = borderValue(layer, c00);
+      const v01 = borderValue(layer, c01);
+      const v10 = borderValue(layer, c10);
+      const v11 = borderValue(layer, c11);
+      const eb = v00 !== v01;
+      const et = v10 !== v11;
+      const er = v01 !== v11;
+      const el = v00 !== v10;
+      const n = (eb ? 1 : 0) + (et ? 1 : 0) + (er ? 1 : 0) + (el ? 1 : 0);
+      if (!n) return [];
+
+      const segs = [];
+      const mb = _midA;
+      const mt = _midB;
+      const ml = _midC;
+      const mr = _midD;
+      if (eb) midDir(d00, d01, mb);
+      if (et) midDir(d10, d11, mt);
+      if (el) midDir(d00, d10, ml);
+      if (er) midDir(d01, d11, mr);
+
+      if (n === 1) {
+        if (eb) segs.push([d00, d01]);
+        if (et) segs.push([d10, d11]);
+        if (el) segs.push([d00, d10]);
+        if (er) segs.push([d01, d11]);
+        return segs;
+      }
+      if (n === 2) {
+        if (eb && et) {
+          segs.push([mb, mt]);
+          return segs;
+        }
+        if (el && er) {
+          segs.push([ml, mr]);
+          return segs;
+        }
+        if (eb) segs.push([d00, d01]);
+        if (et) segs.push([d10, d11]);
+        if (el) segs.push([d00, d10]);
+        if (er) segs.push([d01, d11]);
+        return segs;
+      }
+      if (n === 3) {
+        if (eb) segs.push([d00, d01]);
+        if (et) segs.push([d10, d11]);
+        if (el) segs.push([d00, d10]);
+        if (er) segs.push([d01, d11]);
+        return segs;
+      }
+      const centerVal = borderValue(layer, centerDir);
+      const pairA = centerVal === v00 || centerVal === v11;
+      segs.push(pairA ? [ml, mr] : [mb, mt]);
+      return segs;
     }
 
     function disposeGlobeGroup() {
@@ -982,6 +1074,10 @@
     const _tmpVecB = new THREE.Vector3();
     const _tmpVecC = new THREE.Vector3();
     const _tmpVecD = new THREE.Vector3();
+    const _midA = new THREE.Vector3();
+    const _midB = new THREE.Vector3();
+    const _midC = new THREE.Vector3();
+    const _midD = new THREE.Vector3();
     const _cornerDirs = [
       new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(),
     ];
@@ -1059,6 +1155,8 @@
       const landVerts = new Map();
       const continentBorderPoints = [];
       const subBorderPoints = [];
+      const continentBorderSeen = new Set();
+      const subBorderSeen = new Set();
 
       function cornerDir(i, j, corner) {
         const ii = i + (corner >> 1);
@@ -1077,9 +1175,37 @@
         arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
       }
 
-      function addBorderBetween(a, b, d0, d1, points, shellRadius, steps) {
-        if (a === b) return;
-        appendSmoothedBorderArc(points, d0, d1, shellRadius, center, steps);
+      function dirsEqual(a, b) {
+        return a.dot(b) > 0.99995;
+      }
+
+      function keepSubBorderSegment(seg, c00, c01, c10, c11, d00, d01, d10, d11) {
+        const [a, b] = seg;
+        const sameCluster = (x, y) => clusterFromRegion(x) === clusterFromRegion(y);
+        if (dirsEqual(a, d00) && dirsEqual(b, d01)) return sameCluster(c00, c01) && c00 !== c01;
+        if (dirsEqual(a, d10) && dirsEqual(b, d11)) return sameCluster(c10, c11) && c10 !== c11;
+        if (dirsEqual(a, d00) && dirsEqual(b, d10)) return sameCluster(c00, c10) && c00 !== c10;
+        if (dirsEqual(a, d01) && dirsEqual(b, d11)) return sameCluster(c01, c11) && c01 !== c11;
+        const cl = clusterFromRegion(c00);
+        if (clusterFromRegion(c01) !== cl || clusterFromRegion(c10) !== cl || clusterFromRegion(c11) !== cl) {
+          return false;
+        }
+        return new Set([c00, c01, c10, c11]).size > 1;
+      }
+
+      function pushBorderArc(d0, d1, points, shellRadius, maxAngleDeg, seen) {
+        const key = borderSegmentKey(d0, d1);
+        if (seen.has(key)) return;
+        seen.add(key);
+        appendAdaptiveBorderArc(points, d0, d1, shellRadius, center, maxAngleDeg);
+      }
+
+      function emitCellBorders(layer, segments, shellRadius, maxAngleDeg, points, seen, corners) {
+        segments.forEach((seg) => {
+          if (layer === "region" && !keepSubBorderSegment(seg, ...corners)) return;
+          const [a, b] = seg;
+          pushBorderArc(a, b, points, shellRadius, maxAngleDeg, seen);
+        });
       }
 
       for (let i = 0; i < latN - 1; i += 1) {
@@ -1098,26 +1224,16 @@
           if (c00 === c10 && c00 === c01) pushLandTri(c00, d00, d10, d01);
           if (c11 === c10 && c11 === c01) pushLandTri(c11, d11, d01, d10);
 
-          if (clusterFromRegion(c00) !== clusterFromRegion(c10)) {
-            addBorderBetween(c00, c10, d00, d10, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
-          } else if (c00 !== c10) {
-            addBorderBetween(c00, c10, d00, d10, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
-          }
-          if (clusterFromRegion(c01) !== clusterFromRegion(c11)) {
-            addBorderBetween(c01, c11, d01, d11, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
-          } else if (c01 !== c11) {
-            addBorderBetween(c01, c11, d01, d11, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
-          }
-          if (clusterFromRegion(c00) !== clusterFromRegion(c01)) {
-            addBorderBetween(c00, c01, d00, d01, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
-          } else if (c00 !== c01) {
-            addBorderBetween(c00, c01, d00, d01, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
-          }
-          if (clusterFromRegion(c10) !== clusterFromRegion(c11)) {
-            addBorderBetween(c10, c11, d10, d11, continentBorderPoints, continentBorderRadius, GLOBE_CONTINENT_BORDER_STEPS);
-          } else if (c10 !== c11) {
-            addBorderBetween(c10, c11, d10, d11, subBorderPoints, subBorderRadius, GLOBE_SUB_BORDER_STEPS);
-          }
+          const latC = -Math.PI / 2 + (i + 0.5) * (Math.PI / latN);
+          const lonC = -Math.PI + (j + 0.5) * (2 * Math.PI / lonN);
+          const centerLabel = nearestRegion(sphericalDir(latC, lonC, dirScratch));
+
+          const cornerCtx = [c00, c01, c10, c11, d00, d01, d10, d11];
+          const contSegs = collectCellBorderSegments("continent", c00, c01, c10, c11, d00, d01, d10, d11, centerLabel);
+          emitCellBorders("continent", contSegs, continentBorderRadius, GLOBE_CONTINENT_BORDER_ANGLE_DEG, continentBorderPoints, continentBorderSeen, cornerCtx);
+
+          const subSegs = collectCellBorderSegments("region", c00, c01, c10, c11, d00, d01, d10, d11, centerLabel);
+          emitCellBorders("region", subSegs, subBorderRadius, GLOBE_SUB_BORDER_ANGLE_DEG, subBorderPoints, subBorderSeen, cornerCtx);
         }
       }
 
