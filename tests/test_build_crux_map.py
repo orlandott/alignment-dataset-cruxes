@@ -7,6 +7,7 @@ from scripts.build_crux_map import (
     assign_cluster_themes,
     build_comment_block,
     choose_k,
+    choose_sub_k,
     cluster_exemplars,
     cluster_label,
     cluster_top_terms,
@@ -195,6 +196,16 @@ def test_cluster_label_falls_back_to_terms():
     assert cluster_label("AI Risk & Policy", ["risks", "safety"]) == "AI Risk & Policy"
     assert cluster_label(None, ["risks", "safety", "ais", "control"]) == "risks · safety · ais"
     assert cluster_label(None, []) == "Misc"
+
+
+def test_choose_sub_k_scales_with_parent_size():
+    coords = np.random.default_rng(0).standard_normal((80, 12))
+    small = choose_sub_k(coords[:20], parent_size=20, transcript_parent=False)
+    large = choose_sub_k(coords, parent_size=500, transcript_parent=False)
+    transcript = choose_sub_k(coords[:40], parent_size=40, transcript_parent=True)
+    assert small <= 2
+    assert transcript <= 2
+    assert large >= small
 
 
 def test_compute_subclusters_within_parents():

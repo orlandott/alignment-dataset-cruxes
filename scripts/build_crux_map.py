@@ -734,15 +734,30 @@ def compute_clusters(coords: np.ndarray, n_clusters: int) -> np.ndarray:
     return KMeans(n_clusters=k, random_state=42, n_init=10).fit_predict(coords)
 
 
-def choose_sub_k(coords: np.ndarray) -> int:
-    """Pick 3–6 subclusters inside one parent cluster (or fewer when tiny)."""
+def choose_sub_k(
+    coords: np.ndarray,
+    *,
+    parent_size: int,
+    transcript_parent: bool = False,
+) -> int:
+    """Pick subcluster count from parent size (small parents → fewer regions)."""
     n = coords.shape[0]
     if n < 4:
         return max(1, n)
+    if transcript_parent or parent_size < 50:
+        cap = 2
+    elif parent_size < 120:
+        cap = 3
+    elif parent_size < 250:
+        cap = 4
+    else:
+        cap = SUBCLUSTER_MAX_K
     if n < SUBCLUSTER_MIN_POSTS:
         return max(1, min(2, n - 1))
-    upper = min(SUBCLUSTER_MAX_K, n - 1)
-    lower = min(SUBCLUSTER_MIN_K, upper)
+    upper = min(cap, n - 1)
+    if upper < 2:
+        return 1
+    lower = min(2, upper)
     return choose_k(coords, min_k=lower, max_k=upper)
 
 
@@ -818,6 +833,8 @@ def compute_subclusters(
     matrix,
     vectorizer: TfidfVectorizer,
     posts: list[Post],
+    *,
+    transcript_cluster_id: int | None = None,
 ) -> tuple[np.ndarray, dict[int, list[dict]]]:
     """Return per-post subcluster ids and metadata nested under each parent."""
     n = parent_labels.shape[0]
@@ -829,7 +846,11 @@ def compute_subclusters(
         if row_indices.size == 0:
             continue
         feats = cluster_space[row_indices]
-        k_sub = choose_sub_k(feats)
+        k_sub = choose_sub_k(
+            feats,
+            parent_size=int(row_indices.size),
+            transcript_parent=parent == transcript_cluster_id,
+        )
         if k_sub < 2 or row_indices.size < 4:
             local = np.zeros(row_indices.size, dtype=int)
             k_sub = 1
@@ -1316,7 +1337,12 @@ def build_graph(
         posts, cluster_space, n_clusters=n_clusters
     )
     sub_labels, sub_meta_by_parent = compute_subclusters(
-        cluster_space, labels, geo.matrix, geo.vectorizer, posts
+        cluster_space,
+        labels,
+        geo.matrix,
+        geo.vectorizer,
+        posts,
+        transcript_cluster_id=transcript_cluster_id,
     )
     terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels)
     match_terms = cluster_top_terms(geo.matrix, geo.vectorizer, labels, top_n=25)

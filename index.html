@@ -434,15 +434,16 @@
     // and trackpads don't jump. OrbitControls' built-in zoom is sign-only per
     // event, which feels too aggressive (regression after corpus grew).
     const WHEEL_ZOOM_SENSITIVITY = 0.22;
-    const GLOBE_OCEAN = 0x0a1424;
-    const GLOBE_LAND_OPACITY = 0.52;
+    const GLOBE_OCEAN = 0x1a4f6e;
+    const GLOBE_LAND_OPACITY = 0.58;
+    const GLOBE_CONTINENT_BORDER = 0x000000;
     const REGION_STRIDE = 16;
-    const GLOBE_VORONOI_MAX_SITES = 48;
-    const GLOBE_GRID_LAT = 64;
-    const GLOBE_GRID_LON = 128;
-    // Dot-product gap between 1st/2nd nearest site; smaller = thinner border band on shell.
-    const GLOBE_CONTINENT_BORDER_MARGIN = 0.012;
-    const GLOBE_SUB_BORDER_MARGIN = 0.0035;
+    const GLOBE_GRID_LAT = 96;
+    const GLOBE_GRID_LON = 192;
+    // log1p(post count) multiplier for weighted spherical Voronoi (larger → more shell area).
+    const GLOBE_WEIGHT_SCALE = 0.058;
+    // Below this dot(dir, cluster centroid), a cell is open ocean (no land).
+    const GLOBE_OCEAN_DOT_MIN = 0.36;
 
     const state = {
       graph: null,
@@ -917,144 +918,119 @@
       return target.set(cl * co, Math.sin(lat), cl * so);
     }
 
-    function makeSiteDataTexture(sites) {
-      const w = GLOBE_VORONOI_MAX_SITES;
-      const siteData = new Float32Array(w * 4);
-      const colorData = new Float32Array(w * 4);
-      const n = Math.min(sites.length, w);
-      for (let i = 0; i < n; i += 1) {
-        const o = i * 4;
-        siteData[o] = sites[i].dir.x;
-        siteData[o + 1] = sites[i].dir.y;
-        siteData[o + 2] = sites[i].dir.z;
-        siteData[o + 3] = sites[i].cluster;
-        const c = new THREE.Color(subclusterColor(sites[i].cluster, sites[i].subcluster));
-        colorData[o] = c.r;
-        colorData[o + 1] = c.g;
-        colorData[o + 2] = c.b;
-        colorData[o + 3] = 1;
-      }
-      const makeTex = (data) => {
-        const tex = new THREE.DataTexture(data, w, 1, THREE.RGBAFormat, THREE.FloatType);
-        tex.magFilter = THREE.NearestFilter;
-        tex.minFilter = THREE.NearestFilter;
-        tex.wrapS = THREE.ClampToEdgeWrapping;
-        tex.wrapT = THREE.ClampToEdgeWrapping;
-        tex.needsUpdate = true;
-        return tex;
-      };
-      return { sitesTex: makeTex(siteData), colorsTex: makeTex(colorData), count: n };
+    function globeWeightFromCount(count) {
+      return GLOBE_WEIGHT_SCALE * Math.log1p(Math.max(1, count));
     }
 
-    function createGlobeVoronoiMaterial(sites, center) {
-      const { sitesTex, colorsTex, count } = makeSiteDataTexture(sites);
-      const maxSites = GLOBE_VORONOI_MAX_SITES;
-
-      return new THREE.ShaderMaterial({
-        glslVersion: THREE.GLSL3,
-        uniforms: {
-          uCenter: { value: center.clone() },
-          uNumSites: { value: count },
-          uSitesTex: { value: sitesTex },
-          uColorsTex: { value: colorsTex },
-          uOpacity: { value: GLOBE_LAND_OPACITY },
-          uContinentBorder: { value: GLOBE_CONTINENT_BORDER_MARGIN },
-          uSubBorder: { value: GLOBE_SUB_BORDER_MARGIN },
-        },
-        vertexShader: `
-          out vec3 vWorldPos;
-          void main() {
-            vec4 wp = modelMatrix * vec4(position, 1.0);
-            vWorldPos = wp.xyz;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform vec3 uCenter;
-          uniform float uNumSites;
-          uniform sampler2D uSitesTex;
-          uniform sampler2D uColorsTex;
-          uniform float uOpacity;
-          uniform float uContinentBorder;
-          uniform float uSubBorder;
-          in vec3 vWorldPos;
-          out vec4 fragColor;
-
-          void main() {
-            vec3 dir = normalize(vWorldPos - uCenter);
-            float best = -1.0;
-            float second = -1.0;
-            int bestI = 0;
-            int secondI = 0;
-            for (int i = 0; i < ${maxSites}; i++) {
-              if (float(i) + 0.5 > uNumSites) continue;
-              vec4 site = texelFetch(uSitesTex, ivec2(i, 0), 0);
-              vec3 siteDir = site.xyz;
-              float d = dot(dir, siteDir);
-              if (d > best) {
-                second = best;
-                secondI = bestI;
-                best = d;
-                bestI = i;
-              } else if (d > second) {
-                second = d;
-                secondI = i;
-              }
-            }
-            float margin = best - second;
-            vec3 color = texelFetch(uColorsTex, ivec2(bestI, 0), 0).rgb;
-            float alpha = uOpacity;
-            float bestCluster = texelFetch(uSitesTex, ivec2(bestI, 0), 0).w;
-            float secondCluster = texelFetch(uSitesTex, ivec2(secondI, 0), 0).w;
-            if (margin < uContinentBorder && bestCluster != secondCluster) {
-              color = vec3(0.0);
-              alpha = 1.0;
-            } else if (margin < uSubBorder && bestI != secondI) {
-              color = mix(color, vec3(0.22, 0.28, 0.34), 0.55);
-            }
-            fragColor = vec4(color, alpha);
-          }
-        `,
-        transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
+    function pickWeightedSite(dir, sites) {
+      let best = sites[0];
+      let bestScore = -Infinity;
+      sites.forEach((site) => {
+        const score = dir.dot(site.dir) + site.weight;
+        if (score > bestScore) {
+          bestScore = score;
+          best = site;
+        }
       });
+      return { site: best, rawDot: dir.dot(best.dir), score: bestScore };
     }
 
-    function buildGridLandShell(centroids, center, landRadius) {
+    function buildClusterSites(graph, center) {
+      const sites = [];
+      (graph.clusters || []).forEach((cl) => {
+        const dir = computeRegionDirection(cl.id, undefined, center);
+        if (!dir) return;
+        sites.push({
+          cluster: cl.id,
+          dir,
+          weight: globeWeightFromCount(cl.size ?? 0),
+        });
+      });
+      return sites;
+    }
+
+    function buildRegionSitesByCluster(graph, center) {
+      const byCluster = new Map();
+      (graph.clusters || []).forEach((cl) => {
+        const sites = [];
+        (cl.subclusters || []).forEach((sub) => {
+          const dir = computeRegionDirection(cl.id, sub.id, center);
+          if (!dir) return;
+          sites.push({
+            key: regionKey(cl.id, sub.id),
+            cluster: cl.id,
+            subcluster: sub.id,
+            dir,
+            weight: globeWeightFromCount(sub.size ?? 0),
+          });
+        });
+        if (sites.length) byCluster.set(cl.id, sites);
+      });
+      return byCluster;
+    }
+
+    function classifyGlobeCell(dir, clusterSites, regionSitesByCluster) {
+      if (!clusterSites.length) return null;
+      const continent = pickWeightedSite(dir, clusterSites);
+      if (continent.rawDot < GLOBE_OCEAN_DOT_MIN) return null;
+      const regionSites = regionSitesByCluster.get(continent.site.cluster);
+      if (!regionSites?.length) {
+        return {
+          key: regionKey(continent.site.cluster, 0),
+          cluster: continent.site.cluster,
+          subcluster: 0,
+        };
+      }
+      return pickWeightedSite(dir, regionSites).site;
+    }
+
+    function buildWeightedGlobeLand(graph, center, landRadius) {
       const latN = GLOBE_GRID_LAT;
       const lonN = GLOBE_GRID_LON;
+      const clusterSites = buildClusterSites(graph, center);
+      const regionSitesByCluster = buildRegionSitesByCluster(graph, center);
+      if (!clusterSites.length) return null;
+
       const dirScratch = new THREE.Vector3();
       const cornerDirs = [
         new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(),
       ];
-
-      function nearestRegion(dir) {
-        let best = centroids[0].key;
-        let bestDot = -Infinity;
-        centroids.forEach(({ key, dir: cDir }) => {
-          const d = dir.dot(cDir);
-          if (d > bestDot) { bestDot = d; best = key; }
-        });
-        return best;
-      }
-
       const labels = new Int32Array(latN * lonN);
+      const clusterAt = new Int32Array(latN * lonN);
+      const OCEAN = -1;
+
       for (let i = 0; i < latN; i += 1) {
         const lat = -Math.PI / 2 + (i + 0.5) * (Math.PI / latN);
         for (let j = 0; j < lonN; j += 1) {
           const lon = -Math.PI + (j + 0.5) * (2 * Math.PI / lonN);
-          labels[i * lonN + j] = nearestRegion(sphericalDir(lat, lon, dirScratch));
+          const dir = sphericalDir(lat, lon, dirScratch);
+          const cell = classifyGlobeCell(dir, clusterSites, regionSitesByCluster);
+          const idx = i * lonN + j;
+          if (!cell) {
+            labels[idx] = OCEAN;
+            clusterAt[idx] = OCEAN;
+          } else {
+            labels[idx] = cell.key;
+            clusterAt[idx] = cell.cluster;
+          }
         }
       }
 
       const landVerts = new Map();
+      const borderPoints = [];
+
       function cornerDir(i, j, corner) {
         const ii = i + (corner >> 1);
         const jj = (j + (corner & 1)) % lonN;
         const lat = -Math.PI / 2 + ii * (Math.PI / latN);
         const lon = -Math.PI + jj * (2 * Math.PI / lonN);
         return sphericalDir(lat, lon, cornerDirs[corner]);
+      }
+
+      function pushBorder(d0, d1) {
+        const w0 = worldOnShell(d0, landRadius * 1.04, center, _tmpVecA);
+        const w1 = worldOnShell(d1, landRadius * 1.04, center, _tmpVecB);
+        borderPoints.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z);
       }
 
       for (let i = 0; i < latN - 1; i += 1) {
@@ -1064,11 +1040,17 @@
           const c10 = labels[(i + 1) * lonN + j];
           const c01 = labels[i * lonN + j1];
           const c11 = labels[(i + 1) * lonN + j1];
+          const k00 = clusterAt[i * lonN + j];
+          const k10 = clusterAt[(i + 1) * lonN + j];
+          const k01 = clusterAt[i * lonN + j1];
+          const k11 = clusterAt[(i + 1) * lonN + j1];
+
           cornerDir(i, j, 0); const d00 = cornerDirs[0].clone();
           cornerDir(i, j, 1); const d01 = cornerDirs[1].clone();
           cornerDir(i, j, 2); const d10 = cornerDirs[2].clone();
           cornerDir(i, j, 3); const d11 = cornerDirs[3].clone();
-          if (c00 === c10 && c00 === c01) {
+
+          if (c00 !== OCEAN && c00 === c10 && c00 === c01) {
             const arr = landVerts.get(c00) || [];
             const w0 = worldOnShell(d00, landRadius, center, _tmpVecA);
             const w1 = worldOnShell(d10, landRadius, center, _tmpVecB);
@@ -1076,7 +1058,7 @@
             arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
             landVerts.set(c00, arr);
           }
-          if (c11 === c10 && c11 === c01) {
+          if (c11 !== OCEAN && c11 === c10 && c11 === c01) {
             const arr = landVerts.get(c11) || [];
             const w0 = worldOnShell(d11, landRadius, center, _tmpVecA);
             const w1 = worldOnShell(d01, landRadius, center, _tmpVecB);
@@ -1084,14 +1066,19 @@
             arr.push(w0.x, w0.y, w0.z, w1.x, w1.y, w1.z, w2.x, w2.y, w2.z);
             landVerts.set(c11, arr);
           }
+
+          if (k00 !== k10 && k00 !== OCEAN && k10 !== OCEAN) pushBorder(d00, d10);
+          if (k01 !== k11 && k01 !== OCEAN && k11 !== OCEAN) pushBorder(d01, d11);
+          if (k00 !== k01 && k00 !== OCEAN && k01 !== OCEAN) pushBorder(d00, d01);
+          if (k10 !== k11 && k10 !== OCEAN && k11 !== OCEAN) pushBorder(d10, d11);
         }
       }
 
       const group = new THREE.Group();
-      landVerts.forEach((verts, region) => {
+      landVerts.forEach((verts, regionKey) => {
         if (verts.length < 9) return;
-        const cluster = clusterFromRegion(region);
-        const sub = subFromRegion(region);
+        const cluster = clusterFromRegion(regionKey);
+        const sub = subFromRegion(regionKey);
         const geom = new THREE.BufferGeometry();
         geom.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
         group.add(new THREE.Mesh(
@@ -1105,32 +1092,20 @@
           }),
         ));
       });
+
+      if (borderPoints.length >= 6) {
+        const borderGeom = new THREE.BufferGeometry();
+        borderGeom.setAttribute("position", new THREE.Float32BufferAttribute(borderPoints, 3));
+        const borders = new THREE.LineSegments(
+          borderGeom,
+          new THREE.LineBasicMaterial({ color: GLOBE_CONTINENT_BORDER }),
+        );
+        borders.renderOrder = 2;
+        group.add(borders);
+      }
+
       group.renderOrder = 1;
       return group;
-    }
-
-    function addLandShell(centroids, center, landRadius) {
-      if (!renderer.capabilities.isWebGL2) {
-        console.warn("WebGL2 unavailable; using grid land fallback.");
-        return buildGridLandShell(centroids, center, landRadius);
-      }
-      const geom = new THREE.SphereGeometry(landRadius, 128, 96);
-      const mat = createGlobeVoronoiMaterial(centroids, center);
-      const shell = new THREE.Mesh(geom, mat);
-      shell.renderOrder = 1;
-      renderer.compile(shell, camera, scene);
-      const gl = renderer.getContext();
-      const prog = mat.program;
-      const linked = prog && gl.getProgramParameter(prog, gl.LINK_STATUS);
-      if (!linked) {
-        console.warn("Voronoi shader failed; using grid land fallback.", gl.getProgramInfoLog(prog));
-        geom.dispose();
-        mat.dispose();
-        mat.uniforms.uSitesTex.value.dispose();
-        mat.uniforms.uColorsTex.value.dispose();
-        return buildGridLandShell(centroids, center, landRadius);
-      }
-      return shell;
     }
 
     function disposeGlobeGroup() {
@@ -1178,36 +1153,11 @@
       ocean.renderOrder = 0;
       globeGroup.add(ocean);
 
-      // Subcluster centroids on the unit sphere (mean direction per region).
-      const dirsByRegion = new Map();
-      graph.nodes.forEach((node) => {
-        const idx = state.indexById.get(node.id);
-        if (idx === undefined) return;
-        const dir = _tmpVecA.copy(state.positions[idx]).sub(center).normalize();
-        const sub = node.subcluster ?? 0;
-        const key = regionKey(node.cluster, sub);
-        const list = dirsByRegion.get(key) || [];
-        list.push(dir.clone());
-        dirsByRegion.set(key, list);
-      });
-
-      const centroids = [];
-      dirsByRegion.forEach((dirs, key) => {
-        const sum = new THREE.Vector3();
-        dirs.forEach((d) => sum.add(d));
-        if (sum.lengthSq() < 1e-8) return;
-        centroids.push({
-          key,
-          cluster: clusterFromRegion(key),
-          subcluster: subFromRegion(key),
-          dir: sum.normalize(),
-        });
-      });
-      if (centroids.length < 2) return;
-
-      const landShell = addLandShell(centroids, center, landRadius);
-      landShell.position.copy(center);
-      globeGroup.add(landShell);
+      const land = buildWeightedGlobeLand(graph, center, landRadius);
+      if (land) {
+        land.position.copy(center);
+        globeGroup.add(land);
+      }
 
       // Labels pinned on the globe (CSS2D): continents = large caps; regions = smaller.
       while (globeLabelsGroup.children.length) {
